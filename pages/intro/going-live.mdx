@@ -1,0 +1,27 @@
+---
+title: "Going Live"
+description: "Checklist and requirements before you move to production with Waftpay."
+---
+
+# Going Live
+
+When you’re ready to switch from **sandbox** to **production**, follow this checklist:
+
+## ✅ Go-live checklist
+- [ ] **End-to-end tested** in sandbox with sample flows.
+- [ ] **Webhook endpoint** is live, secure (HTTPS), and signature verification is implemented.
+- [ ] **Error handling** and **retry logic** tested.
+- [ ] **UI/UX messaging** updated for real customers.
+- [ ] **Compliance docs** (KYC, business verification) submitted and approved.
+
+## 🔒 Security reminders
+- Never expose your **Client Secret** in frontend code.
+- Rotate credentials if you suspect compromise.
+- Use TLS (HTTPS) everywhere.
+
+## 🎉 Launch
+- Switch your API base URL to the **Production URL**.
+- Replace sandbox credentials with **production credentials**.
+- Start processing live customer transactions.
+
+👉 Once live, monitor your dashboard closely to ensure everything runs smoothly.

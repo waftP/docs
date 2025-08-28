@@ -1,0 +1,12 @@
+---
+title: "Idempotency & Retries"
+description: "Prevent duplicates and retry safely."
+---
+
+Use an **Idempotency-Key** on every create operation (payments, payouts, checkout sessions).
+If a request is retried with the **same** key, Waftpay returns the **original result**.
+
+## Header
+
+```http
+Idempotency-Key: 7f7b2c0e-4b52-4b1f-9b9a-9f4b2b1d0001

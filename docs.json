@@ -1,48 +1,65 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Waftpay Developer Docs",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
+    "primary": "#4A6CF7",
+    "light": "#FBB040",
     "dark": "#15803D"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "favicon.ico",
+  "logo": {
+    "light": "/public/logo/dark.svg",
+    "dark": "/public/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      { "label": "Support", "href": "mailto:alex.njora@waftpay.io" }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://dashboard.dev.pockets-pay.com"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "API Guides",
         "groups": [
+          {
+            "group": "Introduction",
+            "pages": [
+              "index",
+              "/pages/intro/what-is-mobile-money",
+              "/pages/intro/what-you-should-know",
+              "/pages/intro/how-to-start",
+              "/pages/intro/going-live"
+            ]
+          },
           {
             "group": "Getting started",
             "pages": [
-              "index",
               "quickstart",
-              "development"
+              "environments",
+              "errors"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Webhooks",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "/pages/webhooks/signing",
+              "/pages/webhooks/event-types"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "SDKs & Tools",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "/pages/sdks/node",
+              "/pages/sdks/python",
+              "/pages/sdks/java",
+              "/pages/sdks/php",
+              "/pages/sdks/postman"
             ]
           }
         ]
@@ -51,18 +68,47 @@
         "tab": "API reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Health",
             "pages": [
-              "api-reference/introduction"
+              "api-reference/health"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Authentication",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/auth/oauth-token"
+            ]
+          },
+          {
+            "group": "Payments",
+            "pages": [
+              "api-reference/payments/create",
+              "api-reference/payments/list",
+              "api-reference/payments/retrieve",
+              "api-reference/payments/confirm",
+              "api-reference/payments/cancel"
+            ]
+          },
+          {
+            "group": "Collections",
+            "pages": [
+              "api-reference/collections/checkout-sessions-create"
+            ]
+          },
+          {
+            "group": "Remittance",
+            "pages": [
+              "api-reference/remittance/payouts-create",
+              "api-reference/remittance/payouts-list",
+              "api-reference/remittance/payouts-retrieve",
+              "api-reference/remittance/payouts-confirm",
+              "api-reference/remittance/payouts-cancel"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/webhooks/receive"
             ]
           }
         ]
@@ -71,57 +117,40 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "Run in Postman",
+          "href": "https://app.postman.com/run-collection/YOUR_COLLECTION_ID?env=YOUR_ENV_ID",
+          "icon": "circle-play"
         },
         {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Support Discord",
+          "href": "https://community.waftpay.io",
+          "icon": "discord"
         }
       ]
     }
   },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
+  "openapi": "/openapi/waftpay.postman.json",
+  "api": {
+    "baseUrl": [
+      "https://payments-api.dev.pockets-pay.com"
     ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+    "auth": {
+      "method": "bearer",
+      "name": "Authorization",
+      "inputPrefix": "Bearer "
+    },
+    "playground": {
+      "mode": "show"
     }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/waftpay",
+      "github": "https://github.com/waftpay",
+      "linkedin": "https://www.linkedin.com/company/waftpay"
     }
+  },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
   }
 }

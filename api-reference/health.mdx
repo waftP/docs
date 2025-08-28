@@ -1,0 +1,24 @@
+---
+title: "Get Health"
+openapi: "GET /actuator/health"
+---
+
+# Health Check Endpoint
+
+The **Health Check** endpoint lets you verify that the Waftpay API is online and reachable.
+It’s a lightweight `GET` request that returns the current status of the service.
+
+---
+
+## When to use
+
+- **Monitoring** – Integrate into uptime tools (e.g. Pingdom, Datadog, New Relic) to alert if the API becomes unavailable.
+- **Readiness Probes** – Use this endpoint in container orchestration systems (Kubernetes, Docker) to decide if an instance is ready to accept traffic.
+- **Debugging** – Quickly confirm if issues are due to your integration or a wider service outage.
+
+---
+
+## Request
+
+```http
+GET {BASE_URL}/actuator/health

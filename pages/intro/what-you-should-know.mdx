@@ -1,0 +1,31 @@
+---
+title: "What You Should Know"
+description: "Key concepts and requirements before integrating Waftpay."
+---
+
+# What You Should Know
+
+Before integrating Waftpay APIs, here are the essentials:
+
+## 1. Environments
+- **Sandbox (Dev)**: Test everything with fake money.
+- **Production (Live)**: Real customers and real transactions.
+- Each environment has its **own base URL** and **API credentials**.
+
+## 2. Authentication
+- Waftpay uses **OAuth2 Client Credentials**.
+- Your backend exchanges a **Client ID** + **Client Secret** for a **short-lived bearer token**.
+
+## 3. Currency & Regions
+- All transactions are in **KES (Kenyan Shilling)** for now.
+- Expansion to more currencies will be announced soon.
+
+## 4. Webhooks
+- Waftpay notifies you about **transaction updates** via webhooks.
+- Always verify signatures to ensure authenticity.
+
+## 5. Error Handling
+- APIs return **standardized error codes**.
+- Handle gracefully — retry where safe, or alert users when manual action is required.
+
+👉 Keep these in mind, and your integration will be smoother.

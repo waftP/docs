@@ -1,0 +1,316 @@
+{
+  "info": {
+    "_postman_id": "e2c40c91-c9e8-464c-9156-7d437f842ce3",
+    "name": "Waft API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "13496153",
+    "_collection_link": "https://red-shadow-810321.postman.co/workspace/My-Workspace~78c4e91f-ca9e-4c29-8633-4cc89650477d/collection/13496153-e2c40c91-c9e8-464c-9156-7d437f842ce3?action=share&source=collection_link&creator=13496153"
+  },
+  "item": [
+    {
+      "name": "API Auth",
+      "item": [
+        {
+          "name": "Generate API Token",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-Custom-Signature",
+                "value": "Sso9ax2zfQda8Go655btcjAnQfV4nURppZDq7vquNmvXLBeeuZb8DNcoq6JHv4V3WRLM2bhP0hZUpP33JMI1rkHIdR+H8n4Va50rKBTYX2QL2U5mKOBzJTq+euHu9k5JlFdufRFEB4Yi9f/k1s0wa9O3PnxYKBG6QK5oKnKxZ3ISmNrOk+9lnnhtoRtSHv6txt+9sHMVzuDqcUdnS076jtWFHJ/cvwXEMiq3e+DWZ7ZDIqlDHAtkhGdTpdLGQfFtfGZHHUTijrpYYmGDpxaowK7/dQdDDCdjgSsEHp7Vf6E1aA6aFmu+aJ16l87raomouz1zs7lp2BLfzYn6pDoj0A==",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consumer_secret\": \"{{collection-consumer-secret}}\",\n  \"consumer_key\": \"{{collection-consumer-key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authUrl}}/authentication-service/v1/api/generate-token",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "authentication-service",
+                "v1",
+                "api",
+                "generate-token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Payouts API Token",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-Custom-Signature",
+                "value": "ebQs13NrmhZTWmaG1wNLioMVwd+LbwYJyYe9wy5g1YDY4Zr+E7aim5kwpgsPA87/hrWZP/qCoMDLIxSQMjCbze/qvEoX6mTmfRWpW+kAXLbbUlj2vwxs3yKiS7Sulc7ofZj8+NcSXxr1tO+PaNtiBqmBhJxY7qAY/CNDTfl9j90FF1WRwE5anMIW8tU9jApYA08TflXfA2DDktQK4rrn3fpF9svnUNWfJsNYOQ8u0UgT+zdLHDnf4arKhobS2bD08UDxlhSdiZ0f9gSZIplKYN8gEYf4p4do6fZb1KX8EJUsDBtzS46yoIi+Y/MBpi4Xu7GmFo6p71WEBr7GU9G7Bw==",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consumer_secret\": \"{{payout-consumer-secret}}\",\n  \"consumer_key\": \"{{payout-consumer-key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authUrl}}/authentication-service/v1/api/generate-token",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "authentication-service",
+                "v1",
+                "api",
+                "generate-token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remittance API Token",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-Custom-Signature",
+                "value": "ebQs13NrmhZTWmaG1wNLioMVwd+LbwYJyYe9wy5g1YDY4Zr+E7aim5kwpgsPA87/hrWZP/qCoMDLIxSQMjCbze/qvEoX6mTmfRWpW+kAXLbbUlj2vwxs3yKiS7Sulc7ofZj8+NcSXxr1tO+PaNtiBqmBhJxY7qAY/CNDTfl9j90FF1WRwE5anMIW8tU9jApYA08TflXfA2DDktQK4rrn3fpF9svnUNWfJsNYOQ8u0UgT+zdLHDnf4arKhobS2bD08UDxlhSdiZ0f9gSZIplKYN8gEYf4p4do6fZb1KX8EJUsDBtzS46yoIi+Y/MBpi4Xu7GmFo6p71WEBr7GU9G7Bw==",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consumer_secret\": \"{{remittance-consumer-secret}}\",\n  \"consumer_key\": \"{{remittance-consumer-key}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{authUrl}}/authentication-service/v1/api/generate-token",
+              "host": [
+                "{{authUrl}}"
+              ],
+              "path": [
+                "authentication-service",
+                "v1",
+                "api",
+                "generate-token"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment API Service",
+      "item": [
+        {
+          "name": "Remittance",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{remittance-api-token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-Custom-Signature",
+                "value": "utQ23sQC+U1k2EhQzW6vXjZuxO+7zxtTbNUI0nyM0eI0BtPnpDBACisjJAh0+V5vbtrSzQ5txikCI/IjmuMWGn9A0tvHJdRN1JeKNq7IbQNgs13E2Ccq9kBBLrITfnlamlIZv7R7TuJ1n32E2ohrtVbfL2/3zYvyY+LxbfnRlDCKvMjJdFzcRuaHYdZB/zTzXSGOZbD2RpUkRDuuz6ZXoWtdqxy0nRpCloH5JbM/FxevoeQiQiG0Lc+Fls87B3qWTFWthOLUvZWtO4zXIie2VN6dl2woAbk2Qwt2jfT4HNJI1oqGE6UzKOSx+G2WVoSd31WbgoNOXj/LQF4qOvUCjA==",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transaction\": {\n        \"reference\": \"TXN213687756272197\",\n        \"amount\": 1000,\n        \"currency\": \"KES\",\n        \"description\": \"Test\",\n        \"timestamp\": \"2025-01-21 12:30:10\"\n    },\n    \"originator\": {\n        \"msisdn\": \"254722111999\",\n        \"channel\": \"Test\",\n        \"country\": \"KEN\",\n        \"service_provider\": \"TELCOM-UK\",\n        \"name\": \"John Sender\",\n        \"dob\": \"1965-01-01\",\n        \"nationality\": \"UK\",\n        \"id_type\": \"Passport , National ID ,Drivers License or Diplomatic Passport\",\n        \"ïd_number\": \"PSA010101\"\n    },\n    \"recipient\": {\n        \"service_code\": \"{{remittance-service-code}}\",\n        \"pay_bill_number\": \"909090\",\n        \"store_number\": \"808080\",\n        \"reference\": \"Test\",\n        \"account\": \"254745303012\",\n        \"name\": \"John Doe Init\"\n    },\n    \"callback_url\": \"https://www.google.com\",\n    \"meta\": {\n        \"note\": \"Test\",\n        \"agent_id\": \"Test\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{apiServiceUrl}}/payments-api-service/v1/remittance",
+              "host": [
+                "{{apiServiceUrl}}"
+              ],
+              "path": [
+                "payments-api-service",
+                "v1",
+                "remittance"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Collection",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{collection-api-token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-Custom-Signature",
+                "value": "Sso9ax2zfQda8Go655btcjAnQfV4nURppZDq7vquNmvXLBeeuZb8DNcoq6JHv4V3WRLM2bhP0hZUpP33JMI1rkHIdR+H8n4Va50rKBTYX2QL2U5mKOBzJTq+euHu9k5JlFdufRFEB4Yi9f/k1s0wa9O3PnxYKBG6QK5oKnKxZ3ISmNrOk+9lnnhtoRtSHv6txt+9sHMVzuDqcUdnS076jtWFHJ/cvwXEMiq3e+DWZ7ZDIqlDHAtkhGdTpdLGQfFtfGZHHUTijrpYYmGDpxaowK7/dQdDDCdjgSsEHp7Vf6E1aA6aFmu+aJ16l87raomouz1zs7lp2BLfzYn6pDoj0A==",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transaction\": {\n        \"reference\": \"TNC0009886898182\",\n        \"amount\": 1.50,\n        \"currency\": \"KES\",\n        \"description\": \"Test description\",\n        \"timestamp\": \"2025-01-21 12:30:00\"\n    },\n    \"originator\": {\n        \"msisdn\": \"254712345679\",\n        \"channel\": \"USSD\",\n        \"country\": \"KE\",\n        \"name\": \"John Doe\",\n        \"purpose\": \"Salary payment\"\n    },\n    \"recipient\": {\n        \"service_code\": \"{{collection-service-code}}\",\n        \"reference\": \"INVJMA01\",\n        \"account\": \"254792452002\",\n        \"invoice_number\": \"3456789655\"\n    },\n    \"callback_url\": \"https://www.google.com\",\n    \"meta\": {\n        \"note\": \"This info is returned as part of the callback\",\n        \"agent_id\": \"AGENT456\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{apiServiceUrl}}/payments-api-service/v1/collections",
+              "host": [
+                "{{apiServiceUrl}}"
+              ],
+              "path": [
+                "payments-api-service",
+                "v1",
+                "collections"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Payout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{payout-api-token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-Custom-Signature",
+                "value": "LjPtkXMMP40UMxJzRqcUpwLt6UoTotCDaHxPFMKW3sZ9xjN4I/mWyFrwUT9zXbvFQEs3kH5ynx1IZ4qPDKgggd+a0DvhzOpRqfnihIf8TmsFhk08DFbJiDViLIrgIAHJWYcKlYOa5K84qhjtWEE4GZNhg+BKdcRBKZID3HDHcQXS74deVg7ahl3CyxlWu87xfxUaMv7U3l8k9IYrKZD34TSM4YxDsmjmWnJb7EudlF3Q0V9Rf4JHvYjtbSBLAKRrsSh2lLaZyUKy4swDrQSjJ7YLlcZshjBnwaFLXVx9UWh4o429TySi706uVwQOgwPTT0ycLYNssX7Q82Y5sr3CvQ==",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction\": {\n  \"reference\": \"TXN213687756272200\",\n    \"amount\":1000,\n    \"currency\": \"KES\",\n    \"description\": \"Test description\",\n    \"timestamp\": \"2025-01-21 12:30:10\"\n  },\n  \"originator\": {\n    \"msisdn\": \"254708374149\",\n    \"channel\": \"USSD\",\n    \"country\": \"KEN\",\n    \"name\": \"Payment\",\n    \"purpose\": \"Transaction Payment\"\n  },\n  \"recipient\": {\n    \"service_code\": \"{{payout-service-code}}\",\n    \"reference\": \"INVJMA02\",\n    \"account\": \"254708374149\"\n  },\n  \"callback_url\": \"https://webhook.site/a3f453c2-0b4f-47d4-a3bd-9f47faab618b\",\n  \"meta\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{apiServiceUrl}}/payments-api-service/v1/payouts",
+              "host": [
+                "{{apiServiceUrl}}"
+              ],
+              "path": [
+                "payments-api-service",
+                "v1",
+                "payouts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refund Reversal",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{collection-api-token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-Custom-Signature",
+                "value": "Sso9ax2zfQda8Go655btcjAnQfV4nURppZDq7vquNmvXLBeeuZb8DNcoq6JHv4V3WRLM2bhP0hZUpP33JMI1rkHIdR+H8n4Va50rKBTYX2QL2U5mKOBzJTq+euHu9k5JlFdufRFEB4Yi9f/k1s0wa9O3PnxYKBG6QK5oKnKxZ3ISmNrOk+9lnnhtoRtSHv6txt+9sHMVzuDqcUdnS076jtWFHJ/cvwXEMiq3e+DWZ7ZDIqlDHAtkhGdTpdLGQfFtfGZHHUTijrpYYmGDpxaowK7/dQdDDCdjgSsEHp7Vf6E1aA6aFmu+aJ16l87raomouz1zs7lp2BLfzYn6pDoj0A==",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transaction_reference\": \"TRC94513697913522\",\n    \"payment_uuid\": \"803556523944079845\",\n    \"amount\": 400,\n    \"notification_url\": \"https://webhook.site/679ced79-7dac-4977-be7a-3d600b39c245\",\n    \"remarks\": \"Test remarks\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{apiServiceUrl}}/payments-api-service/v1/refund-reversal",
+              "host": [
+                "{{apiServiceUrl}}"
+              ],
+              "path": [
+                "payments-api-service",
+                "v1",
+                "refund-reversal"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

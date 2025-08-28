@@ -1,0 +1,30 @@
+---
+title: "How to Start"
+description: "Step-by-step guide to begin integrating Waftpay."
+---
+
+# How to Start
+
+Here’s how to get up and running with Waftpay:
+
+## 1. Sign up for a developer account
+- Visit the [Waftpay Dashboard](https://dashboard.dev.pockets-pay.com).
+- Create an account and request API credentials.
+
+## 2. Generate API credentials
+- You’ll get a **Client ID** and **Client Secret** (per environment).
+- Store them securely — they are your keys to the platform.
+
+## 3. Authenticate
+- Call the **OAuth token endpoint** to exchange your credentials for a **bearer token**.
+- Use this token in the `Authorization: Bearer <token>` header for all requests.
+
+## 4. Make your first API call
+- Try the **Health Check** (`/actuator/health`) to confirm connectivity.
+- Then, create a **test payment** in the sandbox environment.
+
+## 5. Set up webhooks
+- Implement webhook handlers to listen for payment updates.
+- Validate signatures using your configured signing secret.
+
+👉 That’s it — now you’re ready to explore collections, payouts, and more.

@@ -1,0 +1,115 @@
+---
+title: "API Status"
+description: "Run a live health check against the Waftpay API."
+---
+
+import React, { useRef, useState } from "react";
+
+export function StatusCheck({ urls }) {
+    const [env, setEnv] = useState(Object.keys(urls)[0]);
+    const url = urls[env];
+
+    const [state, setState] = useState("idle");
+    const [latency, setLatency] = useState(null);
+    const [detail, setDetail] = useState("");
+    const [checkedAt, setCheckedAt] = useState(null);
+    const abortRef = useRef(null);
+
+    async function run() {
+        if (abortRef.current) abortRef.current.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
+
+        setState("loading");
+        setLatency(null);
+        setDetail("");
+        setCheckedAt(null);
+
+        const start = performance.now();
+        try {
+            const res = await fetch(url, { method: "GET", cache: "no-store", signal: controller.signal });
+            const ms = Math.round(performance.now() - start);
+            setLatency(ms);
+
+            if (!res.ok) {
+                setState("down");
+                setDetail(`HTTP ${res.status}`);
+            } else {
+                let data = {};
+                try { data = await res.json(); } catch {}
+                if (data?.status === "UP") {
+                    setState("up");
+                    setDetail(Array.isArray(data?.groups) ? `groups: ${data.groups.join(", ")}` : "");
+                } else {
+                    setState("down");
+                    setDetail(typeof data?.status === "string" ? `status: ${data.status}` : "");
+                }
+            }
+        } catch (e) {
+            if (e?.name !== "AbortError") {
+                setState("down");
+                setDetail(String(e?.message || e));
+            }
+        } finally {
+            setCheckedAt(new Date());
+        }
+    }
+
+    const chip = (bg) => ({ display: "inline-block", width: 10, height: 10, borderRadius: 9999, marginRight: 8, background: bg });
+
+    return (
+        <div>
+            <label style={{ fontSize: 14, marginRight: 8 }}>
+                Environment:
+                <select value={env} onChange={(e) => setEnv(e.target.value)} style={{ marginLeft: 8 }}>
+                    {Object.keys(urls).map(k => <option key={k} value={k}>{k.toUpperCase()}</option>)}
+                </select>
+            </label>
+
+            <button
+                type="button"
+                onClick={run}
+                disabled={state === "loading"}
+                aria-busy={state === "loading"}
+                style={{
+                    marginLeft: 12,
+                    padding: "0.6rem 1rem",
+                    borderRadius: "0.5rem",
+                    border: "1px solid #e5e7eb",
+                    fontWeight: 600,
+                    cursor: state === "loading" ? "not-allowed" : "pointer",
+                    opacity: state === "loading" ? 0.7 : 1
+                }}
+            >
+                {state === "loading" ? "Checking…" : "Run status check"}
+            </button>
+
+            <div style={{ marginTop: "1rem", fontSize: "0.95rem" }} aria-live="polite">
+                {state === "idle" && <span>Click the button to test the API.</span>}
+                {state === "loading" && <span>⏳ Contacting health endpoint…</span>}
+                {state === "up" && (
+                    <span><span style={chip("#16a34a")} /> <strong>Good</strong>{latency ? ` • ${latency} ms` : ""}{detail ? ` • ${detail}` : ""}</span>
+                )}
+                {state === "down" && (
+                    <span><span style={chip("#ef4444")} /> <strong>Not available</strong>{detail ? ` • ${detail}` : ""}</span>
+                )}
+                {checkedAt && <div style={{ marginTop: 4, fontSize: 12, color: "#6b7280" }}>Checked {checkedAt.toLocaleTimeString()} • {url}</div>}
+            </div>
+
+            <details style={{ marginTop: "0.75rem" }}>
+                <summary>Troubleshooting (CORS & networking)</summary>
+                <ul>
+                    <li>Allow cross-origin GETs on the health endpoint: <code>Access-Control-Allow-Origin</code> to your docs domain (or <code>*</code>).</li>
+                    <li>If you can’t open CORS, route this call through a tiny proxy you control.</li>
+                </ul>
+            </details>
+        </div>
+    );
+}
+
+<StatusCheck
+    urls={{
+        dev: "https://payments-api.dev.pockets-pay.com/actuator/health"
+        // prod: "https://payments-api.pockets-pay.com/actuator/health"
+    }}
+/>

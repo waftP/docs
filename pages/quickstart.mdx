@@ -1,0 +1,20 @@
+### `pages/quickstart.mdx` (safe version)
+
+```mdx
+---
+title: "Quickstart"
+description: "Make your first Waftpay API call in minutes."
+---
+
+> Use the **Sandbox**: `https://sandbox.waftpay.io/api`. Switch to Production when ready.
+
+## 1) Get API credentials
+- Log into **https://dashboard.waftpay.io**
+- Create a **Client ID** and **Client Secret** (Sandbox first)
+
+## 2) Get an access token
+
+```bash
+curl -X POST https://sandbox.waftpay.io/api/oauth/token \
+  -H "Content-Type: application/json" \
+  -d '{"grant_type":"client_credentials","client_id":"YOUR_CLIENT_ID","client_secret":"YOUR_CLIENT_SECRET"}'

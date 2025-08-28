@@ -1,0 +1,737 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Waftpay Payments API",
+    "description": "Process payments, collect funds, and remit payouts with Waftpay. Includes OAuth2, idempotency, webhooks, and sandbox support.",
+    "license": { "name": "MIT" },
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "https://sandbox.waftpay.io/api", "description": "Sandbox" },
+    { "url": "https://authentication-api.dev.pockets-pay.com", "description": "Sandbox" },
+    { "url": "https://payments-api.dev.pockets-pay.com", "description": "Health" },
+    { "url": "https://api.waftpay.io", "description": "Production" }
+  ],
+  "tags": [
+    { "name": "Authentication", "description": "Obtain and manage access tokens" },
+    { "name": "Payments", "description": "Charge a customer and track status" },
+    { "name": "Collections", "description": "Customer-initiated payments and hosted checkouts" },
+    { "name": "Remittance", "description": "Send payouts to mobile wallets and bank accounts" },
+    { "name": "Webhooks", "description": "Receive asynchronous notifications" },
+    { "name": "Utilities", "description": "Common utilities (idempotency, health)" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/actuator/health": {
+      "get": {
+        "tags": ["Status"],
+        "summary": "API health",
+        "operationId": "getHealth",
+        "description": "Returns overall API health.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "enum": ["UP", "DOWN"] },
+                    "groups": { "type": "array", "items": { "type": "string" } }
+                  },
+                  "required": ["status"]
+                },
+                "examples": {
+                  "up": {
+                    "summary": "UP",
+                    "value": { "status": "UP", "groups": ["liveness", "readiness"] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/oauth/token": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Get OAuth2 access token",
+        "operationId": "oauth-token",
+        "description": "Exchange **consumer_key** and **consumer_secret** for a short-lived **Bearer** token.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["consumer_key", "consumer_secret"],
+                "properties": {
+                  "consumer_secret":   { "type": "string" },
+                  "consumer_key": { "type": "string", "format": "password" }
+                }
+              },
+              "examples": {
+                "clientCredentials": {
+                  "value": {
+                    "consumer_key": "APP_CONSUMER_KEY",
+                    "consumer_secret": "APP_CONSUMER_SECRET"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["access_token", "token_type", "expires_in"],
+                  "properties": {
+                    "status": true,
+                    "code": 201,
+                    "message": "Request processed successfully",
+                    "data": {},
+                    "pagination": {
+                      "current_page": 0,
+                      "total_items": 0,
+                      "total_pages": 0
+                    },
+                    "meta": {
+                      "timestamp": "2025-03-14T05:41:19.287Z",
+                      "tat": "string"
+                    },
+                    "errors": []
+                  }
+                },
+                "examples": {
+                  "ok": {
+                    "value": {
+                      "status": true,
+                      "code": 201,
+                      "message": "Request processed successfully",
+                      "data": {},
+                      "pagination": {
+                        "current_page": 0,
+                        "total_items": 0,
+                        "total_pages": 0
+                      },
+                      "meta": {
+                        "timestamp": "2025-03-14T05:41:19.287Z",
+                        "tat": "string"
+                      },
+                      "errors": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+
+    "/payments": {
+      "post": {
+        "tags": ["Payments"],
+        "description": "Create a server-side charge. Supports idempotency via `Idempotency-Key` header.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "A unique key to safely retry this request without duplicating charges.",
+            "required": true,
+            "schema": { "type": "string", "maxLength": 64 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePaymentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Payment" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "get": {
+        "tags": ["Payments"],
+        "description": "List payments with pagination.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 },
+            "description": "Page size"
+          },
+          {
+            "name": "starting_after",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Cursor for pagination"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["pending", "processing", "succeeded", "failed", "canceled"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of payments",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ListPaymentsResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+
+    "/payments/{payment_id}": {
+      "get": {
+        "tags": ["Payments"],
+        "description": "Retrieve a payment by ID.",
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Payment" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "tags": ["Payments"],
+        "description": "Confirm a payment that requires an out-of-band authorization (e.g., STK push / OTP).",
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConfirmPaymentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Payment" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Payments"],
+        "description": "Cancel a payment that is not yet completed.",
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Payment canceled" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/collections/checkout-sessions": {
+      "post": {
+        "tags": ["Collections"],
+        "description": "Create a hosted checkout session URL to collect funds from a customer.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Unique key to safely retry."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCheckoutSessionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Checkout session created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CheckoutSession" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+
+    "/remittance/payouts": {
+      "post": {
+        "tags": ["Remittance"],
+        "description": "Create a payout to a mobile wallet or bank account.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePayoutRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payout created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Payout" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "get": {
+        "tags": ["Remittance"],
+        "description": "List payouts with pagination.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          {
+            "name": "starting_after",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["pending", "processing", "succeeded", "failed", "canceled"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of payouts",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ListPayoutsResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+
+    "/remittance/payouts/{payout_id}": {
+      "get": {
+        "tags": ["Remittance"],
+        "description": "Retrieve a payout.",
+        "parameters": [
+          { "name": "payout_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Payout", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Payout" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "tags": ["Remittance"],
+        "description": "Confirm a payout (if additional confirmation is required).",
+        "parameters": [
+          { "name": "payout_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ConfirmPayoutRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Payout updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Payout" } } } },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["Remittance"],
+        "description": "Cancel a payout that has not been sent.",
+        "parameters": [
+          { "name": "payout_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "204": { "description": "Payout canceled" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+
+    "/webhooks/waftpay": {
+      "post": {
+        "tags": ["Webhooks"],
+        "description": "Receive asynchronous event notifications (payments and payouts). Verify signature via `Waftpay-Signature` header.",
+        "parameters": [
+          {
+            "name": "Waftpay-Signature",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "HMAC signature generated by Waftpay"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WebhookEvent" } } }
+        },
+        "responses": {
+          "200": { "description": "Acknowledge receipt" }
+        },
+        "security": []
+      }
+    },
+
+    "/health": {
+      "get": {
+        "tags": ["Utilities"],
+        "description": "Health probe for monitoring.",
+        "responses": { "200": { "description": "OK" } },
+        "security": []
+      }
+    }
+  },
+
+  "components": {
+    "schemas": {
+      "Money": {
+        "type": "object",
+        "required": ["amount", "currency"],
+        "properties": {
+          "amount": { "type": "integer", "description": "Amount in minor units (e.g., cents)" },
+          "currency": { "type": "string", "description": "ISO 4217 code (e.g., KES, USD)" }
+        }
+      },
+
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "phone": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+
+      "Meta": {
+        "type": "object",
+        "additionalProperties": { "type": "string" },
+        "description": "Arbitrary key-value metadata"
+      },
+
+      "TokenRequest": {
+        "type": "object",
+        "required": ["grant_type", "client_id", "client_secret"],
+        "properties": {
+          "grant_type": { "type": "string", "enum": ["client_credentials"] },
+          "client_id": { "type": "string" },
+          "client_secret": { "type": "string" }
+        }
+      },
+
+      "TokenResponse": {
+        "type": "object",
+        "required": ["access_token", "token_type", "expires_in"],
+        "properties": {
+          "access_token": { "type": "string" },
+          "token_type": { "type": "string", "example": "Bearer" },
+          "expires_in": { "type": "integer" }
+        }
+      },
+
+      "CreatePaymentRequest": {
+        "type": "object",
+        "required": ["amount", "source", "reference"],
+        "properties": {
+          "amount": { "$ref": "#/components/schemas/Money" },
+          "source": {
+            "type": "object",
+            "description": "Funding source.",
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["type", "msisdn", "provider"],
+                "properties": {
+                  "type": { "type": "string", "enum": ["mobile_money"] },
+                  "provider": { "type": "string", "example": "MPESA" },
+                  "msisdn": { "type": "string", "description": "Customer phone in MSISDN format" }
+                }
+              },
+              {
+                "type": "object",
+                "required": ["type", "pan", "expiry_month", "expiry_year", "cvv"],
+                "properties": {
+                  "type": { "type": "string", "enum": ["card"] },
+                  "pan": { "type": "string" },
+                  "expiry_month": { "type": "integer" },
+                  "expiry_year": { "type": "integer" },
+                  "cvv": { "type": "string" }
+                }
+              }
+            ]
+          },
+          "customer": { "$ref": "#/components/schemas/Customer" },
+          "reference": { "type": "string", "description": "Your unique reference" },
+          "description": { "type": "string" },
+          "metadata": { "$ref": "#/components/schemas/Meta" },
+          "capture": { "type": "boolean", "default": true, "description": "If false, authorize-only" },
+          "callback_url": { "type": "string", "format": "uri" }
+        }
+      },
+
+      "ConfirmPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "otp": { "type": "string", "description": "Optional OTP or challenge code if required" }
+        }
+      },
+
+      "Payment": {
+        "type": "object",
+        "required": ["id", "amount", "status", "reference", "created_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "amount": { "$ref": "#/components/schemas/Money" },
+          "status": { "type": "string", "enum": ["pending", "processing", "succeeded", "failed", "canceled"] },
+          "reference": { "type": "string" },
+          "description": { "type": "string" },
+          "customer": { "$ref": "#/components/schemas/Customer" },
+          "channel": { "type": "string", "description": "e.g., mobile_money, card" },
+          "provider": { "type": "string", "description": "e.g., MPESA, VISA" },
+          "receipt": { "type": "string", "description": "Provider receipt or transaction reference" },
+          "failure_reason": { "type": "string" },
+          "metadata": { "$ref": "#/components/schemas/Meta" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+
+      "ListPaymentsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Payment" }
+          },
+          "has_more": { "type": "boolean" },
+          "next_cursor": { "type": "string" }
+        }
+      },
+
+      "CreateCheckoutSessionRequest": {
+        "type": "object",
+        "required": ["amount", "success_url", "cancel_url"],
+        "properties": {
+          "amount": { "$ref": "#/components/schemas/Money" },
+          "success_url": { "type": "string", "format": "uri" },
+          "cancel_url": { "type": "string", "format": "uri" },
+          "customer": { "$ref": "#/components/schemas/Customer" },
+          "reference": { "type": "string" },
+          "metadata": { "$ref": "#/components/schemas/Meta" }
+        }
+      },
+
+      "CheckoutSession": {
+        "type": "object",
+        "required": ["id", "status", "url", "amount"],
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string", "enum": ["created", "expired", "completed"] },
+          "url": { "type": "string", "format": "uri" },
+          "amount": { "$ref": "#/components/schemas/Money" },
+          "reference": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+
+      "CreatePayoutRequest": {
+        "type": "object",
+        "required": ["amount", "destination", "reference"],
+        "properties": {
+          "amount": { "$ref": "#/components/schemas/Money" },
+          "destination": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["type", "provider", "msisdn"],
+                "properties": {
+                  "type": { "type": "string", "enum": ["mobile_money"] },
+                  "provider": { "type": "string", "example": "MPESA" },
+                  "msisdn": { "type": "string" },
+                  "name": { "type": "string" }
+                }
+              },
+              {
+                "type": "object",
+                "required": ["type", "account_number", "bank_code"],
+                "properties": {
+                  "type": { "type": "string", "enum": ["bank_account"] },
+                  "account_number": { "type": "string" },
+                  "bank_code": { "type": "string" },
+                  "account_name": { "type": "string" }
+                }
+              }
+            ]
+          },
+          "reference": { "type": "string" },
+          "description": { "type": "string" },
+          "metadata": { "$ref": "#/components/schemas/Meta" },
+          "callback_url": { "type": "string", "format": "uri" }
+        }
+      },
+
+      "ConfirmPayoutRequest": {
+        "type": "object",
+        "properties": {
+          "otp": { "type": "string" }
+        }
+      },
+
+      "Payout": {
+        "type": "object",
+        "required": ["id", "amount", "status", "reference", "created_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "amount": { "$ref": "#/components/schemas/Money" },
+          "status": { "type": "string", "enum": ["pending", "processing", "succeeded", "failed", "canceled"] },
+          "reference": { "type": "string" },
+          "destination": { "type": "object" },
+          "provider": { "type": "string" },
+          "failure_reason": { "type": "string" },
+          "metadata": { "$ref": "#/components/schemas/Meta" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+
+      "ListPayoutsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Payout" }
+          },
+          "has_more": { "type": "boolean" },
+          "next_cursor": { "type": "string" }
+        }
+      },
+
+      "WebhookEvent": {
+        "type": "object",
+        "required": ["id", "type", "created", "data"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "payment.created",
+              "payment.succeeded",
+              "payment.failed",
+              "payment.canceled",
+              "payout.created",
+              "payout.succeeded",
+              "payout.failed",
+              "payout.canceled",
+              "checkout.completed"
+            ]
+          },
+          "created": { "type": "string", "format": "date-time" },
+          "data": { "type": "object" }
+        }
+      },
+
+      "Error": {
+        "type": "object",
+        "required": ["error", "message"],
+        "properties": {
+          "error": { "type": "string", "description": "Machine readable error code" },
+          "message": { "type": "string", "description": "Human readable message" },
+          "param": { "type": "string" },
+          "request_id": { "type": "string" }
+        }
+      }
+    },
+
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+---
+title: "Environments"
+description: "Sandbox vs Production and base URLs."
+---
+
+Waftpay provides **Sandbox** for testing and **Production** for live traffic.
+
+## Base URLs
+
+- **Sandbox:** `https://sandbox.waftpay.io/api`
+- **Production:** `https://api.waftpay.io`
+
+## Tips
+- Use **separate** Client IDs/Secrets for each environment.
+- Keep secrets on the **server** only.
+- Point Sandbox webhooks to a **dev/staging** endpoint first.
+- Log the environment alongside your request/response for easier debugging.
