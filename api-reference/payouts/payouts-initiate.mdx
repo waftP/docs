@@ -29,16 +29,3 @@ Example:
 
 ```json
 "timestamp": "2025-01-21T12:30:10Z"
-
-## Error codes
-
-| HTTP | Code      | Meaning                  |
-|------|-----------|--------------------------|
-| 202  | 200.100   | Accepted for processing  |
-| 400  | 400.100   | Validation failed        |
-| 401  | 400.200   | Failed authentication    |
-| 403  | 403.300   | Failed authorization     |
-| 404  | 400.600   | Resource not found       |
-| 500  | 400.500   | Internal server error    |
-
-Some environments may return more granular codes (e.g., `404.001.000`). In those cases the response body still follows the same envelope:
