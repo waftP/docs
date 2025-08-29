@@ -1,0 +1,44 @@
+---
+title: "Initiate Payout"
+description: "Send money to a customer using Waftpay Payouts API."
+openapi: "POST /payments-api-service/v1/user/payouts"
+---
+
+# Initiate Payout
+
+The **Payouts API** disburses funds from your Waftpay account to customers, vendors, or partners.
+
+This call is **idempotent**: reuse the same `transaction.reference` to safely retry.
+Duplicates are ignored with status **`DUPLICATE_IGNORED`**.
+
+---
+
+## Required Headers
+
+| Header               | Required | Notes |
+|----------------------|--------- |------|
+| `Authorization`      | ✅       | `Bearer <payout_token>` (Payout token only — Collection/Remittance tokens won’t work) |
+| `X-Custom-Signature` | ✅       | Base64 RSA signature (see below) |
+
+---
+
+## Timestamp Format
+
+All date-times are **ISO 8601 UTC**.
+Example:
+
+```json
+"timestamp": "2025-01-21T12:30:10Z"
+
+## Error codes
+
+| HTTP | Code      | Meaning                  |
+|------|-----------|--------------------------|
+| 202  | 200.100   | Accepted for processing  |
+| 400  | 400.100   | Validation failed        |
+| 401  | 400.200   | Failed authentication    |
+| 403  | 403.300   | Failed authorization     |
+| 404  | 400.600   | Resource not found       |
+| 500  | 400.500   | Internal server error    |
+
+Some environments may return more granular codes (e.g., `404.001.000`). In those cases the response body still follows the same envelope:

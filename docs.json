@@ -76,17 +76,20 @@
           {
             "group": "Authentication",
             "pages": [
-              "api-reference/auth/oauth-token"
+              "api-reference/auth/auth-token"
             ]
           },
           {
-            "group": "Payments",
+            "group": "Payment Requests",
             "pages": [
-              "api-reference/payments/create",
-              "api-reference/payments/list",
-              "api-reference/payments/retrieve",
-              "api-reference/payments/confirm",
-              "api-reference/payments/cancel"
+              "api-reference/payment-requests/get-started"
+            ]
+          },
+          {
+            "group": "Payouts",
+            "pages": [
+              "api-reference/payouts/payouts-initiate",
+              "api-reference/payouts/retrieve"
             ]
           },
           {
@@ -129,7 +132,7 @@
       ]
     }
   },
-  "openapi": "/openapi/waftpay.postman.json",
+  "openapi": "/openapi/waftpay.json",
   "api": {
     "baseUrl": [
       "https://payments-api.dev.pockets-pay.com"

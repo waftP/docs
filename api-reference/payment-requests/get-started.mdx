@@ -1,0 +1,27 @@
+---
+title: "Get Started"
+description: "Introduction to Payment Requests APIs – Payouts, Remittance, and Collections."
+---
+
+# Payment Requests
+
+The **Payment Requests** APIs allow you to move money through Waftpay in three different ways:
+
+- **Payouts** – Disburse funds from your account to customers, vendors, or partners.
+- **Remittance** – Move money between accounts, including cross-border transfers.
+- **Collections** – Accept payments from customers through mobile money or other supported channels.
+
+---
+
+## Authentication Tokens
+
+Each flow (**Payouts, Remittance, Collections**) requires its **own authentication token**.
+These tokens are **not interchangeable** — you cannot use a Payout token to initiate a Collection, and vice versa.
+
+## How It Works
+
+First, generate an authentication token using your **Customer Key** and **Customer Secret** from the [Authentication API](/api-reference/auth/auth-token).
+Then, include the token in the `Authorization` header when making API requests:
+
+```http
+Authorization: Bearer <token>

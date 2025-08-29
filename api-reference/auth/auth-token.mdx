@@ -1,0 +1,48 @@
+---
+title: "Get Authentication token"
+description: "Exchange client credentials for a short-lived Bearer token."
+openapi: "POST /authentication-service/v1/api/generate-token"
+---
+
+> Use **client_credentials** from your server. This endpoint does not require a Bearer token.
+
+# Authentication Token – Client Credentials Flow
+
+The Waftpay API uses **Client Credentials** for server-to-server authentication.
+This flow is **not a user login** – you do not pass email or password here. Instead, your application authenticates using a **Client ID** and **Client Secret** issued to you after onboarding.
+
+---
+
+## Token Types
+
+There are **three types of tokens** that can be generated, each tied to your use case:
+
+- **Payout Token** – used when making disbursements (sending funds out).
+- **Collection Token** – used when receiving payments from customers.
+- **Remittance Token** – used for moving money across accounts or cross-border transfers.
+
+All tokens are requested from this same endpoint, using your API key and secret.
+
+---
+
+## Where to Find Your API Key and Secret
+
+Once onboarded to Waftpay:
+
+1. Log into the **Waftpay Client Dashboard**.
+2. Navigate to **Developer → Settings**.
+3. Copy your **API Key** and **API Secret**.
+4. Create a **Private Key** and a **Public Key**. This will be specifically used for **Remittance** and **Payouts** requests. The **RSA Algorithm should be size 256**.
+
+These map to the `consumer_key` and `consumer_secret` parameters in your request body.
+
+:::note
+If you regenerate your API key/secret in the dashboard, the **previous credentials become invalid immediately**.
+:::
+
+---
+
+## Endpoint
+
+```http
+POST {BASE_URL}/authentication-service/v1/api/generate-token
