@@ -1,6 +1,6 @@
 ---
 title: "Collections — Refunds"
-description: "When and how to request a refund for a collection, plus status checks."
+description: "When refunds are allowed and how to check refund reversal status."
 api: "POST /refund-reversal"
 ---
 
@@ -11,12 +11,15 @@ Refunds let you return funds to a payer after a successful collection. Refunds a
 ---
 
 ## When can a refund be done?
+- Original collection is **succeeded**.
+- Provider supports refunds for the **service_code** used.
+- Refund window hasn’t expired (per commercial terms).
+- Amount is available and not locked by chargebacks or prior refunds.
+- You own the original transaction (`client_id` match).
 
-- **Duplicate charge** — same payer charged twice for the same order.
-- **Wrong amount** — charged amount exceeds intended amount.
-- **Customer dispute / cancellation** — service not delivered or order cancelled.
-- **Compliance / regulatory** — mandated reversals by operator/bank.
-- **Operational error** — beneficiary set incorrectly (wrong MSISDN/account).
+## Check refund reversal status (Try it)
+<ParamField body="request_uuid" type="string" required placeholder="A333RTYUT" />
+
 
 **Constraints**
 

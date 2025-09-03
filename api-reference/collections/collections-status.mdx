@@ -1,6 +1,6 @@
 ---
 title: "Collections — Check Status"
-description: "Poll the latest status of a collection by transaction reference or payment UUID."
+description: "Query a collection by transaction_reference or payment_uuid."
 api: "POST /payments-tsq-service/v1/query"
 ---
 
@@ -21,14 +21,11 @@ Use this when you want a pull-based confirmation or a safety net if webhooks can
 ---
 
 ## Request body
+<ParamField body="transaction_reference" type="string" placeholder="TNC000008" />
 
-<ParamField body="transaction_reference" type="string" placeholder="TNC000008">
-  Your original collection reference.
-</ParamField>
+<ParamField body="payment_uuid" type="string" placeholder="8363546214883574601" />
 
-<ParamField body="payment_uuid" type="string" placeholder="8363546214883574601">
-  Our system UUID returned at acceptance. Do not send if `transaction_reference` is set.
-</ParamField>
+> Provide **either** `transaction_reference` **or** `payment_uuid` (not both).
 
 ---
 

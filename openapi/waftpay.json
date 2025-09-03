@@ -400,11 +400,7 @@
         "responses": {
           "200": {
             "description": "Status response",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/TsqResponse" }
-              }
-            }
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TsqResponse" } } }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" }
@@ -422,80 +418,20 @@
           "content": {
             "application/json": {
               "schema": { "$ref": "#/components/schemas/RefundReversalTsqRequest" },
-              "examples": {
-                "default": { "value": { "request_uuid": "A333RTYUT" } }
-              }
+              "examples": { "default": { "value": { "request_uuid": "A333RTYUT" } } }
             }
           }
         },
         "responses": {
           "200": {
             "description": "Refund reversal result",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/RefundReversalStatusResponse" }
-              }
-            }
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefundReversalStatusResponse" } } }
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
     },
-
-    "/payments-api-service/v1/collections/refunds": {
-    "post": {
-      "tags": ["Collections"],
-      "summary": "Initiate Collection Refund",
-      "operationId": "collectionsRefundInitiate",
-      "description": "Initiate a refund for a previously succeeded collection.",
-      "requestBody": {
-        "required": true,
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/RefundInitiateRequest" },
-            "examples": {
-              "default": {
-                "value": {
-                  "original": { "transaction_reference": "TNC000008" },
-                  "refund": {
-                    "amount": "1000.00",
-                    "reason_code": "DUPLICATE_CHARGE",
-                    "description": "Customer cancelled order #1234",
-                    "timestamp": "2025-06-01T09:10:11Z"
-                  },
-                  "callback_url": "https://merchant.example.com/webhooks/refunds",
-                  "meta": { "agent_id": "AGENT789" }
-                }
-              }
-            }
-          }
-        }
-      },
-      "parameters": [
-        {
-          "name": "X-Idempotency-Key",
-          "in": "header",
-          "required": true,
-          "schema": { "type": "string" },
-          "description": "Unique refund request key to safely retry."
-        }
-      ],
-      "responses": {
-        "202": {
-          "description": "Refund accepted for processing",
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/RefundInitiateResponse" }
-            }
-          }
-        },
-        "400": { "$ref": "#/components/responses/PayoutRemittanceBadRequest400" },
-        "401": { "$ref": "#/components/responses/PayoutRemittanceUnauthorized401" }
-      },
-      "security": [{ "bearerAuth": [] }]
-    }
-  },
 
     "/remittance/payouts": {
         "post": {
@@ -641,6 +577,155 @@
 
   "components": {
     "schemas": {
+      "CreateCollectionRequest": {
+        "type": "object",
+        "required": ["transaction", "originator", "recipient", "callback_url"],
+        "properties": {
+          "transaction": {
+            "type": "object",
+            "required": ["reference", "amount", "currency", "description", "timestamp"],
+            "properties": {
+              "reference": { "type": "string" },
+              "amount": { "type": "string", "description": "Two decimals (e.g., 1000.00)" },
+              "currency": { "type": "string", "description": "ISO 4217" },
+              "description": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time", "description": "UTC — must end with 'Z'" }
+            }
+          },
+          "originator": {
+            "type": "object",
+            "required": ["msisdn", "channel", "country"],
+            "properties": {
+              "msisdn": { "type": "string" },
+              "channel": { "type": "string" },
+              "country": { "type": "string" },
+              "name": { "type": "string" },
+              "purpose": { "type": "string" }
+            }
+          },
+          "recipient": {
+            "type": "object",
+            "required": ["service_code", "reference", "account"],
+            "properties": {
+              "service_code": { "type": "string" },
+              "invoice_number": { "type": "string" },
+              "reference": { "type": "string" },
+              "account": { "type": "string" }
+            }
+          },
+          "callback_url": { "type": "string", "format": "uri" },
+          "meta": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": { "note": { "type": "string" }, "agent_id": { "type": "string" } }
+          }
+        }
+      },
+      "CollectionInitiationResponse": {
+        "type": "object",
+        "required": ["status", "code", "description", "data"],
+        "properties": {
+          "status": { "type": "string", "example": "200.100" },
+          "code": { "type": "string", "example": "ACCEPTED" },
+          "description": { "type": "string", "example": "Accepted for processing" },
+          "data": {
+            "type": "object",
+            "required": ["amount", "total_charges", "total_amount", "transaction_reference", "payment_uuid", "payment_reference", "time_received"],
+            "properties": {
+              "amount": { "type": "string", "example": "1000.00" },
+              "total_charges": { "type": "string", "example": "0.00" },
+              "total_amount": { "type": "string", "example": "1000.00" },
+              "transaction_reference": { "type": "string" },
+              "payment_uuid": { "type": "string" },
+              "payment_reference": { "type": "string" },
+              "time_received": { "type": "string", "format": "date-time", "example": "2025-04-04T06:13:52.585619Z" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "TsqRequest": {
+        "type": "object",
+        "oneOf": [ { "required": ["transaction_reference"] }, { "required": ["payment_uuid"] } ],
+        "properties": {
+          "transaction_reference": { "type": "string" },
+          "payment_uuid": { "type": "string" }
+        },
+        "description": "Provide either transaction_reference OR payment_uuid (not both)."
+      },
+      "TsqResponse": {
+        "type": "object",
+        "required": ["code", "status", "description"],
+        "properties": {
+          "code": { "type": "integer", "example": 102 },
+          "status": { "type": "string", "example": "SUCCESS" },
+          "description": { "type": "string" },
+          "results": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "result_code": { "type": "string" },
+              "result_description": { "type": "string" },
+              "amount": { "type": "number" },
+              "total_charges": { "type": "number" },
+              "total_amount": { "type": "number" },
+              "service_code": { "type": "string" },
+              "msisdn": { "type": "string" },
+              "transaction_reference": { "type": "string" },
+              "payment_uuid": { "type": "string" },
+              "external_reference": { "type": "string" },
+              "time_processed": { "type": "string", "format": "date-time", "example": "2025-06-17T10:18:18Z" },
+              "validation_hash": { "type": "string" },
+              "metadata": { "type": "object", "additionalProperties": true }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "RefundReversalTsqRequest": {
+        "type": "object",
+        "required": ["request_uuid"],
+        "properties": { "request_uuid": { "type": "string" } }
+      },
+      "RefundReversalStatusResponse": {
+        "type": "object",
+        "required": ["code", "status", "description"],
+        "properties": {
+          "code": { "type": "integer", "example": 102 },
+          "status": { "type": "string", "example": "SUCCESS" },
+          "description": { "type": "string" },
+          "results": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "result_code": { "type": "string", "example": "21" },
+              "result_description": { "type": "string" },
+              "amount": { "type": "number" },
+              "total_charges": { "type": "number" },
+              "total_amount": { "type": "string", "example": "MPESA_KE_MOCK" },
+              "account": { "type": "string" },
+              "original_payment_uuid": { "type": "string" },
+              "original_transaction_reference": { "type": "string" },
+              "original_external_reference": { "type": "string" },
+              "external_reference": { "type": "string" },
+              "time_processed": { "type": "string", "format": "date-time", "example": "2025-08-26T05:20:27Z" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "ConfirmPaymentRequest": {
+        "type": "object",
+        "description": "Optional payload to confirm a pending collection (OTP / provider token / approval code).",
+        "properties": {
+          "otp": { "type": "string", "examples": ["123456"] },
+          "provider_token": { "type": "string", "examples": ["STK-SESSION-ABC123"] },
+          "approval_code": { "type": "string", "examples": ["A1B2C3"] },
+          "metadata": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": false
+      },
+
       "TsqQueryRequest": {
       "type": "object",
       "oneOf": [
@@ -734,212 +819,6 @@
             "currency": { "type": "string", "description": "ISO 4217 code (e.g., KES, USD)" }
           }
         },
-
-      "CreateCollectionRequest": {
-        "type": "object",
-        "required": ["transaction", "originator", "recipient", "callback_url"],
-        "properties": {
-          "transaction": {
-            "type": "object",
-            "required": ["reference", "amount", "currency", "description", "timestamp"],
-            "properties": {
-              "reference": { "type": "string", "description": "Client-generated unique reference" },
-              "amount": { "type": "string", "description": "Decimal string with two decimals, e.g., 1000.00" },
-              "currency": { "type": "string", "description": "ISO 4217 currency code, e.g., KES" },
-              "description": { "type": "string" },
-              "timestamp": {
-                "type": "string",
-                "format": "date-time",
-                "description": "UTC timestamp — must end with 'Z', e.g., 2025-01-21T12:30:10Z"
-              }
-            }
-          },
-          "originator": {
-            "type": "object",
-            "required": ["msisdn", "channel", "country"],
-            "properties": {
-              "msisdn": { "type": "string", "description": "E.164 without '+' (e.g., 2547...)" },
-              "channel": { "type": "string", "description": "USSD | APP | WEB" },
-              "country": { "type": "string", "description": "ISO 3166-1 alpha-2, e.g., KE" },
-              "name": { "type": "string" },
-              "purpose": { "type": "string" }
-            }
-          },
-          "recipient": {
-            "type": "object",
-            "required": ["service_code", "reference", "account"],
-            "properties": {
-              "service_code": { "type": "string" },
-              "invoice_number": { "type": "string" },
-              "reference": { "type": "string" },
-              "account": { "type": "string" }
-            }
-          },
-          "callback_url": { "type": "string", "format": "uri" },
-          "meta": {
-            "type": "object",
-            "additionalProperties": true,
-            "properties": {
-              "note": { "type": "string" },
-              "agent_id": { "type": "string" }
-            }
-          }
-        }
-      },
-
-      "CollectionInitiationResponse": {
-        "type": "object",
-        "required": ["status", "code", "description", "data"],
-        "properties": {
-          "status": { "type": "string", "example": "200.100" },
-          "code": { "type": "string", "example": "ACCEPTED" },
-          "description": { "type": "string", "example": "Accepted for processing" },
-          "data": {
-            "type": "object",
-            "required": ["amount", "total_charges", "total_amount", "transaction_reference", "payment_uuid", "payment_reference", "time_received"],
-            "properties": {
-              "amount": { "type": "string", "example": "1000.00" },
-              "total_charges": { "type": "string", "example": "0.00" },
-              "total_amount": { "type": "string", "example": "1000.00" },
-              "transaction_reference": { "type": "string", "example": "TNC000008" },
-              "payment_uuid": { "type": "string", "example": "8363546214883574601" },
-              "payment_reference": { "type": "string", "example": "1RJITP5HLL" },
-              "time_received": {
-                "type": "string",
-                "format": "date-time",
-                "example": "2025-04-04T06:13:52.585619Z",
-                "description": "UTC — ends with 'Z'"
-              }
-            },
-            "additionalProperties": true
-          }
-        }
-      },
-
-      "TsqRequest": {
-        "type": "object",
-        "properties": {
-          "transaction_reference": { "type": "string", "description": "Your client reference" },
-          "payment_uuid": { "type": "string", "description": "Waftpay reference" }
-        },
-        "oneOf": [
-          { "required": ["transaction_reference"] },
-          { "required": ["payment_uuid"] }
-        ],
-        "description": "Provide either transaction_reference OR payment_uuid (not both)."
-      },
-
-      "TsqResponse": {
-        "type": "object",
-        "required": ["code", "status", "description"],
-        "properties": {
-          "code": { "type": "integer", "example": 102 },
-          "status": { "type": "string", "example": "SUCCESS", "description": "SUCCESS | PENDING | NOT FOUND | FAILED AUTHORIZATION" },
-          "description": { "type": "string" },
-          "results": {
-            "type": "object",
-            "nullable": true,
-            "properties": {
-              "result_code": { "type": "string", "example": "200" },
-              "result_description": { "type": "string", "example": "Success" },
-              "amount": { "type": "number", "example": 1000 },
-              "total_charges": { "type": "number", "example": 0 },
-              "total_amount": { "type": "number", "example": 1000 },
-              "service_code": { "type": "string", "example": "RMT_WU" },
-              "msisdn": { "type": "string", "example": "254712345678" },
-              "transaction_reference": { "type": "string", "example": "TNC000008" },
-              "payment_uuid": { "type": "string", "example": "8363546214883574601" },
-              "external_reference": { "type": "string", "example": "MNO123456" },
-              "time_processed": {
-                "type": "string",
-                "format": "date-time",
-                "example": "2025-06-17T10:18:18Z",
-                "description": "UTC — ends with 'Z'"
-              },
-              "validation_hash": { "type": "string" },
-              "metadata": { "type": "object", "additionalProperties": true }
-            },
-            "additionalProperties": true
-          }
-        }
-      },
-
-      "RefundReversalTsqRequest": {
-        "type": "object",
-        "required": ["request_uuid"],
-        "properties": {
-          "request_uuid": { "type": "string", "description": "Refund reversal request UUID" }
-        }
-      },
-
-      "RefundReversalStatusResponse": {
-        "type": "object",
-        "required": ["code", "status", "description"],
-        "properties": {
-          "code": { "type": "integer", "example": 102 },
-          "status": { "type": "string", "example": "SUCCESS" },
-          "description": { "type": "string", "example": "Transaction success" },
-          "results": {
-            "type": "object",
-            "nullable": true,
-            "properties": {
-              "result_code": { "type": "string", "example": "21" },
-              "result_description": { "type": "string", "example": "The service request is processed successfully" },
-              "amount": { "type": "number", "example": 1015 },
-              "total_charges": { "type": "number", "example": 0 },
-              "total_amount": { "type": "string", "example": "MPESA_KE_MOCK" },
-              "account": { "type": "string", "example": "254792452002" },
-              "original_payment_uuid": { "type": "string", "example": "882231418121042119" },
-              "original_transaction_reference": { "type": "string", "example": "TNC0009886898418" },
-              "original_external_reference": { "type": "string", "example": "1V1OPZZGHQ" },
-              "external_reference": { "type": "string", "example": "1V33UUE1IR" },
-              "time_processed": {
-                "type": "string",
-                "format": "date-time",
-                "example": "2025-08-26T05:20:27Z",
-                "description": "UTC — ends with 'Z'"
-              }
-            },
-            "additionalProperties": true
-          }
-        }
-      },
-
-      "ConfirmPaymentRequest": {
-        "type": "object",
-        "description": "Payload to confirm a pending payment that requires out-of-band authorization (e.g., STK push, OTP). The body is optional; some providers only require the path parameter.",
-        "properties": {
-          "otp": {
-            "type": "string",
-            "description": "Customer one-time password for OTP confirmation (if applicable).",
-            "examples": ["123456"]
-          },
-          "provider_token": {
-            "type": "string",
-            "description": "Provider-issued session/token to echo back for confirmation (e.g., STK session id).",
-            "examples": ["STK-SESSION-ABC123"]
-          },
-          "approval_code": {
-            "type": "string",
-            "description": "Alternate approval code from bank/USSD/IVR flows.",
-            "examples": ["A1B2C3"]
-          },
-          "metadata": {
-            "type": "object",
-            "description": "Arbitrary key-value pairs for audit/troubleshooting.",
-            "additionalProperties": true,
-            "examples": [
-              { "operator": "Agent7", "note": "Customer confirmed verbally" }
-            ]
-          }
-        },
-        "additionalProperties": false,
-        "examples": [
-          { "otp": "123456" },
-          { "provider_token": "STK-SESSION-ABC123" },
-          { "approval_code": "A1B2C3", "metadata": { "operator": "Agent7" } }
-        ]
-      },
 
       "Customer": {
         "type": "object",
@@ -1481,6 +1360,32 @@
         "required": true,
         "schema": { "type": "string" },
         "description": "Base64 RSA signature over: transaction.reference + transaction.amount + originator.country + recipient.service_code"
+      },
+      "XIdempotencyKey": {
+        "name": "X-Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "description": "Idempotency key to safely retry the same request. Use your transaction.reference.",
+        "schema": { "type": "string", "maxLength": 64 },
+        "example": "TNC000008"
+      },
+
+      "XSignAlg": {
+        "name": "X-Sign-Alg",
+        "in": "header",
+        "required": false,
+        "description": "Signing algorithm identifier (e.g., PS256 or RS256).",
+        "schema": { "type": "string", "enum": ["PS256", "RS256"] },
+        "example": "PS256"
+      },
+
+      "XSignKeyId": {
+        "name": "X-Sign-Key-Id",
+        "in": "header",
+        "required": false,
+        "description": "Your public key identifier (kid) registered with Waftpay.",
+        "schema": { "type": "string" },
+        "example": "kid_waftpay_prod_001"
       }
     },
 
