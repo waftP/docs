@@ -1,37 +1,42 @@
 ---
 title: "Generate X-Custom-Signature"
-description: "How to create and attach the Base64 RSA signature required for Payouts and Remittance requests."
+description: "Authoritative guide for creating and attaching the Base64 RSA signature required for Payouts and Remittance."
 ---
 
 # Generate `X-Custom-Signature`
 
-Certain Waftpay APIs (notably **Payouts** and **Remittance**) require a request signature in the header **`X-Custom-Signature`**.
-This signature proves the request came from you and wasn’t tampered with.
+Some Waftpay APIs (notably **Payouts** and **Remittance**) require a request header called `X-Custom-Signature`.
+This signature lets our platform verify **who sent the request** and that its **key fields weren’t altered** in transit.
 
-> TL;DR: Concatenate key fields in the exact order → sign with your **RSA private key** using **SHA-256** → Base64-encode → send as `X-Custom-Signature`.
+> **TL;DR**
+> 1) Generate an RSA key pair (keep the private key secret; register the public key with Waftpay)
+> 2) Build the **signing string** by concatenating four fields **in order**, with **no separators**
+> 3) Sign that string using **RSA + SHA-256** (a.k.a. `SHA256withRSA` / `RS256`)
+> 4) Base64-encode the raw signature bytes and send it in the `X-Custom-Signature` header
 
 ---
 
 ## When it’s required
 
-- **Payouts**: `POST /payments-api-service/v1/payouts` (or your deployed alias)
+- **Payouts**: `POST /payments-api-service/v1/payouts`
 - **Remittance**: `POST /payments-api-service/v1/remittance`
 
-These endpoints also require **Bearer auth** (product-scoped token) in addition to the signature.
+These endpoints also require **Bearer auth** in the `Authorization` header.
 
 ---
 
-## Fields used to build the signature
+## 1) Create your key pair (RSA 2048)
 
-Use **exactly** the fields below, in this exact order:
+You need an **RSA 2048** key pair in **PEM** format:
 
-1. `transaction.reference`
-2. `transaction.amount`
-3. `originator.country`
-4. `recipient.service_code`
+- **Private key**: PKCS#8 PEM (`-----BEGIN PRIVATE KEY-----`)
+- **Public key**: X.509 SubjectPublicKeyInfo PEM (`-----BEGIN PUBLIC KEY-----`)
 
-Concatenate their **values** with **no separators**.
+### OpenSSL (Linux/macOS/Windows with OpenSSL)
 
-**Example (values):**
+```bash
+# 1) Generate a 2048-bit RSA private key (PKCS#8)
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out client_private.pem
 
-> Need a signature? Generate it below, then paste the value into the **X-Custom-Signature** field in the Try it panel.
+# 2) Derive the matching public key (X.509 SPKI)
+openssl rsa -pubout -in client_private.pem -out client_public.pem

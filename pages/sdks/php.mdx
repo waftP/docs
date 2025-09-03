@@ -1,0 +1,96 @@
+---
+title: "SDK — PHP"
+description: "Guzzle-based helper for RS256 signing and Waftpay endpoints."
+---
+
+# SDK — PHP
+
+> PHP 8.1+, ext-openssl, ext-json. Composer: `guzzlehttp/guzzle:^7`.
+
+```bash
+composer require guzzlehttp/guzzle
+```
+
+## Client
+
+```php
+<?php
+// PaymentsClient.php
+use GuzzleHttp\Client as HttpClient;
+
+class PaymentsClient {
+  private HttpClient $http;
+  private string $baseUrl;
+  private string $token;
+  private ?string $privateKeyPem;
+  private string $signAlg;
+
+  public function __construct(string $baseUrl, string $token, ?string $privateKeyPem = null, string $signAlg = 'RS256') {
+    $this->http = new HttpClient(['http_errors' => false]);
+    $this->baseUrl = rtrim($baseUrl, '/');
+    $this->token = $token;
+    $this->privateKeyPem = $privateKeyPem;
+    $this->signAlg = $signAlg;
+  }
+
+  private function canonical(string $reference, string $amount, string $country, string $serviceCode): string {
+    return $reference . $amount . $country . $serviceCode;
+  }
+
+  private function sign(string $data): string {
+    if ($this->privateKeyPem === null) { throw new \RuntimeException('privateKeyPem required'); }
+    $algo = OPENSSL_ALGO_SHA256;
+    $ok = openssl_sign($data, $raw, $this->privateKeyPem, $algo);
+    if (!$ok) { throw new \RuntimeException('openssl_sign failed'); }
+    return base64_encode($raw);
+  }
+
+  private function post(string $path, array $body, ?string $idempotencyKey = null, ?string $signature = null): array {
+    $headers = [
+      'Authorization' => 'Bearer ' . $this->token,
+      'Content-Type'  => 'application/json'
+    ];
+    if ($idempotencyKey) $headers['X-Idempotency-Key'] = $idempotencyKey;
+    if ($signature) { $headers['X-Custom-Signature'] = $signature; $headers['X-Sign-Alg'] = $this->signAlg; }
+
+    $res = $this->http->post($this->baseUrl . $path, ['headers' => $headers, 'body' => json_encode($body)]);
+    $code = $res->getStatusCode();
+    $json = json_decode((string)$res->getBody(), true);
+    if (!in_array($code, [200,202], true)) { throw new \RuntimeException('HTTP ' . $code . ': ' . $res->getBody()); }
+    return [$code, $json ?: ['raw' => (string)$res->getBody()]];
+  }
+
+  // Collections (no signature)
+  public function collectionsInitiate(array $payload): array {
+    $idem = $payload['transaction']['reference'] ?? null;
+    return $this->post('/payments-api-service/v1/collections', $payload, $idem);
+  }
+
+  // Payouts (signature)
+  public function payoutsInitiate(array $payload): array {
+    $t = $payload['transaction']; $o = $payload['originator']; $r = $payload['recipient'];
+    $sig = $this->sign($this->canonical($t['reference'], $t['amount'], $o['country'], $r['service_code']));
+    return $this->post('/payments-api-service/v1/payouts', $payload, $t['reference'], $sig);
+  }
+
+  // Remittance (signature)
+  public function remittanceInitiate(array $payload): array {
+    $t = $payload['transaction']; $o = $payload['originator']; $r = $payload['recipient'];
+    $sig = $this->sign($this->canonical($t['reference'], $t['amount'], $o['country'], $r['service_code']));
+    return $this->post('/payments-api-service/v1/remittance', $payload, $t['reference'], $sig);
+  }
+
+  // Status (TSQ)
+  public function collectionsStatusReference(string $transaction_reference): array {
+    return $this->post('/payments-tsq-service/v1/query', ['transaction_reference' => $transaction_reference]);
+  }
+  public function collectionsStatusUuid(string $payment_uuid): array {
+    return $this->post('/payments-tsq-service/v1/query', ['payment_uuid' => $payment_uuid]);
+  }
+
+  // Refund Reversal Status
+  public function refundReversalStatus(string $request_uuid): array {
+    return $this->post('/refund-reversal', ['request_uuid' => $request_uuid]);
+  }
+}
+```

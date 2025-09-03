@@ -1,0 +1,84 @@
+---
+title: Remittances — Step‑by‑Step Guide
+description: Move funds between financial entities; KYC fields, signing, acceptance, and delivery confirmation.
+---
+
+# Remittances — Step‑by‑Step Guide
+
+Remittances transfer funds between financial entities (domestic or cross‑border). The flow mirrors payouts/collections with additional **KYC** fields.
+
+---
+
+## 1) Endpoint & Headers
+
+**POST** `/payments-api-service/v1/remittances`
+
+Headers and signing are identical to payouts (same canonical string & rules).
+
+---
+
+## 2) Request Body (example)
+
+```json
+{
+  "transaction": {
+    "reference": "TXN123654573",
+    "amount": "100.00",
+    "currency": "KES",
+    "description": "Family support",
+    "timestamp": "2025-01-21T12:30:10+03:00"
+  },
+  "originator": {
+    "msisdn": "254722111999",
+    "channel": "APP",
+    "country": "KE",
+    "name": "John Sender",
+    "dob": "1965-01-01",
+    "nationality": "UK",
+    "id_type": "Passport"
+  },
+  "recipient": {
+    "service_code": "RMT_WU",
+    "reference": "REM-2025-01",
+    "account": "John Doe Init",
+    "name": "John Doe Init"
+  },
+  "callback_url": "https://merchant.example.com/webhooks/remittances",
+  "meta": {
+    "note": "KYC verified",
+    "agent_id": "AG1234"
+  }
+}
+```
+
+**KYC Guidance**
+- Provide full legal **name**, **DOB**, **nationality**, and **ID type** if the corridor mandates it.  
+- We may request additional attributes depending on corridor/regulator.
+
+---
+
+## 3) Acceptance & Completion
+
+- **HTTP 202** upon acceptance (same envelope as payouts).  
+- Webhook provides **final result** with downstream references, timestamps, and `payment_uuid`.
+
+---
+
+## 4) Corridor & Currency Considerations
+
+- Always sign with the **same `currency`** you send in the payload.  
+- Ensure FX conversions (if any) are handled by your upstream system before you submit the remittance unless your commercial setup includes FX.
+
+---
+
+## 5) Compliance & Risk
+
+- Ensure sanctions/PEP screening where applicable.  
+- We may block or pend transactions for additional review; in that case, TSQ shows `PENDING/REVIEW` until resolved.
+
+---
+
+## 6) Error & Retry Strategy
+
+- Use **idempotent** retries with the same `X-Idempotency-Key` on transient errors (HTTP `5xx`, `429`).  
+- Do **not** retry `400`/`403` without fixing the root cause.

@@ -9,7 +9,7 @@
   },
   "favicon": "favicon.ico",
   "logo": {
-    "light": "/public/logo/dark.svg",
+    "light": "/public/logo/light.png",
     "dark": "/public/logo/dark.svg"
   },
   "navbar": {
@@ -46,20 +46,29 @@
             ]
           },
           {
+            "group": "Guides",
+            "pages": [
+              "/pages/guides/payouts",
+              "/pages/guides/collections",
+              "/pages/guides/remittances",
+              "/pages/guides/status-checks"
+            ]
+          },
+          {
             "group": "Webhooks",
             "pages": [
-              "/pages/webhooks/signing",
-              "/pages/webhooks/event-types"
+              "pages/webhooks/signing",
+              "pages/webhooks/event-types"
             ]
           },
           {
             "group": "SDKs & Tools",
             "pages": [
-              "/pages/sdks/node",
-              "/pages/sdks/python",
-              "/pages/sdks/java",
-              "/pages/sdks/php",
-              "/pages/sdks/postman"
+              "pages/sdks/node",
+              "pages/sdks/python",
+              "pages/sdks/java",
+              "pages/sdks/php",
+              "pages/sdks/postman"
             ]
           }
         ]
@@ -101,7 +110,9 @@
           {
             "group": "Collections",
             "pages": [
-              "api-reference/collections/checkout-sessions-create"
+              "api-reference/collections/collection-initiate",
+              "api-reference/collections/collections-refund",
+              "api-reference/collections/collections-status"
             ]
           },
           {

@@ -1,12 +1,28 @@
 ---
-title: "Postman"
-description: "Run Waftpay API requests in Postman."
+title: "SDK — Postman"
+description: "Use Mintlify’s OpenAPI or a collection to exercise Waftpay endpoints, including auth, Collections, Payouts, and TSQ."
 ---
 
-Click to import the collection into Postman:
+# SDK — Postman
 
-<a href="https://www.postman.com/run-collection/<COLLECTION_UID>?env[baseUrl]=https://payments-api.dev.pockets-pay.com" target="_blank" rel="noreferrer">
-    <img src="https://run.pstmn.io/button.svg" alt="Run in Postman" />
-</a>
+You can drive Waftpay endpoints directly from **Postman**. Choose one of these flows.
 
-> The collection uses an environment variable `baseUrl`. You can switch it to Production later.
+## Option A — Import OpenAPI
+
+1. In Postman, click **Import** → **Link** and paste your docs OpenAPI URL (e.g., `/openapi/waftpay.json` from your docs host).
+2. Postman will create a Collection with all endpoints (e.g., **Collections Initiate**, **TSQ**, **Payouts**).
+3. Create an **Environment** with variables:
+   - `base_url` = `https://payments-api.dev.pockets-pay.com`
+   - `access_token` = *(paste your Bearer token value)*
+   - `x_custom_signature` = *(for signed endpoints — paste precomputed signature)*
+4. In each request, set the `Authorization` header to `Bearer {{access_token}}` and the URL to `{{base_url}}` + path.
+
+## Option B — Download our collection
+
+If you prefer a curated collection and examples, export the endpoints from OpenAPI (or ask us for a ready-made JSON).
+
+## Notes
+
+- For **Payouts** and **Remittance**, compute `X-Custom-Signature` externally (private key usage in Postman isn’t recommended) and paste the Base64 value into the header before sending.
+- For **Collections**, no signature is required.
+- Timestamps in examples use **UTC** and **end with `Z`**.

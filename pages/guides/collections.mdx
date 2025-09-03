@@ -1,0 +1,107 @@
+---
+title: Collections — Step‑by‑Step Guide
+description: Receive incoming customer payments; end‑to‑end flow with signing, acceptance, webhooks, and reconciliation.
+---
+
+# Collections — Step‑by‑Step Guide
+
+Collections represent **incoming customer payments** (e.g., paybill/till). The API is **asynchronous** and uses the same auth/signing model as payouts.
+
+> **Flow**: Authenticate → Sign → Send collection → Receive **202** → Get **webhook** (SUCCESS/FAILED) → Reconcile (optional poll).
+
+---
+
+## 1) Endpoint & Headers
+
+**POST** `/payments-api-service/v1/collections`
+
+Headers are identical to payouts (see that guide). Use `X-Idempotency-Key: <transaction.reference>`.
+
+---
+
+## 2) Request Body (authoritative schema)
+
+```json
+{
+  "transaction": {
+    "reference": "TNC000008",
+    "amount": "1000.00",
+    "currency": "KES",
+    "description": "Order #98765",
+    "timestamp": "2025-01-21T12:30:10+03:00"
+  },
+  "originator": {
+    "msisdn": "254712345678",
+    "channel": "USSD",
+    "country": "KE",
+    "name": "John Doe",
+    "purpose": "Collections"
+  },
+  "recipient": {
+    "service_code": "COLLECT_MPESA",
+    "invoice_number": "3456789987654",
+    "external_reference": "INVJMA01",
+    "account": "254712345678"
+  },
+  "callback_url": "https://merchant.example.com/webhooks/collections",
+  "meta": {
+    "note": "cartId=abc123",
+    "agent_id": "AGENT456"
+  }
+}
+```
+
+**Notes**
+- Use `external_reference` when you need to carry your invoice/order id to downstreams.
+- `account` is the target/payee account in the receiving system context.
+
+---
+
+## 3) Acceptance & Webhooks
+
+**HTTP 202** on accept, with the same `data` envelope as payouts. Webhook example:
+
+```json
+{
+  "code": "200.200",
+  "status": "SUCCESS",
+  "description": "Collection completed",
+  "results": {
+    "result_code": "0",
+    "result_description": "Success",
+    "amount": "1000.00",
+    "total_charges": "0.00",
+    "total_amount": "1000.00",
+    "service_code": "COLLECT_MPESA",
+    "msisdn": "254712345678",
+    "transaction_reference": "TNC000008",
+    "payment_uuid": "8363546214883574601",
+    "external_reference": "MNO7890",
+    "time_processed": "2025-04-04T06:16:21.101Z"
+  }
+}
+```
+
+---
+
+## 4) Reconciliation Tips
+
+- Store `payment_uuid`, `transaction_reference`, and `external_reference` for ledgers.  
+- Use **Status Checks** for any entries that lack a webhook (network failure, etc.).
+- Ensure your webhook handler is **idempotent**—we may retry callbacks.
+
+---
+
+## 5) Security & Compliance
+
+- Mask MSISDN in logs (e.g., show last 3–4 digits).  
+- Enforce HTTPS only; consider mTLS if required.  
+- Follow your local data retention/regulatory guidelines for KYC/PII.
+
+---
+
+## 6) Troubleshooting
+
+- **Validation failed (400.100)**: Check amount precision, missing fields, or service_code.  
+- **Authorization failed (403.300)**: Your token’s client is not entitled to the `service_code`.  
+- **No callback received**: Verify your endpoint returns **200** quickly and is reachable. Poll status if needed.

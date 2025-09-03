@@ -1,0 +1,85 @@
+---
+title: "SDK — Python"
+description: "Helper for signing, idempotency, and calling Waftpay endpoints with requests + cryptography."
+---
+
+# SDK — Python
+
+> Python 3.10+, `requests`, `cryptography`
+
+```bash
+pip install requests cryptography
+```
+
+## Client
+
+```python
+# payments_client.py
+import base64, json, requests
+from dataclasses import dataclass
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+
+@dataclass
+class PaymentsClient:
+    base_url: str
+    token: str
+    private_key_pem: str | None = None
+    sign_alg: str = "RS256"  # or PS256 if explicitly enabled
+
+    def _canonical(self, reference, amount, country, service_code):
+        return f"{reference}{amount}{country}{service_code}"
+
+    def _sign(self, data: str) -> str:
+        if not self.private_key_pem:
+            raise ValueError("private_key_pem is required for signed endpoints")
+        key = serialization.load_pem_private_key(self.private_key_pem.encode(), password=None)
+        if self.sign_alg == "PS256":
+            sig = key.sign(data.encode(), padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256())
+        else:
+            sig = key.sign(data.encode(), padding.PKCS1v15(), hashes.SHA256())
+        return base64.b64encode(sig).decode()
+
+    def _post(self, path: str, body: dict, idempotency_key: str | None = None, signature: str | None = None):
+        headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
+        if idempotency_key:
+            headers["X-Idempotency-Key"] = idempotency_key
+        if signature:
+            headers["X-Custom-Signature"] = signature
+            headers["X-Sign-Alg"] = self.sign_alg
+        r = requests.post(self.base_url + path, headers=headers, json=body, timeout=30)
+        if r.status_code not in (200, 202):
+            raise requests.HTTPError(f"HTTP {r.status_code}: {r.text}")
+        try:
+            return r.status_code, r.json()
+        except Exception:
+            return r.status_code, {"raw": r.text}
+
+    # Collections (no signature)
+    def collections_initiate(self, payload: dict):
+        idem = payload.get("transaction", {}).get("reference")
+        return self._post("/payments-api-service/v1/collections", payload, idempotency_key=idem)
+
+    # Payouts (signature)
+    def payouts_initiate(self, payload: dict):
+        t, o, r = payload["transaction"], payload["originator"], payload["recipient"]
+        sig = self._sign(self._canonical(t["reference"], t["amount"], o["country"], r["service_code"]))
+        return self._post("/payments-api-service/v1/payouts", payload, idempotency_key=t["reference"], signature=sig)
+
+    # Remittance (signature)
+    def remittance_initiate(self, payload: dict):
+        t, o, r = payload["transaction"], payload["originator"], payload["recipient"]
+        sig = self._sign(self._canonical(t["reference"], t["amount"], o["country"], r["service_code"]))
+        return self._post("/payments-api-service/v1/remittance", payload, idempotency_key=t["reference"], signature=sig)
+
+    # Status
+    def collections_status_reference(self, transaction_reference: str):
+        return self._post("/payments-tsq-service/v1/query", {"transaction_reference": transaction_reference})
+
+    def collections_status_uuid(self, payment_uuid: str):
+        return self._post("/payments-tsq-service/v1/query", {"payment_uuid": payment_uuid})
+
+    # Refund Reversal Status
+    def refund_reversal_status(self, request_uuid: str):
+        return self._post("/refund-reversal", {"request_uuid": request_uuid})
+```

@@ -1,0 +1,141 @@
+---
+title: Status Checks — Step‑by‑Step Guide
+description: Poll the latest status of a transaction or a refund reversal; scoping, responses, and reconciliation patterns.
+---
+
+# Status Checks — Step‑by‑Step Guide
+
+Use Status Checks when you need a pull‑based confirmation or as a safety net if webhooks can’t be delivered.
+
+---
+
+## 1) Transactions Status Query
+
+**Endpoint**: `POST /payments-tsq-service/v1/transactions/query`
+
+**Rules**
+- Provide **exactly one** of:  
+  `transaction_reference` **xor** `payment_uuid`.
+- Results are **scoped** to the `client_id` in your Bearer token.
+
+**Requests**
+```json
+{ "transaction_reference": "TXN123654671" }
+```
+```json
+{ "payment_uuid": "4e61243c-3449-43a3-a17c-b857e40434224" }
+```
+
+**Success**
+```json
+{
+  "code": "200.200",
+  "status": "SUCCESS",
+  "description": "Transaction Was Successful",
+  "results": {
+    "result_code": "200",
+    "result_description": "Success",
+    "amount": "30.00",
+    "total_charges": "10.00",
+    "total_amount": "40.00",
+    "service_code": "COLLECT_MPESA",
+    "msisdn": "2547987654321",
+    "transaction_reference": "TXN123654671",
+    "payment_uuid": "4e61243c-3449-43a3-a17c-b857e40434224",
+    "external_reference": "7947539867548",
+    "time_processed": "2025-06-17T10:18:18.302+03:00",
+    "validation_hash": "99e4de9b...5d2db92",
+    "metadata": { "note": "This is part of a callback", "agent_id": "Agent2" }
+  }
+}
+```
+
+**Pending / Created / Expired**
+```json
+{ "code": "200.101", "status": "PENDING", "description": "Transaction Is Pending", "results": {} }
+```
+
+**Not Found**
+```json
+{ "code": "400.600", "status": "NOT_FOUND", "description": "Transaction Not Found", "results": {} }
+```
+
+---
+
+## 2) Refund Reversal Status Query
+
+**Endpoint**: `POST /payments-tsq-service/v1/refunds-reversal/query`
+
+**Request**
+```json
+{ "request_uuid": "A333RTYUT" }
+```
+
+**Success**
+```json
+{
+  "code": "200.200",
+  "status": "SUCCESS",
+  "description": "Transaction success",
+  "results": {
+    "result_code": "21",
+    "result_description": "The service request is processed successfully",
+    "amount": "1015.00",
+    "total_charges": "0.00",
+    "total_amount": "1015.00",
+    "account": "254792452002",
+    "original_payment_uuid": "882231418121042119",
+    "original_transaction_reference": "TNC0009886898418",
+    "original_external_reference": "1V1OPZZGHQ",
+    "external_reference": "1V33UUE1IR",
+    "time_processed": "2025-08-26T05:20:27Z"
+  }
+}
+```
+
+**Not Found**
+```json
+{ "code": "400.600", "status": "NOT_FOUND", "description": "Transaction not found", "results": {} }
+```
+
+---
+
+## 3) Best Practices for Polling
+
+- Poll only when necessary; prefer webhooks.  
+- Use backoff: e.g., 5s → 10s → 30s → 60s; stop after a sensible max window.  
+- Cache the last known status to reduce repeated queries.
+
+---
+
+## 4) Error Reference (TSQ)
+
+| HTTP | code     | meaning                                 |
+|------|----------|-----------------------------------------|
+| 200  | 200.200  | Success                                 |
+| 200  | 200.101  | Pending/Created/Expired                 |
+| 400  | 400.100  | Validation failed (both/none provided)  |
+| 401  | 400.200  | Authentication failed                   |
+| 404  | 400.600  | Not found                               |
+| 500  | 400.500  | Internal error                          |
+
+---
+
+## 5) Reconciliation Patterns
+
+- Use `transaction_reference` as your business key; map to our `payment_uuid`.  
+- Record the final `result_code`/`result_description` for audits.  
+- Ensure ledger postings are idempotent (guard by `(payment_uuid, status)` or webhook delivery ID).
+
+---
+
+## 6) FAQ
+
+**Q: My webhook endpoint was down; will you resend?**  
+A: Yes—exponential retries for a fixed window. Use TSQ as a fallback.
+
+**Q: Why is my request rejected with signature errors?**  
+A: Check canonical string order, Base64URL encoding, and that the `kid` matches the registered public key. Ensure `amount` has exactly 2 decimals and timestamp is RFC3339.
+
+**Q: Can I query by both `transaction_reference` and `payment_uuid` together?**  
+A: No. Exactly one must be provided.

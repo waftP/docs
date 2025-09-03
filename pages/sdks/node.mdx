@@ -1,0 +1,113 @@
+---
+title: "SDK — Node.js"
+description: "Production-friendly helpers for signing, idempotency, and calling Waftpay endpoints."
+---
+
+# SDK — Node.js
+
+This lightweight client handles **RSA signing** (for Payouts/Remittance), **headers**, **idempotency**, and convenient methods for **Collections**, **Payouts**, **Remittance**, **Status**, and **Refund Reversal status**.
+
+> **Runtime**: Node.js 18+
+
+## Client
+
+```js
+// payments-client.js
+import crypto from "node:crypto";
+
+export class PaymentsClient {
+  constructor({ baseUrl, token, privateKeyPem, keyId = undefined, signAlg = "RS256" }){
+    this.baseUrl = baseUrl.replace(/\/$/, "");
+    this.token = token;
+    this.privateKeyPem = privateKeyPem;
+    this.keyId = keyId;
+    this.signAlg = signAlg; // RS256 (default) or PS256 if explicitly enabled
+  }
+
+  // Build canonical string for X-Custom-Signature
+  canonical({ reference, amount, country, service_code }){
+    return `${reference}${amount}${country}${service_code}`;
+  }
+
+  sign(data){
+    const padding = (this.signAlg === "PS256")
+      ? crypto.constants.RSA_PKCS1_PSS_PADDING
+      : crypto.constants.RSA_PKCS1_PADDING;
+    const signature = crypto.sign("sha256", Buffer.from(data, "utf8"), { key: this.privateKeyPem, padding });
+    return signature.toString("base64"); // Standard Base64
+  }
+
+  async _post(path, body, { idempotencyKey, signature } = {}){
+    const url = `${this.baseUrl}${path}`;
+    const headers = {
+      "Authorization": `Bearer ${this.token}`,
+      "Content-Type": "application/json",
+    };
+    if (idempotencyKey) headers["X-Idempotency-Key"] = idempotencyKey;
+    if (signature) {
+      headers["X-Custom-Signature"] = signature;
+      headers["X-Sign-Alg"] = this.signAlg;
+      if (this.keyId) headers["X-Sign-Key-Id"] = this.keyId;
+    }
+    const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+    const text = await res.text();
+    let json; try { json = JSON.parse(text); } catch { json = { raw: text }; }
+    if (!res.ok && res.status !== 202) throw new Error(`HTTP ${res.status}: ${text}`);
+    return { status: res.status, data: json };
+  }
+
+  // Collections do NOT require signature
+  collectionsInitiate(payload){
+    const idem = payload?.transaction?.reference;
+    return this._post("/payments-api-service/v1/collections", payload, { idempotencyKey: idem });
+  }
+
+  // Payouts — signature required
+  payoutsInitiate(payload){
+    const t = payload.transaction; const r = payload.recipient; const o = payload.originator;
+    const data = this.canonical({ reference: t.reference, amount: t.amount, country: o.country, service_code: r.service_code });
+    const sig = this.sign(data);
+    return this._post("/payments-api-service/v1/payouts", payload, { idempotencyKey: t.reference, signature: sig });
+  }
+
+  // Remittance — signature required
+  remittanceInitiate(payload){
+    const t = payload.transaction; const r = payload.recipient; const o = payload.originator;
+    const data = this.canonical({ reference: t.reference, amount: t.amount, country: o.country, service_code: r.service_code });
+    const sig = this.sign(data);
+    return this._post("/payments-api-service/v1/remittance", payload, { idempotencyKey: t.reference, signature: sig });
+  }
+
+  // Status (TSQ)
+  collectionsStatusByReference(transaction_reference){
+    return this._post("/payments-tsq-service/v1/query", { transaction_reference });
+  }
+  collectionsStatusByUuid(payment_uuid){
+    return this._post("/payments-tsq-service/v1/query", { payment_uuid });
+  }
+
+  // Refund Reversal Status
+  refundReversalStatus(request_uuid){
+    return this._post("/refund-reversal", { request_uuid });
+  }
+}
+```
+
+### Usage
+
+```js
+import { PaymentsClient } from "./payments-client.js";
+
+const client = new PaymentsClient({
+  baseUrl: "https://payments-api.dev.pockets-pay.com",
+  token: process.env.ACCESS_TOKEN,
+  privateKeyPem: process.env.CLIENT_PRIVATE_KEY_PEM,
+  keyId: "your-key-id",
+  signAlg: "RS256"
+});
+
+// Example: Collections
+const payload = { /* see Collections — Initiate guide */ };
+const { status, data } = await client.collectionsInitiate(payload);
+console.log(status, data);
+```

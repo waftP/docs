@@ -1,0 +1,38 @@
+---
+title: "Collections — Check Status"
+description: "Poll the latest status of a collection by transaction reference or payment UUID."
+api: "POST /refund-reversal"
+---
+
+# Collections — Check Status
+
+Use this when you want a pull-based confirmation or a safety net if webhooks can’t be delivered.
+
+> Provide **exactly one** of: `transaction_reference` **xor** `payment_uuid`.
+
+---
+
+## Required header
+
+<ParamField header="Authorization" type="string" required placeholder="Bearer eyJhbGciOi...">
+  Bearer token from the Authentication Service.
+</ParamField>
+
+---
+
+## Request body
+
+<ParamField body="transaction_reference" type="string" placeholder="TNC000008">
+  Your original collection reference.
+</ParamField>
+
+<ParamField body="payment_uuid" type="string" placeholder="8363546214883574601">
+  Our system UUID returned at acceptance. Do not send if `transaction_reference` is set.
+</ParamField>
+
+---
+
+## Example requests
+
+```json
+{ "transaction_reference": "TNC000008" }

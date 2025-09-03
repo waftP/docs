@@ -1,0 +1,128 @@
+---
+title: "Collections — Initiate"
+description: "How to create a collection (incoming payment). Authentication, fields, validation, idempotency, and a live Try it."
+api: "POST /payments-api-service/v1/collections"
+---
+
+# Collections — Initiate
+
+Use this endpoint to start a customer payment collection. Requests are validated and **accepted asynchronously**; you’ll receive `202 Accepted` if queued successfully and a **webhook** (or **status poll**) for the final outcome.
+
+> **At a glance**
+> 1) Authenticate (Bearer) → 2) Build JSON → 3) Send → 4) Receive callback → 5) (Optionally) poll status.
+
+---
+
+## Required headers
+
+<ParamField header="Authorization" type="string" required placeholder="Bearer eyJhbGciOi...">
+    Bearer token from the Authentication Service (scoped to PAYMENTS).
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required default="application/json">
+    Must be `application/json`.
+</ParamField>
+
+<ParamField header="X-Idempotency-Key" type="string" placeholder="TNC000008">
+    Optional but recommended — use the same value as `transaction.reference` to dedupe retries.
+</ParamField>
+
+---
+
+## Request body
+
+**transaction**
+
+<ParamField body="transaction.reference" type="string" required placeholder="TNC000008">
+    Unique per client; used for idempotency.
+</ParamField>
+<ParamField body="transaction.amount" type="string" required placeholder="1000.00">
+    Decimal string with two decimals.
+</ParamField>
+<ParamField body="transaction.currency" type="string" required default="KES">
+    ISO-4217 code.
+</ParamField>
+<ParamField body="transaction.description" type="string" required default="Test description">
+    Short description shown in statements/logs.
+</ParamField>
+<ParamField body="transaction.timestamp" type="string" required default="2025-01-21T12:30:10Z">
+    RFC3339 timestamp in UTC — **must end with `Z`**.
+</ParamField>
+
+**originator**
+
+<ParamField body="originator.msisdn" type="string" required default="254712345678">
+    Payer MSISDN in E.164 (no `+`).
+</ParamField>
+<ParamField body="originator.channel" type="string" required default="USSD">
+    Channel (e.g., `USSD`, `APP`, `WEB`).
+</ParamField>
+<ParamField body="originator.country" type="string" required default="KE">
+    ISO-3166-1 alpha-2 (e.g., `KE`).
+</ParamField>
+<ParamField body="originator.name" type="string" default="John Doe">
+    Payer name (optional).
+</ParamField>
+<ParamField body="originator.purpose" type="string" default="Salary Payment">
+    Purpose (optional).
+</ParamField>
+
+**recipient**
+
+<ParamField body="recipient.service_code" type="string" required default="RMT_WU">
+    Assigned service route code.
+</ParamField>
+<ParamField body="recipient.invoice_number" type="string" default="3456789987654">
+    Invoice number (optional).
+</ParamField>
+<ParamField body="recipient.reference" type="string" required default="INVJMA01">
+    Your beneficiary reference.
+</ParamField>
+<ParamField body="recipient.account" type="string" required default="254712345678">
+    Beneficiary account/handle MSISDN.
+</ParamField>
+
+**callback & metadata**
+
+<ParamField body="callback_url" type="string" required default="https://merchant.example.com/webhooks/payments">
+    HTTPS endpoint to receive the final result. Must return `200` to acknowledge.
+</ParamField>
+<ParamField body="meta.note" type="string" default="This info is returned as part of the callback">
+    Freeform note returned in callbacks.
+</ParamField>
+<ParamField body="meta.agent_id" type="string" default="AGENT456">
+    Your internal agent/operator identifier.
+</ParamField>
+
+---
+
+## Example request body
+
+```json
+{
+  "transaction": {
+    "reference": "TNC000008",
+    "amount": "1000.00",
+    "currency": "KES",
+    "description": "Test description",
+    "timestamp": "2025-01-21T12:30:10Z"
+  },
+  "originator": {
+    "msisdn": "254712345678",
+    "channel": "USSD",
+    "country": "KE",
+    "name": "John Doe",
+    "purpose": "Salary Payment"
+  },
+  "recipient": {
+    "service_code": "RMT_WU",
+    "invoice_number": "3456789987654",
+    "reference": "INVJMA01",
+    "account": "254712345678"
+  },
+  "callback_url": "https://merchant.example.com/webhooks/payments",
+  "meta": {
+    "note": "This info is returned as part of the callback",
+    "agent_id": "AGENT456"
+  }
+}

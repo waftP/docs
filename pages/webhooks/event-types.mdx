@@ -1,0 +1,66 @@
+---
+title: "Webhooks — Event Types"
+description: "Catalog of webhook events you may receive from Waftpay."
+---
+
+# Webhooks — Event Types
+
+Below are the primary event types you may see during **Collections**, **Payouts**, **Remittance**, and **Refunds** flows.
+
+> Subscribe by providing a `callback_url` in your request. Each event includes a top-level `type`, `id`, `created` (RFC3339, ends with `Z`), and a `data` object.
+
+## Collections
+
+- `collection.accepted` — We accepted your request (`202`). Includes `payment_uuid`.
+- `collection.succeeded` — Funds confirmed.
+- `collection.failed` — Provider rejected.
+- `collection.refunded` — Refund completed (full or partial).
+
+## Payouts
+
+- `payout.accepted` — We accepted your request.
+- `payout.succeeded` — Beneficiary received funds.
+- `payout.failed` — Provider rejected or timed out.
+
+## Remittance
+
+- `remittance.accepted`
+- `remittance.succeeded`
+- `remittance.failed`
+
+## Refunds
+
+- `refund.accepted` — Refund request queued.
+- `refund.succeeded` — Funds returned to payer.
+- `refund.failed` — Refund could not be completed (see `result_code`).
+
+---
+
+## Example payload
+
+```json
+{
+  "id": "evt_01J123ABCXYZ",
+  "type": "collection.succeeded",
+  "created": "2025-06-17T10:18:18Z",
+  "data": {
+    "transaction_reference": "TNC000008",
+    "payment_uuid": "8363546214883574601",
+    "amount": "1000.00",
+    "currency": "KES",
+    "service_code": "RMT_WU",
+    "msisdn": "254712345678",
+    "external_reference": "MNO123456",
+    "time_processed": "2025-06-17T10:18:18Z",
+    "metadata": {
+      "note": "This is part of a callback",
+      "agent_id": "AGENT456"
+    }
+  }
+}
+```
+
+## Delivery & retries
+
+- We retry on non-2xx or timeouts with exponential backoff (up to the contract window).
+- Keep handlers **idempotent** and verify signatures as described in **Webhooks — Signature Verification**.

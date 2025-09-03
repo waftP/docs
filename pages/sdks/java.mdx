@@ -1,0 +1,48 @@
+---
+title: "SDK — Java"
+description: "Plain JDK helper for signing (SHA256withRSA) and calling Waftpay endpoints."
+---
+
+# SDK — Java
+
+> JDK 17+ recommended. Uses `java.net.http.HttpClient` and JCA only.
+
+## Client
+
+```java
+// PaymentsClient.java
+import java.net.http.*; import java.net.*; import java.nio.charset.StandardCharsets;
+import java.security.*; import java.security.spec.*; import java.util.Base64;
+
+public class PaymentsClient {
+  private final String baseUrl, token, signAlg; private final PrivateKey privateKey; private final HttpClient http = HttpClient.newHttpClient();
+  public PaymentsClient(String baseUrl, String token, String privateKeyPem, String signAlg) throws Exception {
+    this.baseUrl = baseUrl.replaceAll("/$", ""); this.token = token; this.signAlg = signAlg == null ? "RS256" : signAlg;
+    this.privateKey = privateKeyPem == null ? null : loadPrivateKey(privateKeyPem);
+  }
+  static PrivateKey loadPrivateKey(String pem) throws Exception {
+    String p = pem.replaceAll("-----\\w+ PRIVATE KEY-----","").replaceAll("\\s","");
+    byte[] der = Base64.getDecoder().decode(p);
+    return KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(der));
+  }
+  String canonical(String reference, String amount, String country, String serviceCode){
+    return reference + amount + country + serviceCode;
+  }
+  String sign(String data) throws Exception {
+    if (privateKey == null) throw new IllegalStateException("privateKey required");
+    Signature s = Signature.getInstance(signAlg.equals("PS256") ? "RSASSA-PSS" : "SHA256withRSA");
+    if (signAlg.equals("PS256")) s.setParameter(new PSSParameterSpec("SHA-256","MGF1","SHA-256",32,1));
+    s.initSign(privateKey); s.update(data.getBytes(StandardCharsets.UTF_8));
+    return Base64.getEncoder().encodeToString(s.sign());
+  }
+  HttpResponse<String> post(String path, String json, String idempotencyKey, String signature) throws Exception {
+    HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(baseUrl + path))
+      .header("Authorization", "Bearer " + token)
+      .header("Content-Type", "application/json");
+    if (idempotencyKey != null) b.header("X-Idempotency-Key", idempotencyKey);
+    if (signature != null) b.header("X-Custom-Signature", signature).header("X-Sign-Alg", signAlg);
+    b.method("POST", HttpRequest.BodyPublishers.ofString(json));
+    return http.send(b.build(), HttpResponse.BodyHandlers.ofString());
+  }
+}
+```
