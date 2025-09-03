@@ -1,0 +1,37 @@
+---
+title: "Generate X-Custom-Signature"
+description: "How to create and attach the Base64 RSA signature required for Payouts and Remittance requests."
+---
+
+# Generate `X-Custom-Signature`
+
+Certain Waftpay APIs (notably **Payouts** and **Remittance**) require a request signature in the header **`X-Custom-Signature`**.
+This signature proves the request came from you and wasn’t tampered with.
+
+> TL;DR: Concatenate key fields in the exact order → sign with your **RSA private key** using **SHA-256** → Base64-encode → send as `X-Custom-Signature`.
+
+---
+
+## When it’s required
+
+- **Payouts**: `POST /payments-api-service/v1/payouts` (or your deployed alias)
+- **Remittance**: `POST /payments-api-service/v1/remittance`
+
+These endpoints also require **Bearer auth** (product-scoped token) in addition to the signature.
+
+---
+
+## Fields used to build the signature
+
+Use **exactly** the fields below, in this exact order:
+
+1. `transaction.reference`
+2. `transaction.amount`
+3. `originator.country`
+4. `recipient.service_code`
+
+Concatenate their **values** with **no separators**.
+
+**Example (values):**
+
+> Need a signature? Generate it below, then paste the value into the **X-Custom-Signature** field in the Try it panel.

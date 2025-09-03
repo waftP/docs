@@ -86,6 +86,12 @@
             ]
           },
           {
+            "group": "Key Generation",
+            "pages": [
+              "api-reference/signatures/signature-generate"
+            ]
+          },
+          {
             "group": "Payouts",
             "pages": [
               "api-reference/payouts/payouts-initiate",

@@ -542,11 +542,11 @@
 
       "CreatePayoutRequestV2": {
         "type": "object",
-        "required": ["transaction", "originator", "recipient"],
+        "required": ["transaction", "originator", "recipient", "callback_url"],
         "properties": {
           "transaction": {
             "type": "object",
-            "required": ["reference", "amount", "currency", "timestamp"],
+            "required": ["reference", "amount", "currency", "description", "timestamp"],
             "properties": {
               "reference": {
                 "type": "string",
@@ -573,7 +573,7 @@
           },
           "originator": {
             "type": "object",
-            "required": ["msisdn", "channel", "country"],
+            "required": ["msisdn", "channel", "country", "name", "purpose"],
             "properties": {
               "msisdn": {
                 "type": "string",
@@ -587,8 +587,13 @@
                 "type": "string",
                 "description": "Country code (ISO 3166-1 alpha-2 like 'KE' or alpha-3 like 'KEN'). Use what's configured on your account."
               },
-              "name": { "type": "string" },
-              "purpose": { "type": "string" }
+              "name": {
+                "type": "string",
+                "description": "Originator name - preferable two names (e.g., Alvin Muriithi"
+              },
+              "purpose": {
+                "type": "string",
+                "description": "Originator purpose or reason for payout"}
             }
           },
           "recipient": {
@@ -602,14 +607,6 @@
               "pay_bill_number": {
                 "type": "string",
                 "description": "Optional paybill number, if applicable."
-              },
-              "store_number": {
-                "type": "string",
-                "description": "Optional store number, if applicable."
-              },
-              "reference": {
-                "type": "string",
-                "description": "Client-side reference for the recipient or invoice."
               },
               "account": {
                 "type": "string",
@@ -625,11 +622,7 @@
           "meta": {
             "type": "object",
             "description": "Arbitrary key-value metadata echoed back in callbacks.",
-            "properties": {
-              "note": { "type": "string" },
-              "agent_id": { "type": "string" }
-            },
-            "additionalProperties": false
+            "additionalProperties": true
           }
         },
         "examples": [
