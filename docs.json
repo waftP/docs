@@ -51,6 +51,7 @@
               "/pages/guides/payouts",
               "/pages/guides/collections",
               "/pages/guides/remittances",
+              "/pages/guides/refunds",
               "/pages/guides/status-checks"
             ]
           },
@@ -85,19 +86,14 @@
           {
             "group": "Authentication",
             "pages": [
-              "api-reference/auth/auth-token"
+              "api-reference/auth/auth-token",
+              "api-reference/signatures/signature-generate"
             ]
           },
           {
             "group": "Payment Requests",
             "pages": [
               "api-reference/payment-requests/get-started"
-            ]
-          },
-          {
-            "group": "Key Generation",
-            "pages": [
-              "api-reference/signatures/signature-generate"
             ]
           },
           {

@@ -1,10 +1,8 @@
 ---
-title: "Collections — Refunds"
+title: "Refunds"
 description: "When refunds are allowed and how to check refund reversal status."
 api: "POST /refund-reversal"
 ---
-
-# Collections — Refunds
 
 Refunds let you return funds to a payer after a successful collection. Refunds are **asynchronous**; you’ll receive `202 Accepted` if the request is queued, and a webhook (or status poll) for the final outcome.
 

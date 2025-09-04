@@ -806,10 +806,6 @@
                 "type": "string",
                 "description": "Service the client wants to consume (e.g., MPESAB2C)."
               },
-              "pay_bill_number": {
-                "type": "string",
-                "description": "Optional paybill number, if applicable."
-              },
               "account": {
                 "type": "string",
                 "description": "Recipient account identifier (phone, wallet, bank acct)."

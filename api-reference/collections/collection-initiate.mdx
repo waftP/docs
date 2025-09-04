@@ -1,10 +1,8 @@
 ---
-title: "Collections — Initiate"
+title: "Initiate Collections"
 description: "Start an incoming payment. Auth, fields, validation, idempotency, and a live Try it."
 api: "POST /payments-api-service/v1/collections"
 ---
-
-# Collections — Initiate
 
 Use this endpoint to start a customer payment collection. Requests are validated and **accepted asynchronously**; you’ll receive `202 Accepted` if queued successfully and a **webhook** (or **status poll**) for the final outcome.
 
