@@ -50,17 +50,17 @@ Obtain a Bearer token from the Authentication Service using your `api_key` and `
 Your payout requests must be signed over the following canonical string (UTF‑8 bytes), in this **exact** order:
 
 ```text
-reference=<transaction.reference>&amount=<amount_2dp>&currency=<ISO4217>&country=<originator.country>&service_code=<recipient.service_code>&timestamp=<RFC3339>
+reference=<transaction.reference>&amount=<amount_2dp>&currency=<ISO4217>&country=<originator.country>&service_code=<recipient.service_code>
 ```
 
 **Rules**
+- `reference`: as is (e.g., `TXN21************`).
 - `amount`: normalized to **two decimals** (e.g., `100.00`).
 - `currency`: ISO‑4217 (e.g., `KES`).
 - `country`: ISO‑3166‑1 **alpha‑2** (e.g., `KE`).
-- `timestamp`: RFC3339 with timezone (e.g., `2025-01-21T12:30:10+03:00`).
 - Concatenate with `&` separators; **no URL‑encoding** inside the string.
 
-**Sign** the canonical string with **RSA‑PSS SHA‑256** (preferred, `PS256`). If not available, use `RS256`.
+**Sign** the canonical string with **RSA‑PSS SHA‑256** `RS256`.
 Encode the resulting signature as **Base64URL** (strip padding `=`).
 
 ---
@@ -93,7 +93,7 @@ X-Custom-Signature: `<base64url_signature>`
     "amount": "100.00",
     "currency": "KES",
     "description": "Vendor payout",
-    "timestamp": "2025-01-21T12:30:10+03:00"
+    "timestamp": "2025-01-21T12:30:10Z"
   },
   "originator": {
     "msisdn": "254712345678",
@@ -117,7 +117,7 @@ X-Custom-Signature: `<base64url_signature>`
 
 **Validation highlights**
 - `transaction.reference`: unique per client; 1–64 chars; letters, digits, `-`/`_`.
-- `amount`: decimal string with 2dp, `0.01`–`9,999,999,999.99`.
+- `amount`: decimal string with 2dp, `0.01`–`9,999,999,999.99`. (Decimal places are not always utilized with some service providers)
 - `originator.msisdn`: E.164 without `+` (e.g., `2547…`).
 - `recipient.service_code`: assigned by us; determines routing.
 - `callback_url`: HTTPS only, responds **200 OK** to acknowledge.
