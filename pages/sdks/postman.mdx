@@ -5,17 +5,17 @@ description: "Use Mintlify’s OpenAPI or a collection to exercise Waftpay endpo
 
 You can drive Waftpay endpoints directly from **Postman**. Choose one of these flows.
 
-## Option A — Import OpenAPI
+## Option A  Import OpenAPI
 
 1. In Postman, click **Import** → **Link** and paste your docs OpenAPI URL (e.g., `/openapi/waftpay.json` from your docs host).
 2. Postman will create a Collection with all endpoints (e.g., **Collections Initiate**, **TSQ**, **Payouts**).
 3. Create an **Environment** with variables:
    - `base_url` = `https://payments-api.dev.pockets-pay.com`
    - `access_token` = *(paste your Bearer token value)*
-   - `x_custom_signature` = *(for signed endpoints — paste precomputed signature)*
+   - `x_custom_signature` = *(for signed endpoints  paste precomputed signature)*
 4. In each request, set the `Authorization` header to `Bearer {{access_token}}` and the URL to `{{base_url}}` + path.
 
-## Option B — Download our collection
+## Option B  Download our collection
 
 If you prefer a curated collection and examples, export the endpoints from OpenAPI (or ask us for a ready-made JSON).
 

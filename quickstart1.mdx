@@ -1,0 +1,33 @@
+---
+title: "Quickstart"
+description: "Make your first Waftpay API call in minutes."
+---
+
+Get set up and create your first **payment** in Sandbox.
+
+## Step 1: Set up your Waftpay environment
+
+<AccordionGroup>
+    <Accordion title="Create Sandbox credentials">
+        1. Open the **Waftpay Dashboard** and create a **Client ID** and **Client Secret** for Sandbox.
+        2. Keep secrets **server-side only** (never expose in frontend or mobile apps).
+        <Tip>Use different credentials for Sandbox and Production.</Tip>
+    </Accordion>
+
+    <Accordion title="Pick your base URL">
+        - **Sandbox:** `https://sandbox.waftpay.io/api`
+        - **Production:** `https://api.waftpay.io`
+
+        Configure your app per environment to avoid mix-ups.
+    </Accordion>
+</AccordionGroup>
+
+## Step 2: Get an access token
+
+Exchange your client credentials for a short-lived **Bearer** token.
+
+**cURL**
+```bash
+curl -X POST https://sandbox.waftpay.io/api/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"grant_type":"client_credentials","client_id":"YOUR_CLIENT_ID","client_secret":"YOUR_CLIENT_SECRET"}'

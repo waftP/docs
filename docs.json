@@ -14,11 +14,13 @@
   },
   "navbar": {
     "links": [
-      { "label": "Support", "href": "mailto:alex.njora@waftpay.io" }
+      { "label": "Sandbox Login",
+        "href": "mailto:alex.njora@waftpay.io"
+      }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
+      "label": "Create Account",
       "href": "https://dashboard.dev.pockets-pay.com"
     }
   },
@@ -129,7 +131,7 @@
       ]
     }
   },
-  "openapi": "/openapi/waftpay.json",
+  "openapi": "/openapi/waftpay.merged.json",
   "api": {
     "baseUrl": [
       "https://payments-api.dev.pockets-pay.com"

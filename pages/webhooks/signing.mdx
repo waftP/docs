@@ -9,9 +9,9 @@ Waftpay signs every webhook it sends to your `callback_url`. Verify the signatur
 >
 > `Waftpay-Signature: t=1700000100, v1=4b2f..., alg=hmac-sha256`
 >
-> - `t` — UNIX timestamp (seconds)
-> - `v1` — hex HMAC signature
-> - `alg` — algorithm indicator (currently `hmac-sha256`)
+> - `t`  UNIX timestamp (seconds)
+> - `v1`  hex HMAC signature
+> - `alg`  algorithm indicator (currently `hmac-sha256`)
 
 > **Best practice**: Reject requests older than 5 minutes or with a clock skew beyond your tolerance.
 
@@ -93,4 +93,4 @@ function verifyWebhook(string $secret, string $rawBody, string $header): bool {
 
 - Return **HTTP 200** as soon as you store/queue the event
 - Use retries with backoff if your downstream systems are unavailable
-- Keep handlers idempotent — process each `event.id` exactly once
+- Keep handlers idempotent  process each `event.id` exactly once

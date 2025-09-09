@@ -3,31 +3,296 @@ title: "Quickstart"
 description: "Make your first Waftpay API call in minutes."
 ---
 
-Get set up and create your first **payment** in Sandbox.
+Get set up and create your first **payout** in **Sandbox**. This guide covers credentials, tokens, request signing, and sending a test request end‑to‑end.
 
-## Step 1: Set up your Waftpay environment
+<Alert>
+Never put secrets or private keys in browser/mobile apps. Keep everything server‑side.
+</Alert>
+
+---
+
+## 1) Set up your Waftpay environment
 
 <AccordionGroup>
-    <Accordion title="Create Sandbox credentials">
-        1. Open the **Waftpay Dashboard** and create a **Client ID** and **Client Secret** for Sandbox.
-        2. Keep secrets **server-side only** (never expose in frontend or mobile apps).
-        <Tip>Use different credentials for Sandbox and Production.</Tip>
-    </Accordion>
+  <Accordion title="Create Sandbox credentials">
+    1. Open the **Waftpay Dashboard** and create a **Client ID** and **Client Secret** for *Sandbox*.<br/>
+    2. Store them securely (e.g., environment variables, secrets manager).<br/>
+    <Tip>Use **separate** credentials for Sandbox and Production.</Tip>
+  </Accordion>
 
-    <Accordion title="Pick your base URL">
-        - **Sandbox:** `https://sandbox.waftpay.io/api`
-        - **Production:** `https://api.waftpay.io`
+  <Accordion title="Generate signing keys (RSA‑2048)">
+    We sign requests with a 2048‑bit RSA private key.
 
-        Configure your app per environment to avoid mix-ups.
-    </Accordion>
+```bash
+# Generate a 2048‑bit private key (PEM)
+openssl genrsa -out waftpay_private.pem 2048
+
+# Derive the public key (PEM)
+openssl rsa -in waftpay_private.pem -pubout -out waftpay_public.pem
+```
+Upload the **public** key in Dashboard. Keep the **private** key on your server only.
+  </Accordion>
+
+  <Accordion title="Pick your base URL">
+    - **Sandbox:** `https://sandbox.waftpay.io/api`  
+    - **Production:** `https://api.waftpay.io`
+
+    Configure per environment to avoid mix‑ups. See [/environments](/environments).
+  </Accordion>
 </AccordionGroup>
 
-## Step 2: Get an access token
+---
 
-Exchange your client credentials for a short-lived **Bearer** token.
+## 2) Get an access token
 
-**cURL**
+Exchange client credentials for a short‑lived **Bearer** token.
+
+**cURL (Sandbox)**
 ```bash
-curl -X POST https://sandbox.waftpay.io/api/auth/token \
-  -H "Content-Type: application/json" \
-  -d '{"grant_type":"client_credentials","client_id":"YOUR_CLIENT_ID","client_secret":"YOUR_CLIENT_SECRET"}'
+curl -X POST https://sandbox.waftpay.io/api/authentication-service/v1/application/token/authentication   -H "Content-Type: application/json"   -d '{
+    "grant_type": "client_credentials",
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET"
+  }'
+```
+
+A successful response returns JSON with `access_token` and `expires_in`.
+
+---
+
+## 3) Sign your request
+
+Each write operation must include `X-Custom-Signature`. The signature is computed from a **canonical string** derived from the request (method, path, timestamp, body hash). See full rules in [/signing-requests](/signing-requests).
+
+**Pseudo (Node.js)**
+```ts
+import crypto from "crypto";
+
+export function computeSignature({ method, path, body, timestamp, privateKeyPem }:{ 
+  method: string; path: string; body: string; timestamp: string; privateKeyPem: string;
+}) {
+  const bodyHash = crypto.createHash("sha256").update(body || "").digest("hex");
+  const canonical = [method.toUpperCase(), path, timestamp, bodyHash].join("\n");
+
+  const signer = crypto.createSign("RSA-SHA256");
+  signer.update(canonical);
+  const signature = signer.sign(privateKeyPem, "base64");
+  return signature;
+}
+```
+
+Set a header like:
+
+```
+X-Custom-Signature: <base64-signature>
+X-Timestamp: 2025-01-21T12:30:10Z     # the timestamp you signed
+```
+
+---
+
+## 4) Create your first payout (Sandbox)
+
+**Endpoint**  
+`POST /payments-api-service/v1/payouts`
+
+**Complete cURL (Sandbox)**
+```bash
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+BODY='{
+  "transaction": {
+    "reference": "TXN213687756272200",
+    "amount": 1000,
+    "currency": "KES",
+    "description": "Test description",
+    "timestamp": "2025-01-21T12:30:10Z"
+  },
+  "originator": {
+    "msisdn": "254708374149",
+    "channel": "USSD",
+    "country": "KE"
+  },
+  "recipient": {
+    "service_code": "MPESAB2C",
+    "reference": "INVJMA02",
+    "account": "254708374149"
+  },
+  "callback_url": "https://staging.example.com/waftpay/callbacks"
+}'
+
+# Compute the signature on your server. Example shown in Node snippet above.
+# Assume SIGNATURE holds the base64 value for canonical(method, path, TIMESTAMP, sha256(BODY)).
+SIGNATURE="BASE64_SIGNATURE_HERE"
+
+curl --request POST   --url https://sandbox.waftpay.io/api/payments-api-service/v1/payouts   --header "Authorization: Bearer <ACCESS_TOKEN>"   --header "Content-Type: application/json"   --header "X-Timestamp: $TIMESTAMP"   --header "X-Custom-Signature: $SIGNATURE"   --data "$BODY"
+```
+
+**What you’ll get**  
+- **202 Accepted** with code `200.001.000` → request queued; final result is delivered to your `callback_url`.
+- **4xx/5xx** → see [/errors](/errors) for how to interpret extended codes (e.g., `400.001.300` missing field).
+
+---
+
+## 5) Handle the webhook
+
+Your `callback_url` receives the final delivery state. Respond with **2xx** quickly.
+
+```json
+{
+  "request_id": "req_abc123",
+  "transaction": {
+    "reference": "TXN213687756272200",
+    "amount": 1000,
+    "currency": "KES"
+  },
+  "status": "SUCCESS",        // or FAILED
+  "provider_reference": "MPESA-XYZ-12345",
+  "timestamp": "2025-01-21T12:35:05Z",
+  "signature": "<base64-signature>"
+}
+```
+
+Verify the webhook signature using your stored Waftpay public key. Reconcile using `transaction.reference` and `request_id`.
+
+---
+
+## Language examples (server‑side)
+
+<Tabs>
+  <Tab title="Node.js (fetch)">
+  
+```ts
+import crypto from "crypto";
+
+const BASE_URL = "https://sandbox.waftpay.io/api";
+const TOKEN_URL = BASE_URL + "/authentication-service/v1/application/token/authentication";
+const PAYOUT_URL = BASE_URL + "/payments-api-service/v1/payouts";
+
+async function getToken(clientId: string, clientSecret: string) {
+  const res = await fetch(TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ grant_type: "client_credentials", client_id: clientId, client_secret: clientSecret })
+  });
+  if (!res.ok) throw new Error("Auth failed: " + res.status);
+  return res.json() as Promise<{ access_token: string; expires_in: number; }>;
+}
+
+function computeSignature(method: string, path: string, timestamp: string, body: string, privateKeyPem: string) {
+  const bodyHash = crypto.createHash("sha256").update(body || "").digest("hex");
+  const canonical = [method.toUpperCase(), path, timestamp, bodyHash].join("\n");
+  const signer = crypto.createSign("RSA-SHA256");
+  signer.update(canonical);
+  return signer.sign(privateKeyPem, "base64");
+}
+
+export async function createPayout({ clientId, clientSecret, privateKeyPem }:{
+  clientId: string; clientSecret: string; privateKeyPem: string;
+}) {
+  const { access_token } = await getToken(clientId, clientSecret);
+
+  const path = "/payments-api-service/v1/payouts";
+  const url = BASE_URL + path;
+  const body = JSON.stringify({
+    transaction: {
+      reference: "TXN213687756272200",
+      amount: 1000,
+      currency: "KES",
+      description: "Test description",
+      timestamp: "2025-01-21T12:30:10Z"
+    },
+    originator: { msisdn: "254708374149", channel: "USSD", country: "KE" },
+    recipient:  { service_code: "MPESAB2C", reference: "INVJMA02", account: "254708374149" },
+    callback_url: "https://staging.example.com/waftpay/callbacks"
+  });
+
+  const timestamp = new Date().toISOString();
+  const signature = computeSignature("POST", path, timestamp, body, privateKeyPem);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${access_token}`,
+      "Content-Type": "application/json",
+      "X-Timestamp": timestamp,
+      "X-Custom-Signature": signature
+    },
+    body
+  });
+
+  const data = await res.json();
+  return { status: res.status, data };
+}
+```
+  </Tab>
+
+  <Tab title="Python (requests)">
+  
+```python
+import hashlib, base64, time, requests
+from Crypto.Signature import pkcs1_15
+from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA256
+
+BASE = "https://sandbox.waftpay.io/api"
+TOKEN_URL = BASE + "/authentication-service/v1/application/token/authentication"
+PAYOUT_URL = BASE + "/payments-api-service/v1/payouts"
+
+def get_token(client_id, client_secret):
+    r = requests.post(TOKEN_URL, json={
+        "grant_type":"client_credentials",
+        "client_id": client_id,
+        "client_secret": client_secret
+    })
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+def compute_signature(method, path, timestamp, body, private_key_pem):
+    body_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    canonical = "\n".join([method.upper(), path, timestamp, body_hash]).encode("utf-8")
+    key = RSA.import_key(private_key_pem)
+    h = SHA256.new(canonical)
+    sig = pkcs1_15.new(key).sign(h)
+    return base64.b64encode(sig).decode("utf-8")
+
+def create_payout(client_id, client_secret, private_key_pem):
+    token = get_token(client_id, client_secret)
+    path = "/payments-api-service/v1/payouts"
+    url = BASE + path
+    body = {
+        "transaction": {
+            "reference": "TXN213687756272200",
+            "amount": 1000,
+            "currency": "KES",
+            "description": "Test description",
+            "timestamp": "2025-01-21T12:30:10Z"
+        },
+        "originator": {"msisdn":"254708374149","channel":"USSD","country":"KE"},
+        "recipient":  {"service_code":"MPESAB2C","reference":"INVJMA02","account":"254708374149"},
+        "callback_url":"https://staging.example.com/waftpay/callbacks"
+    }
+    import json
+    body_str = json.dumps(body, separators=(",",":"))
+    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    sig = compute_signature("POST", path, ts, body_str, private_key_pem)
+    r = requests.post(url, headers={
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "X-Timestamp": ts,
+        "X-Custom-Signature": sig
+    }, data=body_str)
+    return r.status_code, r.json()
+```
+  </Tab>
+</Tabs>
+
+---
+
+## 6) What to expect & next steps
+
+- **202 Accepted** → Track the final outcome via webhook.  
+- **4xx/5xx** → See [/errors](/errors). Fix the payload for 4xx; retry with backoff for 5xx.  
+- Use **unique** `transaction.reference` per attempt and idempotency on retries.
+
+<Callout type="success">
+You’ve made your first Sandbox payout! When you’re ready for live funds, switch base URL & credentials — see [/environments](/environments).
+</Callout>

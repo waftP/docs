@@ -9,16 +9,16 @@ Below are the primary event types you may see during **Collections**, **Payouts*
 
 ## Collections
 
-- `collection.accepted` — We accepted your request (`202`). Includes `payment_uuid`.
-- `collection.succeeded` — Funds confirmed.
-- `collection.failed` — Provider rejected.
-- `collection.refunded` — Refund completed (full or partial).
+- `collection.accepted`  We accepted your request (`202`). Includes `payment_uuid`.
+- `collection.succeeded`  Funds confirmed.
+- `collection.failed`  Provider rejected.
+- `collection.refunded`  Refund completed (full or partial).
 
 ## Payouts
 
-- `payout.accepted` — We accepted your request.
-- `payout.succeeded` — Beneficiary received funds.
-- `payout.failed` — Provider rejected or timed out.
+- `payout.accepted`  We accepted your request.
+- `payout.succeeded`  Beneficiary received funds.
+- `payout.failed`  Provider rejected or timed out.
 
 ## Remittance
 
@@ -28,9 +28,9 @@ Below are the primary event types you may see during **Collections**, **Payouts*
 
 ## Refunds
 
-- `refund.accepted` — Refund request queued.
-- `refund.succeeded` — Funds returned to payer.
-- `refund.failed` — Refund could not be completed (see `result_code`).
+- `refund.accepted`  Refund request queued.
+- `refund.succeeded`  Funds returned to payer.
+- `refund.failed`  Refund could not be completed (see `result_code`).
 
 ---
 
@@ -61,4 +61,4 @@ Below are the primary event types you may see during **Collections**, **Payouts*
 ## Delivery & retries
 
 - We retry on non-2xx or timeouts with exponential backoff (up to the contract window).
-- Keep handlers **idempotent** and verify signatures as described in **Webhooks — Signature Verification**.
+- Keep handlers **idempotent** and verify signatures as described in **Webhooks  Signature Verification**.

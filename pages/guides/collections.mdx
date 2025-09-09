@@ -86,7 +86,7 @@ Headers are identical to payouts (see that guide). Use `X-Idempotency-Key: <tran
 
 - Store `payment_uuid`, `transaction_reference`, and `external_reference` for ledgers.  
 - Use **Status Checks** for any entries that lack a webhook (network failure, etc.).
-- Ensure your webhook handler is **idempotent**—we may retry callbacks.
+- Ensure your webhook handler is **idempotent**we may retry callbacks.
 
 ---
 

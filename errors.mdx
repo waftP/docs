@@ -1,14 +1,253 @@
 ---
 title: "Errors"
-description: "Standard error shape and common codes."
+description: "How to read, troubleshoot, and act on Waftpay API errors."
 ---
 
-All errors return JSON with a consistent shape:
+All endpoints return errors with a consistent, machine-readable shape. This page shows the structure, how to interpret it step-by-step, and a catalog of common error codes.
+
+## Standard error shape
 
 ```json
 {
   "error": "invalid_request",
   "message": "msisdn is required",
   "param": "source.msisdn",
-  "request_id": "req_abc123"
+  "request_id": "req_abc123",
+  "code": "400.001.300",
+  "status": "REJECTED"
 }
+```
+
+### Field reference
+
+- **error**  High-level category (`invalid_request`, `authentication_error`, `authorization_error`, `validation_error`, `service_error`, etc.).
+- **message**  Human‑readable explanation. Safe to show in logs and dashboards.
+- **param**  The field that caused the error (if applicable).
+- **request_id**  Unique ID for this request. Always include this when contacting support.
+- **code**  Waftpay extended error code (explained below).
+- **status**  Business outcome for this request (`ACCEPTED`, `REJECTED`, or `ERROR`).
+
+> Some responses may also include a `details` object with extra validation information for batch or nested payloads.
+
+---
+
+## The Waftpay extended error code
+
+We append a structured code to the standard HTTP status to make troubleshooting fast:
+
+```
+<HTTP>.<SERVICE>.<SPECIFIC>
+```
+
+- **HTTP**  The HTTP status class (e.g., `400`, `401`, `403`, `404`, `500`, `202`).
+- **SERVICE**  The internal service identifier. In the examples below, `001` represents the Payments/Payouts flow.
+- **SPECIFIC**  The precise reason within that service (e.g., missing field, invalid currency, database error).
+
+**Example**: `400.001.304` : HTTP **400** (Bad Request) • Service **001** • Reason **invalid currency**.
+
+You’ll see the HTTP status in the response and the extended code in the body (and our logs). Use both together when searching runbooks or talking to support.
+
+---
+
+## Outcomes vs. HTTP statuses
+
+- **ACCEPTED (202)**  The request passed validation and was queued for processing. Final state will arrive via your `callback_url`.
+- **REJECTED (4xx)**  The request is invalid or not permitted. Fix the request before retrying.
+- **ERROR (5xx)**  A temporary error on our side. You may retry with backoff and idempotency.
+
+---
+
+## How to troubleshoot (step-by-step)
+
+1. **Read the HTTP status**  
+   `4xx` : your request needs fixing (don’t blind‑retry).  
+   `5xx` : transient service issue (safe to retry with backoff).  
+   `202` : accepted asynchronously; wait for the callback.
+2. **Check `code` and `status`**  
+   `code` pinpoints the exact cause (e.g., `400.001.307` = invalid URL).  
+   `status` tells you whether the request was accepted, rejected, or errored.
+3. **Use `param` to find the faulty field** (e.g., `transaction.amount`).  
+4. **Act based on the family**
+   - **Validation (400.001.xxx):** fix the payload (type/format/range/required).
+   - **Auth (401/403):** verify Bearer token, signature, and access rights.
+   - **Business rules (e.g., duplicate reference):** change inputs or reference IDs.
+   - **Service (500.xxx):** retry with exponential backoff and idempotency keys.
+5. **Log `request_id`** for correlation across your systems. Include it in support tickets.
+6. **For 202 Accepted**, track state via your **`callback_url`** (final success/failure) or a **GET status** endpoint where applicable.
+
+---
+
+## Common error codes (Service `001`  Payments/Payouts)
+
+> The **Service** column is `001` in these examples. Other products will use their own service ID but keep the same pattern.
+
+| HTTP | Code        | Status    | Description                              |
+|-----:|-------------|-----------|------------------------------------------|
+| 202  | 200.001.000 | ACCEPTED  | Accepted for processing                   |
+| 401  | 401.001.000 | REJECTED  | Failed authentication                     |
+| 401  | 400.001.100 | REJECTED  | Bearer token missing                      |
+| 403  | 403.001.000 | REJECTED  | Failed authorization                      |
+| 403  | 403.001.100 | REJECTED  | Service access not allowed                |
+| 400  | 400.001.000 | REJECTED  | Validation failed                         |
+| 400  | 400.001.200 | REJECTED  | Duplicate reference                       |
+| 400  | 400.001.300 | REJECTED  | Validation failed, missing field          |
+| 400  | 400.001.301 | REJECTED  | Validation failed, empty field            |
+| 400  | 400.001.302 | REJECTED  | Validation failed, field contains invalid characters |
+| 400  | 400.001.303 | REJECTED  | Validation failed, invalid amount         |
+| 400  | 400.001.304 | REJECTED  | Validation failed, invalid currency       |
+| 400  | 400.001.305 | REJECTED  | Validation failed, invalid timestamp      |
+| 400  | 400.001.306 | REJECTED  | Validation failed, invalid timestamp format |
+| 400  | 400.001.307 | REJECTED  | Validation failed, invalid URL            |
+| 400  | 400.001.308 | REJECTED  | Validation failed, field contains SQL keywords |
+| 400  | 400.001.400 | REJECTED  | Signature validation failed               |
+| 500  | 500.001.000 | ERROR     | Service error                             |
+| 500  | 500.001.100 | ERROR     | Service error, database related error     |
+| 500  | 500.001.200 | ERROR     | Service error, rabbit related error       |
+| 500  | 500.001.300 | ERROR     | Service error, NATS related error         |
+| 404  | 404.001.000 | REJECTED  | Resource not found                         |
+
+> If you see a code not in this table, read it using the same `<HTTP>.<SERVICE>.<SPECIFIC>` pattern and check the endpoint’s section for any service‑specific codes.
+
+---
+
+## Example responses
+
+### 1) Validation error (missing field)
+
+```json
+{
+  "error": "validation_error",
+  "message": "transaction.amount is required",
+  "param": "transaction.amount",
+  "request_id": "req_4xk92F",
+  "code": "400.001.300",
+  "status": "REJECTED"
+}
+```
+
+**Fix:** Provide `transaction.amount` as an integer ≥ the minimum allowed.
+
+### 2) Authentication error (bad token)
+
+```json
+{
+  "error": "authentication_error",
+  "message": "Invalid Bearer token",
+  "request_id": "req_Kh2J0P",
+  "code": "401.001.000",
+  "status": "REJECTED"
+}
+```
+
+**Fix:** Refresh OAuth token and send `Authorization: Bearer <token>`.
+
+### 3) Signature validation failed
+
+```json
+{
+  "error": "invalid_signature",
+  "message": "Signature does not match",
+  "request_id": "req_Qp1a9N",
+  "code": "400.001.400",
+  "status": "REJECTED"
+}
+```
+
+**Fix:** Recreate the signature exactly as described in **Signing Requests** (canonical string, algorithm, headers, key).
+
+### 4) Accepted for processing (async)
+
+```json
+{
+  "message": "Accepted",
+  "request_id": "req_B8u5mA",
+  "code": "200.001.000",
+  "status": "ACCEPTED"
+}
+```
+
+**Next:** Wait for your final webhook to the configured `callback_url`.
+
+### 5) Service error (retryable)
+
+```json
+{
+  "error": "service_error",
+  "message": "Temporary outage",
+  "request_id": "req_t71m2Z",
+  "code": "500.001.000",
+  "status": "ERROR"
+}
+```
+
+**Fix:** Retry with exponential backoff and an **idempotency key**.
+
+---
+
+## Programmatic handling
+
+Below is a simple handler to centralize error interpretation on the client side.
+
+```ts
+type WaftpayError = {
+  error?: string;
+  message?: string;
+  param?: string;
+  request_id?: string;
+  code?: string;
+  status?: string;
+};
+
+export function interpretError(res: Response, body: WaftpayError) {
+  const http = res.status;
+  const code = body.code || "";
+  const status = body.status || (http >= 500 ? "ERROR" : http >= 400 ? "REJECTED" : "ACCEPTED");
+
+  const [httpPart, servicePart, specificPart] = code.split(".");
+
+  return {
+    http,
+    status,
+    service: servicePart,
+    specific: specificPart,
+    isRetryable: http >= 500,
+    isValidation: http === 400 || code.startsWith("400."),
+    message: body.message,
+    param: body.param,
+    requestId: body.request_id
+  };
+}
+```
+
+---
+
+## Best practices
+
+- **Always log** `request_id`, `code`, `status`, `error`, and `message`.
+- **Use idempotency keys** on POSTs to avoid duplicates on retries.
+- **Don’t retry 4xx** (unless you’ve corrected the payload or credentials).
+- **Backoff on 5xx** (`500.001.xxx`) and monitor for sustained failures.
+- **Validate locally** (types, formats, required fields) before sending.
+- **Secure your auth** (valid OAuth Bearer token) and **sign requests** exactly as specified.
+- **Whitelist your `callback_url`** and ensure it is an **HTTPS** URL that returns **2xx** swiftly.
+
+---
+
+## Glossary
+
+- **Duplicate reference**  Your `transaction.reference` was already used; supply a new unique value.
+- **Invalid currency**  Currency not supported or wrong ISO 4217 code for the target flow.
+- **Invalid timestamp / format**  Use ISO‑8601 (e.g., `2025-01-21T12:30:10Z`).
+- **Invalid URL**  `callback_url` must be a valid `https://` URI.
+- **Service access not allowed**  Your client is not permitted to call this operation or product; contact support if this seems wrong.
+- **Signature validation failed**  The computed signature doesn’t match ours; re‑derive it using the documented string‑to‑sign and key.
+
+---
+
+## See also
+
+
+- **Environments** — Sandbox vs Production base URLs: [/environments](/environments)
+- **Authentication** — how to get your Bearer token: [/authentication](/authentication)
+- **Signing Requests** — canonical string and RSA key setup: [/signing-requests](/signing-requests)
+

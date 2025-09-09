@@ -50,6 +50,14 @@
     {
       "name": "Utilities",
       "description": "Common utilities (idempotency, health)"
+    },
+    {
+      "name": "Payouts",
+      "description": ""
+    },
+    {
+      "name": "Status",
+      "description": ""
     }
   ],
   "security": [
@@ -244,349 +252,349 @@
           }
         }
       }
-    },
-    "/payments-api-service/v1/payouts": {
-      "post": {
-        "tags": [
-          "Payouts"
-        ],
-        "summary": "Initiate Payout",
-        "operationId": "initiatePayout",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/XCustomSignature"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePayoutRequestV2"
-              },
-              "examples": {
-                "default": {
-                  "value": {
-                    "transaction": {
-                      "reference": "TXN213687756272200",
-                      "amount": 1000,
-                      "currency": "KES",
-                      "description": "Test description",
-                      "timestamp": "2025-01-21T12:30:10Z"
-                    },
-                    "originator": {
-                      "msisdn": "254708374149",
-                      "channel": "USSD",
-                      "country": "KE"
-                    },
-                    "recipient": {
-                      "service_code": "MPESAB2C",
-                      "reference": "INVJMA02",
-                      "account": "254708374149"
-                    },
-                    "callback_url": "https://merchant.example.com/callbacks/payout",
-                    "meta": {}
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PayoutInitiationResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          }
+    }
+  },
+  "/payments-api-service/v1/payouts": {
+    "post": {
+      "tags": [
+        "Payouts"
+      ],
+      "summary": "Initiate Payout",
+      "operationId": "initiatePayout",
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/XCustomSignature"
         }
-      }
-    },
-    "/payments-api-service/v1/payouts/{reference}": {
-      "get": {
-        "tags": [
-          "Payouts"
-        ],
-        "summary": "Check Payout Status",
-        "operationId": "getPayoutByReference",
-        "parameters": [
-          {
-            "name": "reference",
-            "in": "path",
-            "required": true,
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
             "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Payout status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PayoutStatusResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
-    "/payments/{payment_id}": {
-      "get": {
-        "tags": [
-          "Payments"
-        ],
-        "description": "Retrieve a payment by ID.",
-        "parameters": [
-          {
-            "name": "payment_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Payment",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Payment"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Payments"
-        ],
-        "description": "Confirm a payment that requires an out-of-band authorization (e.g., STK push / OTP).",
-        "parameters": [
-          {
-            "name": "payment_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConfirmPaymentRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Payment updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Payment"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Payments"
-        ],
-        "description": "Cancel a payment that is not yet completed.",
-        "parameters": [
-          {
-            "name": "payment_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Payment canceled"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
-    "/payments-api-service/v1/collections": {
-      "post": {
-        "tags": [
-          "Collections"
-        ],
-        "summary": "Initiate Collection",
-        "operationId": "collectionsInitiate",
-        "description": "Start a customer payment collection. Returns 202 Accepted on enqueue; final outcome is sent via webhook or available via status query.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCollectionRequest"
-              },
-              "examples": {
-                "default": {
-                  "value": {
-                    "transaction": {
-                      "reference": "TNC000008",
-                      "amount": "1000.00",
-                      "currency": "KES",
-                      "description": "Test description",
-                      "timestamp": "2025-01-21T12:30:10Z"
-                    },
-                    "originator": {
-                      "msisdn": "254712345678",
-                      "channel": "USSD",
-                      "country": "KE",
-                      "name": "John Doe",
-                      "purpose": "Salary Payment"
-                    },
-                    "recipient": {
-                      "service_code": "RMT_WU",
-                      "invoice_number": "3456789987654",
-                      "reference": "INVJMA01",
-                      "account": "254712345678"
-                    },
-                    "callback_url": "https://merchant.example.com/webhooks/payments",
-                    "meta": {
-                      "note": "This info is returned as part of the callback",
-                      "agent_id": "AGENT456"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Accepted for processing",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CollectionInitiationResponse"
-                },
-                "examples": {
-                  "accepted": {
-                    "value": {
-                      "status": "200.100",
-                      "code": "ACCEPTED",
-                      "description": "Accepted for processing",
-                      "data": {
-                        "amount": "1000.00",
-                        "total_charges": "0.00",
-                        "total_amount": "1000.00",
-                        "transaction_reference": "TNC000008",
-                        "payment_uuid": "8363546214883574601",
-                        "payment_reference": "1RJITP5HLL",
-                        "time_received": "2025-04-04T06:13:52.585619Z"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/PayoutRemittanceBadRequest400"
-          },
-          "401": {
-            "$ref": "#/components/responses/PayoutRemittanceUnauthorized401"
-          },
-          "403": {
-            "$ref": "#/components/responses/PayoutRemittanceForbidden403"
-          },
-          "500": {
-            "$ref": "#/components/responses/PayoutRemittanceInternal500"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Idempotency-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
+              "$ref": "#/components/schemas/CreatePayoutRequestV2"
             },
-            "description": "Strongly recommended. Reuse the same value as transaction.reference to dedupe retries."
+            "examples": {
+              "default": {
+                "value": {
+                  "transaction": {
+                    "reference": "TXN213687756272200",
+                    "amount": 1000,
+                    "currency": "KES",
+                    "description": "Test description",
+                    "timestamp": "2025-01-21T12:30:10Z"
+                  },
+                  "originator": {
+                    "msisdn": "254708374149",
+                    "channel": "USSD",
+                    "country": "KE"
+                  },
+                  "recipient": {
+                    "service_code": "MPESAB2C",
+                    "reference": "INVJMA02",
+                    "account": "254708374149"
+                  },
+                  "callback_url": "https://merchant.example.com/callbacks/payout",
+                  "meta": {}
+                }
+              }
+            }
           }
-        ]
-      }
-    },
-    "/payments-tsq-service/v1/query": {
-      "post": {
-        "tags": [
-          "Collections"
-        ],
-        "summary": "Check Collection Status",
-        "operationId": "collectionsStatusQuery",
-        "description": "Query the latest status of a collection. Provide exactly one of transaction_reference or payment_uuid.",
-        "requestBody": {
-          "required": true,
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Accepted",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TsqQueryRequest"
+                "$ref": "#/components/schemas/PayoutInitiationResponse"
+              }
+            }
+          }
+        },
+        "400": {
+          "$ref": "#/components/responses/BadRequest"
+        },
+        "401": {
+          "$ref": "#/components/responses/Unauthorized"
+        }
+      }
+    }
+  },
+  "/payments-api-service/v1/payouts/{reference}": {
+    "get": {
+      "tags": [
+        "Payouts"
+      ],
+      "summary": "Check Payout Status",
+      "operationId": "getPayoutByReference",
+      "parameters": [
+        {
+          "name": "reference",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Payout status",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoutStatusResponse"
+              }
+            }
+          }
+        },
+        "401": {
+          "$ref": "#/components/responses/Unauthorized"
+        },
+        "404": {
+          "$ref": "#/components/responses/NotFound"
+        }
+      }
+    }
+  },
+  "/payments/{payment_id}": {
+    "get": {
+      "tags": [
+        "Payments"
+      ],
+      "description": "Retrieve a payment by ID.",
+      "parameters": [
+        {
+          "name": "payment_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Payment",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payment"
+              }
+            }
+          }
+        },
+        "404": {
+          "$ref": "#/components/responses/NotFound"
+        }
+      }
+    },
+    "post": {
+      "tags": [
+        "Payments"
+      ],
+      "description": "Confirm a payment that requires an out-of-band authorization (e.g., STK push / OTP).",
+      "parameters": [
+        {
+          "name": "payment_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": false,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ConfirmPaymentRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Payment updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Payment"
+              }
+            }
+          }
+        },
+        "400": {
+          "$ref": "#/components/responses/BadRequest"
+        },
+        "404": {
+          "$ref": "#/components/responses/NotFound"
+        }
+      }
+    },
+    "delete": {
+      "tags": [
+        "Payments"
+      ],
+      "description": "Cancel a payment that is not yet completed.",
+      "parameters": [
+        {
+          "name": "payment_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "204": {
+          "description": "Payment canceled"
+        },
+        "400": {
+          "$ref": "#/components/responses/BadRequest"
+        },
+        "404": {
+          "$ref": "#/components/responses/NotFound"
+        }
+      }
+    }
+  },
+  "/payments-api-service/v1/collections": {
+    "post": {
+      "tags": [
+        "Collections"
+      ],
+      "summary": "Initiate Collection",
+      "operationId": "collectionsInitiate",
+      "description": "Start a customer payment collection. Returns 202 Accepted on enqueue; final outcome is sent via webhook or available via status query.",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateCollectionRequest"
+            },
+            "examples": {
+              "default": {
+                "value": {
+                  "transaction": {
+                    "reference": "TNC000008",
+                    "amount": "1000.00",
+                    "currency": "KES",
+                    "description": "Test description",
+                    "timestamp": "2025-01-21T12:30:10Z"
+                  },
+                  "originator": {
+                    "msisdn": "254712345678",
+                    "channel": "USSD",
+                    "country": "KE",
+                    "name": "John Doe",
+                    "purpose": "Salary Payment"
+                  },
+                  "recipient": {
+                    "service_code": "RMT_WU",
+                    "invoice_number": "3456789987654",
+                    "reference": "INVJMA01",
+                    "account": "254712345678"
+                  },
+                  "callback_url": "https://merchant.example.com/webhooks/payments",
+                  "meta": {
+                    "note": "This info is returned as part of the callback",
+                    "agent_id": "AGENT456"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "202": {
+          "description": "Accepted for processing",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionInitiationResponse"
               },
               "examples": {
-                "byReference": {
+                "accepted": {
                   "value": {
-                    "transaction_reference": "TNC000008"
+                    "status": "200.100",
+                    "code": "ACCEPTED",
+                    "description": "Accepted for processing",
+                    "data": {
+                      "amount": "1000.00",
+                      "total_charges": "0.00",
+                      "total_amount": "1000.00",
+                      "transaction_reference": "TNC000008",
+                      "payment_uuid": "8363546214883574601",
+                      "payment_reference": "1RJITP5HLL",
+                      "time_received": "2025-04-04T06:13:52.585619Z"
+                    }
                   }
-                },
-                "byPaymentUuid": {
-                  "value": {
-                    "payment_uuid": "8363546214883574601"
-                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "$ref": "#/components/responses/PayoutRemittanceBadRequest400"
+        },
+        "401": {
+          "$ref": "#/components/responses/PayoutRemittanceUnauthorized401"
+        },
+        "403": {
+          "$ref": "#/components/responses/PayoutRemittanceForbidden403"
+        },
+        "500": {
+          "$ref": "#/components/responses/PayoutRemittanceInternal500"
+        }
+      },
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "X-Idempotency-Key",
+          "in": "header",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Strongly recommended. Reuse the same value as transaction.reference to dedupe retries."
+        }
+      ]
+    }
+  },
+  "/payments-tsq-service/v1/query": {
+    "post": {
+      "tags": [
+        "Collections"
+      ],
+      "summary": "Check Collection Status",
+      "operationId": "collectionsStatusQuery",
+      "description": "Query the latest status of a collection. Provide exactly one of transaction_reference or payment_uuid.",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TsqQueryRequest"
+            },
+            "examples": {
+              "byReference": {
+                "value": {
+                  "transaction_reference": "TNC000008"
+                }
+              },
+              "byPaymentUuid": {
+                "value": {
+                  "payment_uuid": "8363546214883574601"
                 }
               }
             }
@@ -981,7 +989,7 @@
         "tags": [
           "Webhooks"
         ],
-        "description": "Receive asynchronous event notifications (payments and payouts). Verify signature via Waftpay-Signature header.",
+        "description": "Receive asynchronous event notifications (payments and payouts). Verify signature via `Waftpay-Signature` header.",
         "parameters": [
           {
             "name": "Waftpay-Signature",
@@ -1885,6 +1893,470 @@
             }
           }
         }
+      },
+      "CreateCollectionRequest": {
+        "type": "object",
+        "required": [
+          "transaction",
+          "originator",
+          "recipient",
+          "callback_url"
+        ],
+        "properties": {
+          "transaction": {
+            "type": "object",
+            "required": [
+              "reference",
+              "amount",
+              "currency",
+              "description",
+              "timestamp"
+            ],
+            "properties": {
+              "reference": {
+                "type": "string",
+                "description": "Client-generated unique reference (idempotency key). Reuse to safely retry."
+              },
+              "amount": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{2})$",
+                "description": "Decimal string with two decimals (major units).",
+                "example": "1000.00"
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 currency code (e.g., KES, USD).",
+                "example": "KES"
+              },
+              "description": {
+                "type": "string",
+                "description": "Short narrative for the payment."
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 UTC timestamp. Must end with 'Z'."
+              }
+            }
+          },
+          "originator": {
+            "type": "object",
+            "required": [
+              "msisdn",
+              "channel",
+              "country"
+            ],
+            "properties": {
+              "msisdn": {
+                "type": "string",
+                "description": "Payer phone number in MSISDN format (e.g., 2547XXXXXXXX)."
+              },
+              "channel": {
+                "type": "string",
+                "description": "Channel used to initiate the collection (e.g., USSD, APP, WEB)."
+              },
+              "country": {
+                "type": "string",
+                "description": "ISO 3166-1 alpha-2 country code (e.g., KE)."
+              },
+              "name": {
+                "type": "string",
+                "description": "Payer name (optional)."
+              },
+              "purpose": {
+                "type": "string",
+                "description": "Purpose or payment reason (optional)."
+              }
+            }
+          },
+          "recipient": {
+            "type": "object",
+            "required": [
+              "service_code",
+              "reference",
+              "account"
+            ],
+            "properties": {
+              "service_code": {
+                "type": "string",
+                "description": "Service route code (e.g., RMT_WU)."
+              },
+              "invoice_number": {
+                "type": "string",
+                "description": "Invoice number (optional)."
+              },
+              "reference": {
+                "type": "string",
+                "description": "Your beneficiary reference."
+              },
+              "account": {
+                "type": "string",
+                "description": "Beneficiary account / MSISDN / handle."
+              }
+            }
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTPS URL to receive final status callbacks."
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Arbitrary key-value metadata echoed back in callbacks."
+          }
+        }
+      },
+      "CollectionInitiationResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "code",
+          "description",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "e.g., 200.100"
+          },
+          "code": {
+            "type": "string",
+            "description": "ACCEPTED, REJECTED, or DUPLICATE_IGNORED."
+          },
+          "description": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "transaction_reference",
+              "payment_uuid",
+              "payment_reference",
+              "time_received"
+            ],
+            "properties": {
+              "amount": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "description": "Echo of requested amount."
+              },
+              "total_charges": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "total_amount": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "transaction_reference": {
+                "type": "string"
+              },
+              "payment_uuid": {
+                "type": "string",
+                "description": "UUID or numeric string identifier."
+              },
+              "payment_reference": {
+                "type": "string"
+              },
+              "time_received": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 UTC timestamp."
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "TsqQueryRequest": {
+        "type": "object",
+        "properties": {
+          "transaction_reference": {
+            "type": "string"
+          },
+          "payment_uuid": {
+            "type": "string"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "transaction_reference"
+            ]
+          },
+          {
+            "required": [
+              "payment_uuid"
+            ]
+          }
+        ],
+        "additionalProperties": false,
+        "description": "Provide exactly one of transaction_reference or payment_uuid."
+      },
+      "TsqQueryResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "status",
+          "description",
+          "results"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PENDING",
+              "FAILED",
+              "NOT FOUND"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "results": {
+            "type": "object",
+            "properties": {
+              "result_code": {
+                "type": "string"
+              },
+              "result_description": {
+                "type": "string"
+              },
+              "amount": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "total_charges": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "total_amount": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "service_code": {
+                "type": "string"
+              },
+              "msisdn": {
+                "type": "string"
+              },
+              "transaction_reference": {
+                "type": "string"
+              },
+              "payment_uuid": {
+                "type": "string"
+              },
+              "external_reference": {
+                "type": "string"
+              },
+              "time_processed": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "validation_hash": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "RefundReversalStatusRequest": {
+        "type": "object",
+        "required": [
+          "request_uuid"
+        ],
+        "properties": {
+          "request_uuid": {
+            "type": "string"
+          }
+        }
+      },
+      "RefundReversalStatusResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "status",
+          "description"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          }
+        }
+      },
+      "RefundInitiateRequest": {
+        "type": "object",
+        "required": [
+          "original",
+          "refund",
+          "callback_url"
+        ],
+        "properties": {
+          "original": {
+            "type": "object",
+            "properties": {
+              "transaction_reference": {
+                "type": "string"
+              },
+              "payment_uuid": {
+                "type": "string"
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "transaction_reference"
+                ]
+              },
+              {
+                "required": [
+                  "payment_uuid"
+                ]
+              }
+            ]
+          },
+          "refund": {
+            "type": "object",
+            "required": [
+              "amount",
+              "reason_code",
+              "timestamp"
+            ],
+            "properties": {
+              "amount": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{2})$",
+                "example": "1000.00"
+              },
+              "reason_code": {
+                "type": "string",
+                "enum": [
+                  "CUSTOMER_REQUEST",
+                  "DUPLICATE_CHARGE",
+                  "ORDER_CANCELLED",
+                  "OTHER"
+                ]
+              },
+              "description": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "RefundInitiateResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "code",
+          "description",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "refund_reference": {
+                "type": "string"
+              },
+              "original_transaction_reference": {
+                "type": "string"
+              },
+              "time_received": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "ConfirmPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "otp": {
+            "type": "string",
+            "description": "One-time password if required by the channel/provider."
+          }
+        }
       }
     },
     "parameters": {
@@ -1896,6 +2368,15 @@
           "type": "string"
         },
         "description": "Base64 RSA signature over: transaction.reference + transaction.amount + originator.country + recipient.service_code"
+      },
+      "XIdempotencyKey": {
+        "name": "X-Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Strongly recommended. Reuse the same value as transaction.reference to dedupe retries."
       }
     },
     "responses": {

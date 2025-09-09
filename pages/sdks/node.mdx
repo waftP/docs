@@ -60,7 +60,7 @@ export class PaymentsClient {
     return this._post("/payments-api-service/v1/collections", payload, { idempotencyKey: idem });
   }
 
-  // Payouts — signature required
+  // Payouts  signature required
   payoutsInitiate(payload){
     const t = payload.transaction; const r = payload.recipient; const o = payload.originator;
     const data = this.canonical({ reference: t.reference, amount: t.amount, country: o.country, service_code: r.service_code });
@@ -68,7 +68,7 @@ export class PaymentsClient {
     return this._post("/payments-api-service/v1/payouts", payload, { idempotencyKey: t.reference, signature: sig });
   }
 
-  // Remittance — signature required
+  // Remittance  signature required
   remittanceInitiate(payload){
     const t = payload.transaction; const r = payload.recipient; const o = payload.originator;
     const data = this.canonical({ reference: t.reference, amount: t.amount, country: o.country, service_code: r.service_code });
@@ -105,7 +105,7 @@ const client = new PaymentsClient({
 });
 
 // Example: Collections
-const payload = { /* see Collections — Initiate guide */ };
+const payload = { /* see Collections  Initiate guide */ };
 const { status, data } = await client.collectionsInitiate(payload);
 console.log(status, data);
 ```

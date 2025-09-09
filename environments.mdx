@@ -1,17 +1,203 @@
 ---
 title: "Environments"
-description: "Sandbox vs Production and base URLs."
+description: "Sandbox vs Production, base URLs, and how to switch safely."
 ---
 
-Waftpay provides **Sandbox** for testing and **Production** for live traffic.
+Waftpay provides two environments:
+
+- **Sandbox** — a safe, isolated environment for development and QA.
+- **Production** — live traffic and real money movement.
+
+Functionality and payload shapes are **parity-aligned** between environments. Any differences are noted below.
+
+---
 
 ## Base URLs
 
-- **Sandbox:** `https://sandbox.waftpay.io/api`
-- **Production:** `https://api.waftpay.io`
+Use the correct host per environment when composing endpoints.
 
-## Tips
-- Use **separate** Client IDs/Secrets for each environment.
-- Keep secrets on the **server** only.
-- Point Sandbox webhooks to a **dev/staging** endpoint first.
-- Log the environment alongside your request/response for easier debugging.
+| Environment | Base URL |
+|---|---|
+| **Sandbox** | `https://sandbox.waftpay.io/api` |
+| **Production** | `https://api.waftpay.io` |
+
+> **Note:** In Sandbox, endpoints are prefixed with `/api`. In Production, the `/api` prefix is **not** used.
+
+### Service examples
+
+**Authentication (Client Credentials):**
+
+- Sandbox: `https://sandbox.waftpay.io/api/authentication-service/v1/application/token/authentication`  
+- Production: `https://api.waftpay.io/authentication-service/v1/application/token/authentication`
+
+**Payments / Payouts:**
+
+- Sandbox: `https://sandbox.waftpay.io/api/payments-api-service/v1/payouts`  
+- Production: `https://api.waftpay.io/payments-api-service/v1/payouts`
+
+---
+
+## Switching environments
+
+We recommend parameterizing the base URL and credentials.
+
+```bash
+# .env (example)
+WAFTPAY_BASE_URL=https://sandbox.waftpay.io/api
+WAFTPAY_CLIENT_ID=...
+WAFTPAY_CLIENT_SECRET=...
+WAFTPAY_PUBLIC_KEY_PATH=./keys/sandbox_public.pem
+WAFTPAY_PRIVATE_KEY_PATH=./keys/sandbox_private.pem
+```
+
+```ts
+// config.ts
+export const WAFTPAY = {
+  baseUrl: process.env.WAFTPAY_BASE_URL ?? "https://sandbox.waftpay.io/api",
+  clientId: process.env.WAFTPAY_CLIENT_ID!,
+  clientSecret: process.env.WAFTPAY_CLIENT_SECRET!,
+};
+```
+
+Switch to Production by setting:
+
+```bash
+WAFTPAY_BASE_URL=https://api.waftpay.io
+# ...and production credentials / keys
+```
+
+---
+
+## Quick start: per‑environment calls
+
+### 1) Get an access token
+
+```bash
+# SANDBOX
+curl -X POST \
+  https://sandbox.waftpay.io/api/authentication-service/v1/application/token/authentication \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "client_id":"<sandbox-client-id>",
+    "client_secret":"<sandbox-client-secret>",
+    "grant_type":"client_credentials"
+  }'
+```
+
+```bash
+# PRODUCTION
+curl -X POST \
+  https://api.waftpay.io/authentication-service/v1/application/token/authentication \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "client_id":"<prod-client-id>",
+    "client_secret":"<prod-client-secret>",
+    "grant_type":"client_credentials"
+  }'
+```
+
+### 2) Create a payout
+
+```bash
+# SANDBOX
+curl --request POST \
+  --url https://sandbox.waftpay.io/api/payments-api-service/v1/payouts \
+  --header 'Authorization: Bearer <sandbox-access-token>' \
+  --header 'Content-Type: application/json' \
+  --header 'X-Custom-Signature: <signature>' \
+  --data '{
+  "transaction": {
+    "reference": "TXN213687756272200",
+    "amount": 1000,
+    "currency": "KES",
+    "description": "Test description",
+    "timestamp": "2025-01-21T12:30:10Z"
+  },
+  "originator": {
+    "msisdn": "254708374149",
+    "channel": "USSD",
+    "country": "KE"
+  },
+  "recipient": {
+    "service_code": "MPESAB2C",
+    "reference": "INVJMA02",
+    "account": "254708374149"
+  },
+  "callback_url": "https://staging.example.com/waftpay/callbacks"
+}'
+```
+
+```bash
+# PRODUCTION
+curl --request POST \
+  --url https://api.waftpay.io/payments-api-service/v1/payouts \
+  --header 'Authorization: Bearer <prod-access-token>' \
+  --header 'Content-Type: application/json' \
+  --header 'X-Custom-Signature: <signature>' \
+  --data '{
+  "transaction": {
+    "reference": "TXN213687756272201",
+    "amount": 1000,
+    "currency": "KES",
+    "description": "Live payout",
+    "timestamp": "2025-01-21T12:30:10Z"
+  },
+  "originator": {
+    "msisdn": "2547XXXXXXXX",
+    "channel": "USSD",
+    "country": "KE"
+  },
+  "recipient": {
+    "service_code": "MPESAB2C",
+    "reference": "INVLIVE01",
+    "account": "2547YYYYYYYY"
+  },
+  "callback_url": "https://merchant.example.com/waftpay/callbacks"
+}'
+```
+
+---
+
+## Credentials & keys
+
+- Maintain **separate** OAuth Client IDs/Secrets and signing keys per environment.
+- Keep private keys **server‑side only** and rotate regularly.
+- Enforce least privilege: ensure the Production client has access only to the services it needs.
+
+> See **Authentication** and **Signing Requests** for how to generate and rotate RSA‑2048 PEM keys and how to compute `X-Custom-Signature`.
+
+---
+
+## Webhooks
+
+- Use distinct webhook endpoints per environment, e.g.:  
+  - Sandbox → `https://staging.example.com/waftpay/callbacks`  
+  - Production → `https://merchant.example.com/waftpay/callbacks`
+- Endpoints **must** be HTTPS and return a fast **2xx** to acknowledge.
+- Verify the webhook signature using the same signing scheme used for requests.
+
+---
+
+## Behavioural differences
+
+- **Limits & throughput:** Sandbox is throttled and may have lower throughput than Production.
+- **Third‑party integrations:** In Sandbox, payouts and collections are **simulated** and will not move real funds.
+- **Errors:** Error shapes and codes are identical across environments (see **Errors**).
+
+---
+
+## Best practices
+
+- Treat Production credentials and keys as **secrets**; keep them out of client apps and repos.
+- Log the **environment**, **request_id**, and **extended error code** for every call.
+- Use **idempotency** on POSTs and ensure `transaction.reference` is unique per attempt.
+- Run end‑to‑end tests in Sandbox before promoting changes to Production.
+- Monitor webhooks separately per environment and alert on delivery failures.
+
+---
+
+## See also
+- **Authentication** — obtain a client-credentials token: [/authentication](/authentication)
+- **Signing Requests** — compute and send `X-Custom-Signature`: [/signing-requests](/signing-requests)
+- **Errors** — interpret extended error codes: [/errors](/errors)
+
