@@ -111,6 +111,7 @@
         }
       }
     },
+
     "/authentication-service/v1/api/generate-token": {
       "post": {
         "tags": [
@@ -245,6 +246,7 @@
         }
       }
     },
+
     "/payments-api-service/v1/payouts": {
       "post": {
         "tags": [
@@ -312,6 +314,7 @@
         }
       }
     },
+
     "/payments-api-service/v1/payouts/{reference}": {
       "get": {
         "tags": [
@@ -349,118 +352,30 @@
         }
       }
     },
-    "/payments/{payment_id}": {
-      "get": {
-        "tags": [
-          "Payments"
-        ],
-        "description": "Retrieve a payment by ID.",
-        "parameters": [
-          {
-            "name": "payment_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Payment",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Payment"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Payments"
-        ],
-        "description": "Confirm a payment that requires an out-of-band authorization (e.g., STK push / OTP).",
-        "parameters": [
-          {
-            "name": "payment_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConfirmPaymentRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Payment updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Payment"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Payments"
-        ],
-        "description": "Cancel a payment that is not yet completed.",
-        "parameters": [
-          {
-            "name": "payment_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Payment canceled"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
+
     "/payments-api-service/v1/collections": {
+      "servers": [
+        { "url": "https://sandbox.waftpay.io/api", "description": "Sandbox (Collections TSQ)" },
+        { "url": "https://api.waftpay.io", "description": "Production (Collections TSQ)" }
+      ],
       "post": {
         "tags": [
           "Collections"
         ],
         "summary": "Initiate Collection",
         "operationId": "collectionsInitiate",
-        "description": "Start a customer payment collection. Returns 202 Accepted on enqueue; final outcome is sent via webhook or available via status query.",
+        "description": "Start a customer payment collection. Returns **202 Accepted** on enqueue; final outcome is sent via webhook or available via status query.",
+        "parameters": [
+          {
+            "name": "X-Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Strongly recommended. Reuse the same value as transaction.reference to dedupe retries."
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -526,22 +441,126 @@
                         "time_received": "2025-04-04T06:13:52.585619Z"
                       }
                     }
+                  },
+                  "duplicateIgnored": {
+                    "value": {
+                      "status": "200.100",
+                      "code": "DUPLICATE_IGNORED",
+                      "description": "Duplicate collection ignored",
+                      "data": {
+                        "transaction_reference": "TNC000008",
+                        "payment_reference": "1RJITP5HLL",
+                        "time_received": "2025-04-04T06:13:52.585619Z"
+                      }
+                    }
                   }
                 }
               }
             }
           },
           "400": {
-            "$ref": "#/components/responses/PayoutRemittanceBadRequest400"
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaftpayErrorEnvelope"
+                },
+                "examples": {
+                  "missingZ": {
+                    "summary": "Timestamp must end with 'Z'",
+                    "value": {
+                      "code": "400.100",
+                      "status": "REJECTED",
+                      "description": "Validation failed",
+                      "data": {
+                        "field_errors": [
+                          {
+                            "field": "transaction.timestamp",
+                            "message": "Must end with 'Z' (UTC)"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "invalidAccount": {
+                    "summary": "Invalid recipient account",
+                    "value": {
+                      "code": "400.100",
+                      "status": "REJECTED",
+                      "description": "Validation failed",
+                      "data": {
+                        "field_errors": [
+                          {
+                            "field": "recipient.account",
+                            "message": "Invalid account"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
-            "$ref": "#/components/responses/PayoutRemittanceUnauthorized401"
+            "description": "Failed Authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaftpayErrorEnvelope"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "code": "400.200",
+                      "status": "REJECTED",
+                      "description": "Failed Authentication",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
           },
           "403": {
-            "$ref": "#/components/responses/PayoutRemittanceForbidden403"
+            "description": "Failed Authorization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaftpayErrorEnvelope"
+                },
+                "examples": {
+                  "forbidden": {
+                    "value": {
+                      "code": "403.300",
+                      "status": "REJECTED",
+                      "description": "Failed Authorization",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
           },
           "500": {
-            "$ref": "#/components/responses/PayoutRemittanceInternal500"
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaftpayErrorEnvelope"
+                },
+                "examples": {
+                  "internal": {
+                    "value": {
+                      "code": "400.500",
+                      "status": "FAILED",
+                      "description": "Internal server error",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -549,20 +568,20 @@
             "bearerAuth": []
           }
         ],
-        "parameters": [
+        "x-codeSamples": [
           {
-            "name": "X-Idempotency-Key",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Strongly recommended. Reuse the same value as transaction.reference to dedupe retries."
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST https://sandbox.waftpay.io/api/payments-api-service/v1/collections           -H \"Authorization: Bearer YOUR_JWT\"           -H \"Content-Type: application/json\"           -H \"X-Idempotency-Key: TNC000008\"           -d '{\n    \"transaction\": {\n      \"reference\": \"TNC000008\",\n      \"amount\": \"1000.00\",\n      \"currency\": \"KES\",\n      \"description\": \"Test description\",\n      \"timestamp\": \"2025-01-21T12:30:10Z\"\n    },\n    \"originator\": {\n      \"msisdn\": \"254712345678\",\n      \"channel\": \"USSD\",\n      \"country\": \"KE\",\n      \"name\": \"John Doe\",\n      \"purpose\": \"Salary Payment\"\n    },\n    \"recipient\": {\n      \"service_code\": \"RMT_WU\",\n      \"invoice_number\": \"3456789987654\",\n      \"reference\": \"INVJMA01\",\n      \"account\": \"254712345678\"\n    },\n    \"callback_url\": \"https://merchant.example.com/webhooks/payments\",\n    \"meta\": {\n      \"note\": \"This info is returned as part of the callback\",\n      \"agent_id\": \"AGENT456\"\n    }\n  }'\n"
           }
         ]
       }
     },
     "/payments-tsq-service/v1/query": {
+      "servers": [
+        { "url": "https://sandbox.waftpay.io/api", "description": "Sandbox (Collections TSQ)" },
+        { "url": "https://api.waftpay.io", "description": "Production (Collections TSQ)" }
+      ],
       "post": {
         "tags": [
           "Collections"
@@ -647,17 +666,185 @@
             }
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaftpayErrorEnvelope"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "code": "400.200",
+                      "status": "REJECTED",
+                      "description": "Failed Authentication",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
           {
             "bearerAuth": []
           }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST https://sandbox.waftpay.io/api/payments-tsq-service/v1/query           -H \"Authorization: Bearer YOUR_JWT\"           -H \"Content-Type: application/json\"           -d '{\"transaction_reference\":\"TNC000008\"}'\n"
+          }
         ]
       }
     },
+    "/payments-api-service/v1/collections/refunds": {
+      "servers": [
+        { "url": "https://sandbox.waftpay.io/api", "description": "Sandbox (Collections TSQ)" },
+        { "url": "https://api.waftpay.io", "description": "Production (Collections TSQ)" }
+      ],
+      "post": {
+        "tags": [
+          "Collections"
+        ],
+        "summary": "Initiate Collection Refund",
+        "operationId": "collectionsRefundInitiate",
+        "description": "Initiate a refund for a previously succeeded collection.",
+        "parameters": [
+          {
+            "name": "X-Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Unique refund request key to safely retry."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundInitiateRequest"
+              },
+              "examples": {
+                "default": {
+                  "value": {
+                    "original": {
+                      "transaction_reference": "TNC000008"
+                    },
+                    "refund": {
+                      "amount": "1000.00",
+                      "reason_code": "DUPLICATE_CHARGE",
+                      "description": "Customer cancelled order #1234",
+                      "timestamp": "2025-06-01T09:10:11Z"
+                    },
+                    "callback_url": "https://merchant.example.com/webhooks/refunds",
+                    "meta": {
+                      "agent_id": "AGENT789"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Refund accepted for processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundInitiateResponse"
+                },
+                "examples": {
+                  "accepted": {
+                    "value": {
+                      "status": "200.100",
+                      "code": "ACCEPTED",
+                      "description": "Refund accepted",
+                      "data": {
+                        "refund_reference": "RF12345",
+                        "original_transaction_reference": "TNC000008",
+                        "time_received": "2025-06-01T09:10:11Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaftpayErrorEnvelope"
+                },
+                "examples": {
+                  "invalid": {
+                    "value": {
+                      "code": "400.100",
+                      "status": "REJECTED",
+                      "description": "Validation failed",
+                      "data": {
+                        "field_errors": [
+                          {
+                            "field": "refund.amount",
+                            "message": "Must be positive decimal with two digits"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Failed Authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaftpayErrorEnvelope"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "code": "400.200",
+                      "status": "REJECTED",
+                      "description": "Failed Authentication",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST https://sandbox.waftpay.io/api/payments-api-service/v1/collections/refunds           -H \"Authorization: Bearer YOUR_JWT\"           -H \"Content-Type: application/json\"           -H \"X-Idempotency-Key: RF-TNC000008\"           -d '{\n    \"original\": {\"transaction_reference\":\"TNC000008\"},\n    \"refund\": {\"amount\":\"1000.00\",\"reason_code\":\"DUPLICATE_CHARGE\",\"description\":\"Customer cancelled order #1234\",\"timestamp\":\"2025-06-01T09:10:11Z\"},\n    \"callback_url\":\"https://merchant.example.com/webhooks/refunds\",\n    \"meta\":{\"agent_id\":\"AGENT789\"}\n  }'\n"
+          }
+        ]
+      }
+    },
+
     "/refund-reversal": {
+      "servers": [
+        { "url": "https://sandbox.waftpay.io/api", "description": "Sandbox (Collections TSQ)" },
+        { "url": "https://api.waftpay.io", "description": "Production (Collections TSQ)" }
+      ],
       "post": {
         "tags": [
           "Collections"
@@ -689,51 +876,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RefundReversalStatusResponse"
+                },
+                "examples": {
+                  "ok": {
+                    "value": {
+                      "code": 102,
+                      "status": "SUCCESS",
+                      "description": "Reversal completed",
+                      "data": {
+                        "request_uuid": "A333RTYUT"
+                      }
+                    }
+                  }
                 }
               }
             }
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
-    "/payments-api-service/v1/collections/refunds": {
-      "post": {
-        "tags": [
-          "Collections"
-        ],
-        "summary": "Initiate Collection Refund",
-        "operationId": "collectionsRefundInitiate",
-        "description": "Initiate a refund for a previously succeeded collection.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefundInitiateRequest"
-              },
-              "examples": {
-                "default": {
-                  "value": {
-                    "original": {
-                      "transaction_reference": "TNC000008"
-                    },
-                    "refund": {
-                      "amount": "1000.00",
-                      "reason_code": "DUPLICATE_CHARGE",
-                      "description": "Customer cancelled order #1234",
-                      "timestamp": "2025-06-01T09:10:11Z"
-                    },
-                    "callback_url": "https://merchant.example.com/webhooks/refunds",
-                    "meta": {
-                      "agent_id": "AGENT789"
+            "description": "Failed Authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaftpayErrorEnvelope"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "value": {
+                      "code": "400.200",
+                      "status": "REJECTED",
+                      "description": "Failed Authentication",
+                      "data": null
                     }
                   }
                 }
@@ -741,241 +913,21 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "X-Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Unique refund request key to safely retry."
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Refund accepted for processing",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RefundInitiateResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/PayoutRemittanceBadRequest400"
-          },
-          "401": {
-            "$ref": "#/components/responses/PayoutRemittanceUnauthorized401"
-          }
-        },
         "security": [
           {
             "bearerAuth": []
           }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "curl",
+            "label": "cURL",
+            "source": "curl -X POST https://sandbox.waftpay.io/api/refund-reversal           -H \"Authorization: Bearer YOUR_JWT\"           -H \"Content-Type: application/json\"           -d '{\"request_uuid\":\"A333RTYUT\"}'\n"
+          }
         ]
       }
     },
-    "/remittance/payouts": {
-      "post": {
-        "tags": [
-          "Remittance"
-        ],
-        "description": "Create a payout to a mobile wallet or bank account.",
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePayoutRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Payout created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Payout"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "Remittance"
-        ],
-        "description": "List payouts with pagination.",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "starting_after",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "pending",
-                "processing",
-                "succeeded",
-                "failed",
-                "canceled"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of payouts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListPayoutsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          }
-        }
-      }
-    },
-    "/remittance/payouts/{payout_id}": {
-      "get": {
-        "tags": [
-          "Remittance"
-        ],
-        "description": "Retrieve a payout.",
-        "parameters": [
-          {
-            "name": "payout_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Payout",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Payout"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Remittance"
-        ],
-        "description": "Confirm a payout (if additional confirmation is required).",
-        "parameters": [
-          {
-            "name": "payout_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConfirmPayoutRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Payout updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Payout"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Remittance"
-        ],
-        "description": "Cancel a payout that has not been sent.",
-        "parameters": [
-          {
-            "name": "payout_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Payout canceled"
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
+
     "/webhooks/waftpay": {
       "post": {
         "tags": [
@@ -1011,6 +963,7 @@
         "security": []
       }
     },
+
     "/health": {
       "get": {
         "tags": [
@@ -1247,6 +1200,7 @@
           }
         ]
       },
+
       "PayoutInitiationResponse": {
         "type": "object",
         "required": [
@@ -1349,6 +1303,7 @@
           }
         }
       },
+
       "PayoutStatusResponse": {
         "type": "object",
         "required": [
@@ -1443,6 +1398,7 @@
           }
         }
       },
+
       "Payment": {
         "type": "object",
         "required": [
@@ -1506,6 +1462,453 @@
           }
         }
       },
+
+      "CreateCollectionRequest": {
+        "type": "object",
+        "required": [
+          "transaction",
+          "originator",
+          "recipient",
+          "callback_url"
+        ],
+        "properties": {
+          "transaction": {
+            "type": "object",
+            "required": [
+              "reference",
+              "amount",
+              "currency",
+              "description",
+              "timestamp"
+            ],
+            "properties": {
+              "reference": {
+                "type": "string",
+                "description": "Idempotency key; reuse to safely retry."
+              },
+              "amount": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{2})$",
+                "example": "1000.00",
+                "description": "Major units; two decimals."
+              },
+              "currency": {
+                "type": "string",
+                "example": "KES"
+              },
+              "description": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "UTC RFC3339, must end with 'Z'."
+              }
+            }
+          },
+          "originator": {
+            "type": "object",
+            "required": [
+              "msisdn",
+              "channel",
+              "country"
+            ],
+            "properties": {
+              "msisdn": {
+                "type": "string",
+                "description": "Payer MSISDN (no '+')."
+              },
+              "channel": {
+                "type": "string",
+                "example": "USSD"
+              },
+              "country": {
+                "type": "string",
+                "example": "KE"
+              },
+              "name": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string"
+              }
+            }
+          },
+          "recipient": {
+            "type": "object",
+            "required": [
+              "service_code",
+              "reference",
+              "account"
+            ],
+            "properties": {
+              "service_code": {
+                "type": "string",
+                "example": "RMT_WU"
+              },
+              "invoice_number": {
+                "type": "string"
+              },
+              "reference": {
+                "type": "string",
+                "description": "Your beneficiary reference."
+              },
+              "account": {
+                "type": "string",
+                "description": "Beneficiary handle (MSISDN)."
+              }
+            }
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "CollectionInitiationResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "code",
+          "description",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "e.g., 200.100"
+          },
+          "code": {
+            "type": "string",
+            "description": "ACCEPTED, REJECTED, or DUPLICATE_IGNORED."
+          },
+          "description": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "transaction_reference",
+              "payment_uuid",
+              "payment_reference",
+              "time_received"
+            ],
+            "properties": {
+              "amount": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "total_charges": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "total_amount": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "transaction_reference": {
+                "type": "string"
+              },
+              "payment_uuid": {
+                "type": "string"
+              },
+              "payment_reference": {
+                "type": "string"
+              },
+              "time_received": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "TsqQueryRequest": {
+        "type": "object",
+        "properties": {
+          "transaction_reference": {
+            "type": "string"
+          },
+          "payment_uuid": {
+            "type": "string"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "transaction_reference"
+            ]
+          },
+          {
+            "required": [
+              "payment_uuid"
+            ]
+          }
+        ],
+        "additionalProperties": false,
+        "description": "Provide exactly one of transaction_reference or payment_uuid."
+      },
+      "TsqQueryResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "status",
+          "description",
+          "results"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PENDING",
+              "FAILED",
+              "NOT FOUND"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "results": {
+            "type": "object",
+            "properties": {
+              "result_code": {
+                "type": "string"
+              },
+              "result_description": {
+                "type": "string"
+              },
+              "amount": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "total_charges": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "total_amount": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "service_code": {
+                "type": "string"
+              },
+              "msisdn": {
+                "type": "string"
+              },
+              "transaction_reference": {
+                "type": "string"
+              },
+              "payment_uuid": {
+                "type": "string"
+              },
+              "external_reference": {
+                "type": "string"
+              },
+              "time_processed": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "validation_hash": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "RefundInitiateRequest": {
+        "type": "object",
+        "required": [
+          "original",
+          "refund",
+          "callback_url"
+        ],
+        "properties": {
+          "original": {
+            "type": "object",
+            "properties": {
+              "transaction_reference": {
+                "type": "string"
+              },
+              "payment_uuid": {
+                "type": "string"
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "transaction_reference"
+                ]
+              },
+              {
+                "required": [
+                  "payment_uuid"
+                ]
+              }
+            ]
+          },
+          "refund": {
+            "type": "object",
+            "required": [
+              "amount",
+              "reason_code",
+              "timestamp"
+            ],
+            "properties": {
+              "amount": {
+                "type": "string",
+                "pattern": "^\\d+(\\.\\d{2})$",
+                "example": "1000.00"
+              },
+              "reason_code": {
+                "type": "string",
+                "enum": [
+                  "CUSTOMER_REQUEST",
+                  "DUPLICATE_CHARGE",
+                  "ORDER_CANCELLED",
+                  "OTHER"
+                ]
+              },
+              "description": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "RefundInitiateResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "code",
+          "description",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "refund_reference": {
+                "type": "string"
+              },
+              "original_transaction_reference": {
+                "type": "string"
+              },
+              "time_received": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "RefundReversalStatusRequest": {
+        "type": "object",
+        "required": [
+          "request_uuid"
+        ],
+        "properties": {
+          "request_uuid": {
+            "type": "string"
+          }
+        }
+      },
+      "RefundReversalStatusResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "status",
+          "description"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          }
+        }
+      },
+
       "ListPaymentsResponse": {
         "type": "object",
         "properties": {
