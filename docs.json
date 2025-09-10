@@ -44,7 +44,6 @@
           {
             "group": "Getting started",
             "pages": [
-              "quickstart",
               "environments",
               "errors"
             ]
