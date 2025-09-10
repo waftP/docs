@@ -1478,11 +1478,11 @@
 
       "RefundReversalTsqRequest": {
         "type": "object",
-        "required": ["request_uuid"],
+        "required": ["reference"],
         "properties": {
-          "request_uuid": {
+          "reference": {
             "type": "string",
-            "description": "UUID or token that identifies the refund reversal request (as issued when the reversal was initiated).",
+            "description": "Request UUID or token that identifies the refund reversal request (as issued when the reversal was initiated).",
             "example": "A333RTYUT"
           }
         }
