@@ -78,7 +78,8 @@
           {
             "group": "Payment Requests",
             "pages": [
-              "api-reference/payment-requests/get-started"
+              "api-reference/payment-requests/get-started",
+              "api-reference/payment-requests/rules-and-process-flow"
             ]
           },
           {
@@ -92,19 +93,16 @@
             "group": "Collections",
             "pages": [
               "api-reference/collections/collection-initiate",
-              "api-reference/collections/collections-refund",
               "api-reference/collections/collections-status",
+              "api-reference/collections/collections-refund",
               "api-reference/collections/collections-confirm"
             ]
           },
           {
             "group": "Remittance",
             "pages": [
-              "api-reference/remittance/payouts-create",
-              "api-reference/remittance/payouts-list",
-              "api-reference/remittance/payouts-retrieve",
-              "api-reference/remittance/payouts-confirm",
-              "api-reference/remittance/payouts-cancel"
+              "api-reference/remittance/remittance-initiate",
+              "api-reference/remittance/remittance-status"
             ]
           },
           {

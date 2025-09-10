@@ -1,0 +1,18 @@
+---
+title: "Check Remittance Status"
+description: "Retrieve the latest status of a remittance using your client reference/uuid."
+openapi: "POST /payments-tsq-service/v1/query/payments"
+---
+
+# Check Remittance Status
+
+Use your original `transaction.reference` to retrieve the remittance’s latest status.
+
+> **Auth**: Requires a **Remittance token** (`Authorization: Bearer <collection_token>`).
+
+---
+
+## Endpoint
+
+```http
+GET {BASE_URL}/payments-tsq-service/v1/query/payments

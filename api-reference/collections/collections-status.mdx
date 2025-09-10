@@ -1,33 +1,18 @@
 ---
-title: "Check Collections Status"
-description: "Query a collection by transaction_reference or payment_uuid."
-api: "POST /payments-tsq-service/v1/query"
+title: "Check Collection Status"
+description: "Retrieve the latest status of a collection using your client reference/uuid."
+openapi: "POST /payments-tsq-service/v1/query/payments"
 ---
 
-Use this when you want a pull-based confirmation or a safety net if webhooks can’t be delivered.
+# Check Collection Status
 
-> Provide **exactly one** of: `transaction_reference` **xor** `payment_uuid`.
+Use your original `transaction.reference` to retrieve the collection’s latest status.
 
----
-
-## Required header
-
-<ParamField header="Authorization" type="string" required placeholder="Bearer eyJhbGciOi...">
-  Bearer token from the Authentication Service.
-</ParamField>
+> **Auth**: Requires a **Collection token** (`Authorization: Bearer <collection_token>`).
 
 ---
 
-## Request body
-<ParamField body="transaction_reference" type="string" placeholder="TNC000008" />
+## Endpoint
 
-<ParamField body="payment_uuid" type="string" placeholder="8363546214883574601" />
-
-> Provide **either** `transaction_reference` **or** `payment_uuid` (not both).
-
----
-
-## Example requests
-
-```json
-{ "transaction_reference": "TNC000008" }
+```http
+GET {BASE_URL}/payments-tsq-service/v1/query/payments

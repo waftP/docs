@@ -1,44 +1,22 @@
 ---
-title: "Refunds"
-description: "When refunds are allowed and how to check refund reversal status."
-api: "POST /refund-reversal"
+title: "Initiate Refund Reversal (Query)"
+description: "Query the status of a refund reversal by request UUID."
+openapi: "POST /refund-reversal"
 ---
 
-Refunds let you return funds to a payer after a successful collection. Refunds are **asynchronous**; you’ll receive `202 Accepted` if the request is queued, and a webhook (or status poll) for the final outcome.
+<Note>
+    This endpoint **does not create** a refund; it **queries the status** of an already-initiated refund reversal using a <code>request_uuid</code>.
+</Note>
 
----
+## Prerequisites
 
-## When can a refund be done?
-- Original collection is **succeeded**.
-- Provider supports refunds for the **service_code** used.
-- Refund window hasn’t expired (per commercial terms).
-- Amount is available and not locked by chargebacks or prior refunds.
-- You own the original transaction (`client_id` match).
-
-## Check refund reversal status (Try it)
-<ParamField body="request_uuid" type="string" required placeholder="A333RTYUT" />
-
-
-**Constraints**
-
-- The original collection must be **`SUCCESS`**.
-- Refund amount ≤ original `total_amount`.
-- Refund window may be limited by MNO/bank policies (e.g., same-day).
-- You must own the original `client_id` / `payment_uuid`.
-- Final outcome depends on **downstream operator** acceptance.
-
-> If partial refunds are disallowed in your contract, request the **full** original amount.
+- **Bearer token** from `POST /authentication-service/v1/api/generate-token` (Refunds/Reversals product scope)
+- **Content-Type**: `application/json`
 
 ---
 
-## Initiate a refund (API)
+## Required headers
 
-> **Note**: Endpoint path can vary by environment. If your gateway prefixes routes (e.g., `/user`), adjust `api:` accordingly.
-
-**Try it**
-
-```mdx
----
-api: "POST https://payments-api.dev.pockets-pay.com/payments-api-service/v1/refunds"
-playground: "interactive"
----
+```http
+Authorization: Bearer <token>
+Content-Type: application/json

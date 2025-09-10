@@ -1,0 +1,90 @@
+---
+title: "Rules & Process Flow"
+description: "Operational rules, gateway filtering, and controller/service responsibilities for Collections."
+---
+
+## 1) Rules
+
+### Authentication & Security
+- Never expose **API keys/secrets** in logs, traces, or error messages.
+- Encrypt sensitive data (API secrets, private keys) **at rest** and **in transit**.
+- Scope tokens to products; use the correct token for **Collections** vs **Payouts/Remittance**.
+- Store Bearer tokens server-side; rotate and revoke when necessary.
+
+### Data Validation & Integrity
+- Validate **all inputs** before processing (type, length, format, enums).
+- Enforce **mandatory fields** (reject null/empty).
+- Constrain types/lengths to prevent overflows and unexpected errors.
+- Ensure request bodies conform to your **JSON Schema** (reject on validation errors).
+- Defend against **SQL Injection**, **XSS**, and deserialization attacks.
+
+### Message Queue Processing (RabbitMQ & NATS)
+- Use **durable queues** to prevent message loss.
+- Configure **DLQs (dead-letter queues)** for failures.
+- Make messages **idempotent** (e.g., use `transaction.reference` as the idempotency key).
+- Implement **retries with exponential backoff** for transient errors.
+
+### Logging & Monitoring
+- Log requests/responses **without** sensitive fields (no secrets/tokens/signatures).
+- Use **structured logging** (JSON fields for correlation IDs, reference IDs, user agent).
+- Monitor MQ depths, DLQ rates, and processing latencies; alert on anomalies.
+- Maintain **audit logs** for critical ops (logins, config changes, key rotations).
+
+---
+
+## 2) Collections Request — Contract (post-auth validation)
+
+After the Bearer token is validated, the following fields are required/validated:
+
+| JSON Path                     | Type   | Description                                                                 | Required |
+|------------------------------|--------|-----------------------------------------------------------------------------|----------|
+| `transaction.reference`      | string | Client-unique idempotency key                                               | YES      |
+| `transaction.amount`         | string | Transaction amount                                                          | YES      |
+| `transaction.description`    | string | Description of the collection/remittance                                    | YES      |
+| `transaction.currency`       | string | Currency code (e.g., `KES`)                                                 | YES      |
+| `transaction.timestamp`      | string | Client-initiated timestamp string                                           | YES      |
+| `originator.msisdn`          | string | Originating phone number (MSISDN)                                           | YES      |
+| `originator.country`         | string | Country code (e.g., `KE`)                                                   | YES      |
+| `originator.channel`         | string | Channel/device (e.g., `USSD`, `API`)                                        | YES      |
+| `recipient.service_code`     | string | Service to consume (e.g., `RMT_WU`)                                         | YES      |
+| `recipient.reference`        | string | Client-unique reference for recipient context                               | YES      |
+| `recipient.account`          | string | Customer account identifier (phone/wallet/bank)                             | YES      |
+| `callback_url`               | string | HTTPS webhook for final status                                              | YES      |
+| `meta.note`                  | string | Additional description/notes                                                | YES      |
+| `meta.agent_id`              | string | Agent identifier                                                            | YES      |
+
+<Note>
+Follow your configured <code>recipient.service_code</code> contract for which fields are enforced.
+</Note>
+
+---
+
+## 3) API Gateway / Filter Layer
+
+**Responsibilities**
+- Wrap request/response to read body and headers.
+- Skip filtering for **Swagger** and **/actuator** endpoints.
+- Apply filters for:
+  - `/payments-api-service/v1/collections`
+  - `/payments-api-service/v1/payouts`
+  - `/payments-api-service/v1/remittance`
+
+**Filter Flow**
+1. Verify `Authorization` header exists and starts with `Bearer `.
+2. Parse JWT; extract:
+   - **Token Subject** (token type)
+   - **ClientDetails** (custom claims: org/product/permissions)
+3. Extract `recipient.service_code` from the request body.
+4. Check **ClientDetails** authorizes the requested service code.
+   - If unauthorized → **403 Forbidden** (persist the invalid request for audit).
+5. If authorized → wrap request and **pass** down the chain.
+
+**Special Handling**
+- Missing/invalid token → **401 Unauthorized**.
+- Missing `recipient.service_code` → **403 Forbidden**.
+- Duplicate `transaction.reference` → handle gracefully (idempotent response).
+
+**Reference headers**
+```http
+Authorization: Bearer <JWT Token>
+Content-Type: application/json

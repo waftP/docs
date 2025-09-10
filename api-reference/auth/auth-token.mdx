@@ -4,41 +4,37 @@ description: "Exchange client credentials for a short-lived Bearer token."
 openapi: "POST /authentication-service/v1/api/generate-token"
 ---
 
-> Use **client_credentials** from your server. This endpoint does not require a Bearer token.
+> Use **client_credentials** from your server. This endpoint does **not** require a Bearer token.
 
 # Authentication Token – Client Credentials Flow
 
 The Waftpay API uses **Client Credentials** for server-to-server authentication.
-This flow is **not a user login** – you do not pass email or password here. Instead, your application authenticates using a **Client ID** and **Client Secret** issued to you after onboarding.
+This flow is **not a user login** – you do not pass email or password. Your application authenticates using a **Client ID** and **Client Secret** issued during onboarding.
 
 ---
 
 ## Token Types
 
-There are **three types of tokens** that can be generated, each tied to your use case:
+There are **three token types**, each tied to your use case:
 
-- **Payout Token** – used when making disbursements (sending funds out).
-- **Collection Token** – used when receiving payments from customers.
-- **Remittance Token** – used for moving money across accounts or cross-border transfers.
+- **Payout Token** – sending funds out (disbursements).
+- **Collection Token** – receiving funds from customers.
+- **Remittance Token** – account-to-account or cross-border movement.
 
-All tokens are requested from this same endpoint, using your API key and secret.
+All tokens are requested from this same endpoint using your key/secret.
 
 ---
 
 ## Where to Find Your API Key and Secret
 
-Once onboarded to Waftpay:
-
 1. Log into the **Waftpay Client Dashboard**.
-2. Navigate to **Developer → Settings**.
-3. Copy your **API Key** and **API Secret**.
-4. Create a **Private Key** and a **Public Key**. This will be specifically used for **Remittance** and **Payouts** requests. The **RSA Algorithm should be size 256**.
+2. Go to **Developer → Settings**.
+3. Copy your **API Key** and **API Secret** (maps to `consumer_key` and `consumer_secret`).
+4. (If required by your product) Generate **RSA keys** for request signing (e.g., payouts/remittance). Use **RSA-2048** with **SHA-256** signatures.
 
-These map to the `consumer_key` and `consumer_secret` parameters in your request body.
-
-:::note
-If you regenerate your API key/secret in the dashboard, the **previous credentials become invalid immediately**.
-:::
+<Note>
+    If you regenerate your key/secret in the dashboard, the **previous credentials become invalid immediately**.
+</Note>
 
 ---
 

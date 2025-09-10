@@ -32,6 +32,70 @@ You need an **RSA 2048** key pair in **PEM** format:
 - **Private key**: PKCS#8 PEM (`-----BEGIN PRIVATE KEY-----`)
 - **Public key**: X.509 SubjectPublicKeyInfo PEM (`-----BEGIN PUBLIC KEY-----`)
 
+
+## Generate `X-Custom-Signature`
+
+**String to sign (example):** `TXN123654573100KENewqeqw`
+(Use your exact payload values and casing.)
+
+<Tabs>
+    <Tab title="Node.js">
+
+        ```js
+        import crypto from "crypto";
+        import fs from "fs";
+
+        const txRef = "TXN123654573";
+        const amount = "100";   // stringify exactly as sent
+        const country = "KEN";  // match payload (KE vs KEN)
+        const service = "ewqeqw";
+
+        const signingString = `${txRef}${amount}${country}${service}`;
+        const privateKeyPem = fs.readFileSync("client_private.pem", "utf8");
+
+        const sig = crypto.sign("RSA-SHA256", Buffer.from(signingString, "utf8"), privateKeyPem);
+        console.log(sig.toString("base64")); // -> X-Custom-Signature
+        ```
+    </Tab>
+    <Tab title="Python">
+
+        ```python
+        import base64
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding
+
+        tx_ref = "TXN123654573"
+        amount = "100"
+        country = "KEN"
+        service = "ewqeqw"
+
+        signing_string = f"{tx_ref}{amount}{country}{service}".encode("utf-8")
+
+        with open("client_private.pem", "rb") as f:
+        key = serialization.load_pem_private_key(f.read(), password=None)
+
+        sig = key.sign(signing_string, padding.PKCS1v15(), hashes.SHA256())
+        print(base64.b64encode(sig).decode("utf-8"))  # -> X-Custom-Signature
+        ```
+    </Tab>
+    <Tab title="PHP">
+
+        ```php
+        <?php
+        $signingString = "TXN123654573100KENewqeqw";
+        $privateKey = openssl_pkey_get_private(file_get_contents('client_private.pem'));
+        openssl_sign($signingString, $rawSig, $privateKey, OPENSSL_ALGO_SHA256);
+        echo base64_encode($rawSig), PHP_EOL; // -> X-Custom-Signature
+        ```
+    </Tab>
+</Tabs>
+
+<Note>
+    Use <em>standard Base64</em> (not Base64URL). Algorithm is <strong>RS256</strong> (RSA PKCS#1 v1.5 + SHA-256).
+</Note>
+
+---
+
 ### OpenSSL (Linux/macOS/Windows with OpenSSL)
 
 ```bash
@@ -40,3 +104,5 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out client_private
 
 # 2) Derive the matching public key (X.509 SPKI)
 openssl rsa -pubout -in client_private.pem -out client_public.pem
+
+---

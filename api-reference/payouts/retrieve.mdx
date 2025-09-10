@@ -1,7 +1,7 @@
 ---
 title: "Check Payout Status"
 description: "Retrieve the latest status of a payout using your client reference."
-openapi: "GET /payments-api-service/v1/payouts/{reference}"
+openapi: "post /payments-tsq-service/v1/query/payments"
 ---
 
 # Check Payout Status
@@ -15,4 +15,4 @@ Use your original `transaction.reference` to retrieve the payout’s latest stat
 ## Endpoint
 
 ```http
-GET {BASE_URL}/payments-api-service/v1/payouts/{reference}
+GET {BASE_URL}/payments-tsq-service/v1/query/payments
