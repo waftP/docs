@@ -4,6 +4,8 @@
   "name": "Waftpay Developer Docs",
   "colors": {
     "primary": "#4A6CF7",
+    "secondary": "#4A6CF7",
+    "primary": "#4A6CF7",
     "light": "#FBB040",
     "dark": "#15803D"
   },
@@ -94,8 +96,7 @@
             "pages": [
               "api-reference/collections/collection-initiate",
               "api-reference/collections/collections-status",
-              "api-reference/collections/collections-refund",
-              "api-reference/collections/collections-confirm"
+              "api-reference/collections/collections-refund"
             ]
           },
           {
