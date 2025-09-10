@@ -1290,16 +1290,19 @@
 
       "PaymentStatusQueryRequest": {
         "type": "object",
-        "required": ["reference"],
         "properties": {
-          "reference": {
+          "transaction_reference": {
             "type": "string",
-            "description": "This is either the client-generated transaction reference or the payment UUID."
+            "description": "This is the client-generated transaction reference"
+          },
+          "payment_uuid": {
+            "type": "string",
+            "description": "This is either the payment UUID."
           }
         },
         "examples": [
-          { "reference": "TXN213687756272200", "reference_type": "transaction_reference", "product": "payout" },
-          { "reference": "1RJITP5HLL", "reference_type": "payment_reference", "product": "collection" }
+          { "transaction_reference": "TXN213687756272200" },
+          { "payment_uuid": "1RJITP5HLL" }
         ]
       },
 
