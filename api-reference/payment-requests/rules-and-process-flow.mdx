@@ -57,28 +57,6 @@ After the Bearer token is validated, the following fields are required/validated
 Follow your configured <code>recipient.service_code</code> contract for which fields are enforced.
 </Note>
 
----
-
-## 3) API Gateway / Filter Layer
-
-**Responsibilities**
-- Wrap request/response to read body and headers.
-- Skip filtering for **Swagger** and **/actuator** endpoints.
-- Apply filters for:
-  - `/payments-api-service/v1/collections`
-  - `/payments-api-service/v1/payouts`
-  - `/payments-api-service/v1/remittance`
-
-**Filter Flow**
-1. Verify `Authorization` header exists and starts with `Bearer `.
-2. Parse JWT; extract:
-   - **Token Subject** (token type)
-   - **ClientDetails** (custom claims: org/product/permissions)
-3. Extract `recipient.service_code` from the request body.
-4. Check **ClientDetails** authorizes the requested service code.
-   - If unauthorized → **403 Forbidden** (persist the invalid request for audit).
-5. If authorized → wrap request and **pass** down the chain.
-
 **Special Handling**
 - Missing/invalid token → **401 Unauthorized**.
 - Missing `recipient.service_code` → **403 Forbidden**.
