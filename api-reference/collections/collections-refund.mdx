@@ -1,16 +1,16 @@
 ---
-title: "Initiate Refund Reversal (Query)"
-description: "Query the status of a refund reversal by request UUID."
+title: "Initiate Refund (Query)"
+description: "Query the status of a refund by request UUID."
 openapi: "POST /refund-reversal"
 ---
 
 <Note>
-    This endpoint **does not create** a refund; it **queries the status** of an already-initiated refund reversal using a <code>request_uuid</code>.
+    This endpoint **does not create** a refund; it **queries the status** of an already-initiated refund using a <code>request_uuid</code>.
 </Note>
 
 ## Prerequisites
 
-- **Bearer token** from `POST /authentication-service/v1/api/generate-token` (Refunds/Reversals product scope)
+- **Bearer token** from `POST /authentication-service/v1/api/generate-token` (Refunds product scope)
 - **Content-Type**: `application/json`
 
 ---
