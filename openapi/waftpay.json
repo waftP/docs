@@ -15,11 +15,15 @@
     },
     {
       "url": "https://authentication.dev.pockets-pay.com",
-      "description": "Sandbox"
+      "description": "Authentication"
     },
     {
       "url": "https://payments-api.dev.pockets-pay.com",
       "description": "Health"
+    },
+    {
+      "url": "https://payments-tsq-api-service.dev.pockets-pay.com",
+      "description": "Status"
     },
     {
       "url": "https://api.waftpay.io",
@@ -916,7 +920,7 @@
           },
           "code": {
             "type": "string",
-            "description": "ACCEPTED, REJECTED, or DUPLICATE_IGNORED."
+            "description": "ACCEPTED, REJECTED."
           },
           "description": {
             "type": "string"
@@ -983,7 +987,7 @@
             "summary": "Duplicate ignored",
             "value": {
               "status": "200.100",
-              "code": "DUPLICATE_IGNORED",
+              "code": "REJECTED",
               "description": "Duplicate payout ignored",
               "data": {
                 "transaction_reference": "TXN213687756272200",
