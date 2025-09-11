@@ -104,6 +104,12 @@
             ]
           },
           {
+            "group": "Wallet",
+            "pages": [
+              "api-reference/wallet/get-balance"
+            ]
+          },
+          {
             "group": "Webhooks",
             "pages": [
               "api-reference/webhooks/receive"

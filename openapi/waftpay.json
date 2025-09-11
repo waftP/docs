@@ -117,6 +117,60 @@
       }
     },
 
+    "/balance": {
+      "get": {
+        "tags": [
+          "Balances"
+        ],
+        "summary": "Wallet Balances",
+        "operationId": "getBalance",
+        "description": "Returns wallet balalances.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Wallet Balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "UP",
+                        "DOWN"
+                      ]
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                },
+                "examples": {
+                  "up": {
+                    "summary": "UP",
+                    "value": {
+                      "status": "UP",
+                      "groups": [
+                        "liveness",
+                        "readiness"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
     "/authentication-service/v1/api/generate-token": {
       "post": {
         "tags": [
@@ -553,44 +607,15 @@
                       "code": 102,
                       "status": "SUCCESS",
                       "description": "Transaction success",
-                      "results": {
-                        "result_code": "21",
-                        "result_description": "The service request is processed successfully",
-                        "amount": 1015,
-                        "total_charges": 0,
-                        "total_amount": "MPESA_KE_MOCK",
-                        "account": "254792452002",
-                        "original_payment_uuid": "882231418121042119",
-                        "original_transaction_reference": "TNC0009886898418",
-                        "original_external_reference": "1V1OPZZGHQ",
-                        "external_reference": "1V33UUE1IR",
-                        "time_processed": "2025-08-26T05:20:27Z"
-                      }
+                      "data": {}
                     }
                   },
                   "failed": {
                     "value": {
-                      "code": 103,
-                      "status": "FAILED",
-                      "description": "Transaction Failed",
-                      "results": {
-                        "result_code": "No response received",
-                        "result_description": "HTTP connect timed out",
-                        "amount": 100,
-                        "total_charges": 1.5,
-                        "total_amount": 101.5,
-                        "service_code": "MOCK_MPESA_COL",
-                        "account": "254712345678",
-                        "transaction_reference": "ref-586351566",
-                        "payment_uuid": "345836869386794168",
-                        "external_reference": null,
-                        "time_processed": "2025-09-09T12:29:21.802553127Z",
-                        "validation_hash": "dfda0d2ddf4897c7bea679e356be89f1c9fab306fcf22c9bf9c73f635cf05031",
-                        "metadata": {
-                          "note": "This info is returned as part of the callback",
-                          "agent_id": "AGENT456"
-                        }
-                      }
+                      "code": 400,
+                      "status": "REJECTED",
+                      "description": "Invalid payment reversal request",
+                      "data": {}
                     }
                   },
                   "unauthorizedInBody": {
@@ -1485,12 +1510,38 @@
 
       "RefundReversalTsqRequest": {
         "type": "object",
-        "required": ["reference"],
+        "required": ["transaction_reference", "payment_uuid", "amount", "notification_url"],
         "properties": {
-          "reference": {
+          "transaction_reference": {
             "type": "string",
-            "description": "Request UUID or token that identifies the refund reversal request (as issued when the reversal was initiated).",
-            "example": "A333RTYUT"
+            "description": "Client-generated reference of the ORIGINAL collection that this refund or reversal applies to. Use the same reference you used when creating the original transaction (idempotency-friendly).",
+            "example": "TNC0009886898418"
+          },
+          "payment_uuid": {
+            "type": "string",
+            "description": "Waftpay platform UUID of the ORIGINAL payment being refunded/reversed.",
+            "example": "882231418121042119"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Refund/reversal amount in major currency units (e.g., 1015 = 1015 KES). Must be less than or equal to the original transaction amount.",
+            "example": 1015
+          },
+          "notification_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Public HTTPS webhook to receive asynchronous status updates for this refund/reversal.",
+            "example": "https://merchant.example.com/callbacks/refund-reversal"
+          },
+          "remarks": {
+            "type": "string",
+            "description": "Optional free-form reason or note for the refund/reversal. Included in dashboards and echoed in webhooks.",
+            "example": "Duplicate charge reversal for order #A-4452"
+          },
+          "meta": {
+            "type": "object",
+            "description": "Arbitrary key-value metadata echoed back in callbacks.",
+            "additionalProperties": true
           }
         }
       },

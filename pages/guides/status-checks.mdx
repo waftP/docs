@@ -133,7 +133,7 @@ Use Status Checks when you need a pull‑based confirmation or as a safety net i
 A: Yes, exponential retries for a fixed window. Use TSQ as a fallback.
 
 **Q: Why is my request rejected with signature errors?**  
-A: Check canonical string order, Base64URL encoding, and that the `kid` matches the registered public key. Ensure `amount` has exactly 2 decimals and timestamp is RFC3339.
+A: Check canonical string order, Base64URL encoding, and that the `kid` matches the registered public key. Ensure `amount` has no decimals.
 
 **Q: Can I query by both `transaction_reference` and `payment_uuid` together?**  
 A: No. Exactly one must be provided.

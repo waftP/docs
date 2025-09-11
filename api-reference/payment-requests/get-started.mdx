@@ -10,6 +10,8 @@ The **Payment Requests** APIs allow you to move money through Waftpay in three d
 - **Payouts** – Disburse funds from your account to customers, vendors, or partners.
 - **Remittance** – Move money between accounts, including cross-border transfers.
 - **Collections** – Accept payments from customers through mobile money or other supported channels.
+- **Refunds** – Within collections, request for refunds of payments.
+- **Reversals** – Within collections, request for reversals of payments from customers.
 
 ---
 
@@ -17,6 +19,7 @@ The **Payment Requests** APIs allow you to move money through Waftpay in three d
 
 Each flow (**Payouts, Remittance, Collections**) requires its **own authentication token**.
 These tokens are **not interchangeable**  you cannot use a Payout token to initiate a Collection, and vice versa.
+However, a user will use the **Collections** token to initiate a reversal or a refund **ONLY**.
 
 ## How It Works
 

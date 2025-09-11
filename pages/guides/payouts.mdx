@@ -24,7 +24,7 @@ All examples below use Production paths. Swap the host for Sandbox as needed.
 
 ## 1) Authenticate (Bearer JWT)
 
-Obtain a Bearer token from the Authentication Service using your `api_key` and `api_secret` (scoped to the **PAYMENTS** product).
+Obtain a Bearer token from the [Authentication API](/api-reference/auth/auth-token) using your `api_key` and `api_secret` (scoped to the **PAYMENTS** product).
 
 - **Header** to send later: `Authorization: Bearer <access_token>`
 - Tokens expire; refresh before expiry.
@@ -59,7 +59,7 @@ reference=<transaction.reference>&amount=<amount_2dp>&currency=<ISO4217>&country
 - Concatenate with `&` separators; **no URL‑encoding** inside the string.
 
 **Sign** the canonical string with **RSA‑PSS SHA‑256** `RS256`.
-Encode the resulting signature as **Base64URL** (strip padding `=`).
+Encode the resulting signature as **Base64URL**.
 
 ---
 
@@ -69,12 +69,10 @@ Encode the resulting signature as **Base64URL** (strip padding `=`).
 Authorization: Bearer `<access_token>`
 Content-Type: application/json
 X-Idempotency-Key: `<transaction.reference>`
-X-Sign-Alg: PS256
-X-Sign-Key-Id: `<your_kid>`
 X-Custom-Signature: `<base64url_signature>`
 ```
 
-> **Idempotency**: We guarantee at‑most‑once processing per `(client_id, X-Idempotency-Key)`. Retries with the same idempotency key return the original result.
+> **Idempotency**: We guarantee at‑most‑once processing per `(client_id, X-Idempotency-Key)`. Retries with the same idempotency key return a rejected result.
 
 ---
 
