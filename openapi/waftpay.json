@@ -380,11 +380,6 @@
         "summary": "Initiate Collection",
         "operationId": "initiateCollection",
         "description": "Create a customer collection request. Provide a unique `transaction.reference` for idempotency. Uses the same authentication and signature flow as payouts.",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/XCustomSignature"
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
