@@ -6,27 +6,6 @@ openapi: "POST /payments-api-service/v1/remittance"
 
 ---
 
-[//]: # ()
-[//]: # (<Note>)
-
-[//]: # (    <strong>Idempotency:</strong> Reuse the same <code>transaction.reference</code> to safely retry the same request.)
-
-[//]: # (</Note>)
-
-[//]: # ()
-[//]: # (## Prerequisites)
-
-[//]: # ()
-[//]: # (- **Bearer token** from `POST /authentication-service/v1/api/generate-token`)
-
-[//]: # (- **Signature header** `X-Custom-Signature` &#40;RS256 over the concatenation below&#41;)
-
-[//]: # (- **Public key** registered with Waftpay &#40;your private key stays on your server&#41;)
-
-[//]: # ()
-[//]: # (**Signing string &#40;no separators&#41;:**)
-
-
 <Note>
     <strong>Idempotency:</strong> Reuse the same <code>transaction.reference</code> to safely retry the same request.
 </Note>
@@ -47,7 +26,7 @@ transaction.reference + transaction.amount + originator.country + recipient.serv
 </Info>
 
 <Warning>
-    <strong>Timestamp format:</strong> If your tenant enforces ISO-8601, use <code>2025-01-21T12:30:10Z</code>. Otherwise, the examples here use <code>YYYY-MM-DD HH:mm:ss</code> (e.g., <code>2025-01-21 12:30:10</code>). Match your tenant configuration.
+    <strong>Timestamp format:</strong> ISO-8601, use <code>2025-01-21T12:30:10Z</code>.
 </Warning>
 
 ---
