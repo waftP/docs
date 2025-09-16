@@ -1,0 +1,24 @@
+---
+title: Test & Simulate
+description: Send sample webhooks to your endpoint in sandbox.
+---
+
+Use our sandbox to simulate webhook deliveries to your callback URL.
+
+## Quick start (cURL)
+
+```bash
+curl --request POST           --url https://sandbox.your-domain.example/developer-tools/webhooks/send-test           --header 'Content-Type: application/json'           --data '{
+    "callback_url": "https://merchant.example.com/webhooks/payments",
+    "status": "SUCCESS",
+    "code": "102",
+    "amount": 1000,
+    "client_reference": "TRD99672118069255",
+    "payment_uuid": "422664585064023059",
+    "payment_id": 145,
+    "metadata": { "note": "Test delivery" }
+  }'
+```
+
+> The simulator **sends** a webhook to your `callback_url` using the same payload format as production (see **Webhook Payload**).  
+> In your logs, confirm receipt and your 2xx response.

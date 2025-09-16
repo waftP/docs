@@ -1,0 +1,32 @@
+---
+title: Retries & Idempotency
+description: Delivery guarantees, retry policy, and how to make your endpoint idempotent.
+---
+
+## Delivery behavior
+
+- We `POST` to your callback URL and treat **HTTP 200/201/202** as delivered.
+- On non-2xx or network/timeout errors, we **retry** after a short delay, up to a small maximum number of attempts.  
+- After the maximum is reached, we stop retrying.
+
+> **Your responsibility:** Always return a 2xx once you’ve **safely persisted** the event.
+
+## Building idempotency
+
+Webhooks may arrive **more than once** (e.g., retries, network jitter). Implement idempotency using any of:
+
+- **Dedup key**: `payment_uuid` (primary) and/or `transaction_reference` (your `client_reference`).  
+- **Upsert** logic keyed by `payment_uuid`, updating status if it changes.
+- **Exactly-once side effects**: persist first, enqueue internal work, then return 2xx.
+
+### Recommended database structure
+
+| Column                | Purpose                         |
+|----------------------|----------------------------------|
+| id (auto)            | Internal primary key             |
+| payment_uuid (uniq)  | Dedup key                        |
+| client_reference     | Your reference                   |
+| last_status          | Last delivered status            |
+| last_code            | Code mapped to status            |
+| payload_json         | Raw payload for audit/debug      |
+| processed_at         | When you confirmed delivery      |

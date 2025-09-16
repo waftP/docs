@@ -112,7 +112,14 @@
           {
             "group": "Webhooks",
             "pages": [
-              "api-reference/webhooks/receive"
+              "pages/webhooks/overview",
+              "pages/webhooks/payload",
+              "pages/webhooks/verify-signature",
+              "pages/webhooks/retries-and-idempotency",
+              "pages/webhooks/building-your-endpoint",
+              "pages/webhooks/testing-simulator",
+              "pages/webhooks/troubleshooting",
+              "pages/webhooks/best-practices"
             ]
           }
         ]

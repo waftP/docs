@@ -1,0 +1,22 @@
+---
+title: Troubleshooting
+description: Common integration pitfalls and how to fix them.
+---
+
+#### We never receive webhooks
+- Verify your callback URL is **publicly reachable** (no VPN/IP allowlist blocking).
+- Ensure your endpoint accepts `POST application/json`.
+- Check server logs for non-2xx responses; we only consider **200 / 201 / 202** delivered.
+
+#### We get duplicates
+- Retries can cause re-delivery. Implement **idempotency** with `payment_uuid` or `client_reference`.
+
+#### Signature mismatch
+- Ensure you build the hash exactly as documented (no separators, consistent string formats).  
+- Watch out for number formatting on `amount`.
+
+#### Timeouts
+- Read the body, **persist**, and return **2xx** quickly; do heavy work async.
+
+#### Metadata not present
+- `metadata` is optional; code defensively.

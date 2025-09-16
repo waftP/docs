@@ -1,0 +1,13 @@
+---
+title: Best Practices
+description: Hardening guidance for production-grade webhook receivers.
+---
+
+- **HTTPS everywhere**; reject plain HTTP in production.
+- **2xx fast**: store → ack → process async (queue/job).
+- **Idempotency keys**: use `payment_uuid` (primary) and/or `client_reference`.
+- **Least privilege**: your endpoint should only accept from expected sources (e.g., allowlist or signature).
+- **Auditability**: persist raw payload + headers for a limited retention window.
+- **Monitoring**: alert on spikes in non-2xx responses and long latencies.
+- **Backoff**: if you call our APIs in response, add your own retry/backoff to avoid thundering herds.
+- **Versioning**: handle new fields gracefully (ignore unknowns).

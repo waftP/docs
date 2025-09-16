@@ -1,0 +1,20 @@
+---
+title: Overview
+description: How Waftpay notifies your system about payment status changes via webhooks.
+---
+
+Webhooks let Waftpay notify your server about payment status events (e.g., `SUCCESS`, `FAILED`, `PENDING`). 
+Your system exposes a **callback URL** (HTTPS recommended) that accepts a JSON `POST`. 
+We automatically retry a few times if your endpoint is temporarily unavailable.
+
+#### What you’ll implement
+1. A publicly reachable **HTTPS POST** endpoint (your callback URL).
+2. Logic to **validate** the payload and verify its integrity.
+3. **Idempotency** handling to avoid double-processing.
+4. A fast **2xx** response on success.
+
+#### Event lifecycle (high level)
+- We process the payment event → transform it into a client-friendly payload → `POST` it to your callback URL. 
+- We treat HTTP **200/201/202** as delivered; non-2xx or timeouts trigger retries (up to a small, configurable maximum).
+
+> **Note**: Webhooks report status; they don’t accept commands. Use the Payments API for actions.

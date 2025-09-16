@@ -1,0 +1,60 @@
+---
+title: Payload
+description: JSON schema and examples for webhook notifications.
+---
+
+We deliver `POST` requests with a JSON body to your callback URL.
+
+## Top-level structure
+
+```json
+{
+  "status": "SUCCESS",
+  "code": "102",
+  "description": "SUCCESS",
+  "results": {
+    "result_code": "0",
+    "result_description": "Transaction complete",
+    "amount": 1000.0,
+    "total_charges": 10.0,
+    "total_amount": 1000.0,
+    "msisdn": "254712345678",
+    "transaction_reference": "TRD99672118069255",
+    "payment_uuid": "422664585064023059",
+    "external_reference": "ws_CO_11062025125308639792002",
+    "time_processed": "2025-06-18T08:28:16.090966",
+    "validation_hash": "2b9e9d...a9db1",
+    "metadata": {
+      "note": "Optional key-value metadata",
+      "agent_id": "AGENT456"
+    }
+  }
+}
+```
+
+**Fields**
+
+- `status` (`string`): High-level outcome — e.g., `CREATED`, `PENDING`, `SUCCESS`, `FAILED`, `ESCALATED`, `EXPIRED`, `REFUNDED`, `REVERSED`.  
+- `code` (`string`): Machine code corresponding to `status` (e.g., `102` for `SUCCESS`).  
+- `description` (`string`): Human-friendly explanation.  
+- `results` (`object`): Detailed result set:
+  - `result_code`, `result_description`: Processor/rail outcome.  
+  - Monetary fields: `amount`, `total_charges`, `total_amount`.  
+  - Ids: `transaction_reference` (your client reference), `payment_uuid` (Waftpay reference), `external_reference` (network/MNO reference if present).  
+  - `msisdn` (if applicable), `time_processed` (ISO-8601 UTC), `metadata` (optional).  
+  - `validation_hash`: Integrity string (see **Verify Signature**).
+
+## Status codes
+
+| status     | code |
+|------------|------|
+| CREATED    | 100  |
+| PENDING    | 101  |
+| **SUCCESS**| **102** |
+| FAILED     | 103  |
+| ESCALATED  | 104  |
+| EXPIRED    | 105  |
+| REFUNDED   | 106  |
+| REVERSED   | 107  |
+
+These codes map to the payment lifecycle and are consistent across webhook events.

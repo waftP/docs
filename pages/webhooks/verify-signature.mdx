@@ -1,0 +1,68 @@
+---
+title: Verify Signature (validation_hash)
+description: How to verify webhook integrity.
+---
+
+Each webhook includes a `results.validation_hash` you can verify to ensure the payload hasn’t been tampered with.
+
+## Hash composition
+
+The `validation_hash` is a SHA-256 over the **string concatenation**:
+
+```
+amount + client_reference + payment_uuid + payment_id
+```
+
+- `amount` — numeric amount from the original payment request  
+- `client_reference` — your unique transaction reference  
+- `payment_uuid` — Waftpay’s reference  
+- `payment_id` — Waftpay’s numeric id
+
+> The hash is generated on our side during notification building and included in the webhook payload. You can recompute it using the values you already know from your original request and the webhook body to cross-check integrity.
+
+:::
+For production-grade integrity, we recommend migrating to a HMAC with a **per-client secret** (provided via the dashboard/API) rather than a plain concatenated hash.
+:::
+
+## Examples
+
+### Node.js (TypeScript)
+
+```ts
+import crypto from "node:crypto";
+
+function toFixedPlain(n: number) {
+  // Ensure string format matches your canonical amount representation
+  return Number(n).toString();
+}
+
+export function verifyValidationHash(
+  amount: number,
+  clientRef: string,
+  paymentUuid: string,
+  paymentId: number,
+  receivedHash: string
+) {
+  const payload = `${toFixedPlain(amount)}${clientRef}${paymentUuid}${paymentId}`;
+  const computed = crypto.createHash("sha256").update(payload).digest("hex");
+  return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(receivedHash));
+}
+```
+
+### Java
+
+```java
+MessageDigest md = MessageDigest.getInstance("SHA-256");
+String payload = amount + clientRef + paymentUuid + paymentId;
+byte[] digest = md.digest(payload.getBytes(StandardCharsets.UTF_8));
+String computed = DatatypeConverter.printHexBinary(digest).toLowerCase();
+boolean ok = computed.equals(receivedHash);
+```
+
+### PHP
+
+```php
+$payload = (string)$amount . $clientRef . $paymentUuid . (string)$paymentId;
+$computed = hash('sha256', $payload);
+$ok = hash_equals($computed, $receivedHash);
+```
