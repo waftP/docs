@@ -23,7 +23,8 @@ However, a user will use the **Collections** token to initiate a reversal or a r
 
 ## How It Works
 
-First, generate an authentication token using your **Customer Key** and **Customer Secret** from the [Authentication API](/api-reference/auth/auth-token).
+First, generate a public key and a private key. One you have done this, add the public key to the dashbboard inorder for you to generate
+an authentication token using your **Customer Key** and **Customer Secret** from the [Authentication API](/api-reference/auth/auth-token).
 Then, include the token in the `Authorization` header when making API requests:
 
 ```http
