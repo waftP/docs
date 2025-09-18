@@ -48,6 +48,33 @@ Use Status Checks when you need a pull‑based confirmation or as a safety net i
 }
 ```
 
+**Failed**
+```json
+{
+  "code": 103,
+  "status": "FAILED",
+  "description": "Transaction Failed",
+  "results": {
+    "result_code": "No response received",
+    "result_description": "HTTP connect timed out",
+    "amount": 100,
+    "total_charges": 1.5,
+    "total_amount": 101.5,
+    "service_code": "MOCK_MPESA_COL",
+    "account": "254712345678",
+    "transaction_reference": "ref-586351566",
+    "payment_uuid": "345836869386794168",
+    "external_reference": null,
+    "time_processed": "2025-09-09T12:29:21.802553127Z",
+    "validation_hash": "dfda0d2ddf4897c7bea679e356be89f1c9fab306fcf22c9bf9c73f635cf05031",
+    "metadata": {
+      "note": "This info is returned as part of the callback",
+      "agent_id": "AGENT456"
+    }
+  }
+}
+```
+
 **Pending / Created / Expired**
 ```json
 { "code": "200.101", "status": "PENDING", "description": "Transaction Is Pending", "results": {} }
@@ -92,6 +119,33 @@ Use Status Checks when you need a pull‑based confirmation or as a safety net i
     "original_external_reference": "1V1OPZZGHQ",
     "external_reference": "1V33UUE1IR",
     "time_processed": "2025-08-26T05:20:27Z"
+  }
+}
+```
+
+**Failed**
+```json
+{
+  "code": 103,
+  "status": "FAILED",
+  "description": "Transaction Failed",
+  "results": {
+    "result_code": "No response received",
+    "result_description": "HTTP connect timed out",
+    "amount": 100,
+    "total_charges": 1.5,
+    "total_amount": 101.5,
+    "service_code": "MOCK_MPESA_COL",
+    "account": "254712345678",
+    "transaction_reference": "ref-586351566",
+    "payment_uuid": "345836869386794168",
+    "external_reference": null,
+    "time_processed": "2025-09-09T12:29:21.802553127Z",
+    "validation_hash": "dfda0d2ddf4897c7bea679e356be89f1c9fab306fcf22c9bf9c73f635cf05031",
+    "metadata": {
+      "note": "This info is returned as part of the callback",
+      "agent_id": "AGENT456"
+    }
   }
 }
 ```
