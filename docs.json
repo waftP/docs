@@ -82,6 +82,12 @@
             ]
           },
           {
+            "group": "Wallet",
+            "pages": [
+              "api-reference/wallet/get-balance"
+            ]
+          },
+          {
             "group": "Payouts",
             "pages": [
               "api-reference/payouts/payouts-initiate",
@@ -101,12 +107,6 @@
             "pages": [
               "api-reference/remittance/remittance-initiate",
               "api-reference/remittance/remittance-status"
-            ]
-          },
-          {
-            "group": "Wallet",
-            "pages": [
-              "api-reference/wallet/get-balance"
             ]
           },
           {

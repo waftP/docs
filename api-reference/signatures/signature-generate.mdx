@@ -76,6 +76,66 @@ You need an **RSA 2048** key pair in **PEM** format:
         print(base64.b64encode(sig).decode("utf-8"))  # -> X-Custom-Signature
         ```
     </Tab>
+    <Tab title="Java">
+
+        ```java
+        import java.nio.charset.StandardCharsets;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.security.KeyFactory;
+        import java.security.PrivateKey;
+        import java.security.Signature;
+        import java.security.spec.PKCS8EncodedKeySpec;
+        import java.util.Base64;
+
+        public final class WaftpaySignature {
+
+            public static String generateXCustomSignature(
+            String txRef,
+            String amount,
+            String country,
+            String service,
+            PrivateKey privateKey
+            ) throws Exception {
+
+                String signingString = txRef + amount + country + service;
+                byte[] message = signingString.getBytes(StandardCharsets.UTF_8);
+
+                Signature sig = Signature.getInstance("SHA256withRSA");
+                sig.initSign(privateKey);
+                sig.update(message);
+                byte[] raw = sig.sign();
+
+                return Base64.getEncoder().encodeToString(raw);
+            }
+
+            public static PrivateKey loadPkcs8PrivateKey(Path pemPath) throws Exception {
+                String pem = Files.readString(pemPath, StandardCharsets.US_ASCII);
+
+                String base64 = pem
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+
+                byte[] der = Base64.getDecoder().decode(base64);
+                PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(der);
+                return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+            }
+
+            public static void main(String[] args) throws Exception {
+                PrivateKey key = loadPkcs8PrivateKey(Path.of("client_private.pem"));
+
+                String txRef   = "TXN123654573";
+                String amount  = "100";
+                String country = "KEN";
+                String service = "ewqeqw";
+
+                String xCustomSignature = generateXCustomSignature(txRef, amount, country, service, key);
+                System.out.println("X-Custom-Signature: " + xCustomSignature);
+            }
+        }
+        ```
+    </Tab>
     <Tab title="PHP">
 
         ```php
@@ -102,5 +162,3 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out client_private
 
 # 2) Derive the matching public key (X.509 SPKI)
 openssl rsa -pubout -in client_private.pem -out client_public.pem
-
----

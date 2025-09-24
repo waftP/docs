@@ -1,10 +1,116 @@
 ---
 title: "Get Balance"
-description: "Fetch balance for different wallets based on the services subcribed to."
-openapi: "GET /balances"
+description: "Fetch wallet balances for the authenticated product (collections, payouts, etc.). Filter by currency or fetch all."
+openapi: "GET /payments-tsq-service/v1/wallet-balances"
 ---
 
+Fetch wallet balances associated with the **product tied to your token** (e.g., *Collections*, *Payouts*).
+Optionally filter by a specific `currency` (e.g., `KES`). If omitted, **all balances** for the product are returned.
 
+> **Base URL (Sandbox)**
+>
+> `{{payments_tsq_base_url}}`
+
+## Endpoint
 
 ```http
-GET {BASE_URL}/balance
+GET /payments-tsq-service/v1/wallet-balances?currency={CURRENCY}
+```
+
+## Authentication
+
+This endpoint **requires** a Bearer token that is **scoped to the product** you are querying (e.g., a *Collections* token can only view Collections balances; a *Payouts* token can only view Payouts balances).
+
+```http
+Authorization: Bearer <access_token>
+```
+
+If the token is invalid, expired, or not authorized for the requested product, you'll receive `401 Unauthorized`.
+
+## Query parameters
+
+| Name     | In    | Type   | Required | Description                                        |
+|----------|-------|--------|----------|----------------------------------------------------|
+| currency | query | string | No       | ISO currency code (e.g., `KES`, `UGX`). If omitted, returns all balances for the product tied to your token. |
+
+---
+
+## Successful responses
+
+### 200 OK — All balances (no filter)
+```json
+{
+  "code": 200,
+  "status": "SUCCESS",
+  "description": "Request processed successfully",
+  "results": [
+    {
+      "currency": "KES",
+      "actual_balance": 10010110.0,
+      "available_balance": 10010110.0,
+      "alert_limit": 0.0,
+      "status": "ACTIVE"
+    }
+  ]
+}
+```
+
+### 200 OK — Specific currency (present)
+```json
+{
+  "code": 200,
+  "status": "SUCCESS",
+  "description": "Request processed successfully",
+  "results": [
+    {
+      "currency": "UGX",
+      "actual_balance": 12345.0,
+      "available_balance": 12345.0,
+      "alert_limit": 0.0,
+      "status": "ACTIVE"
+    }
+  ]
+}
+```
+
+> **Notes**
+> - `actual_balance` is the total ledger balance.
+> - `available_balance` is the spendable amount after holds/reserves.
+> - `alert_limit` is your configured low-balance threshold (if any).
+> - `status` reflects wallet state (e.g., `ACTIVE`).
+
+---
+
+## Error responses
+
+### 404 Not Found — Currency not provisioned for this product
+```json
+{
+  "code": 404,
+  "status": "FAILED",
+  "description": "Balances not found",
+  "results": {}
+}
+```
+
+### 401 Unauthorized — Bad/expired token or wrong scope
+```json
+{
+  "code": 401,
+  "status": "FAILED",
+  "description": "Unauthorized",
+  "results": {}
+}
+```
+
+---
+
+## Behavior & constraints
+
+- **Product scoping:** The Bearer token determines which product’s wallets are visible (e.g., Collections vs Payouts).
+- **Filtering:** `currency` is optional; when omitted, all provisioned wallets for the token’s product are returned.
+- **Idempotency:** This is a `GET` and does not change state; no idempotency key required.
+- **Caching:** Avoid caching balances client‑side if you need real‑time accuracy.
+- **Rate limits:** Standard platform rate limits apply. Handle `429` with retries and backoff.
+
+---

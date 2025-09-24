@@ -502,6 +502,73 @@
       }
     },
 
+    "/payments-tsq-service/v1/wallet-balances": {
+      "get": {
+        "tags": ["Balances"],
+        "summary": "Get wallet balances",
+        "operationId": "getWalletBalances",
+        "description": "Fetch wallet balances for the authenticated product (collections, payouts, etc.). Optionally filter by currency (ISO code). If omitted, all balances for the product are returned.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "currency",
+            "required": false,
+            "schema": { "type": "string", "example": "KES" },
+            "description": "ISO currency code to filter the balance (e.g., KES, UGX, USD)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Balances fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BalanceListResponse" },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "code": 200,
+                      "status": "SUCCESS",
+                      "description": "Request processed successfully",
+                      "results": [{}]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Balances not found for provided currency",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "notFound": {
+                    "value": {
+                      "code": 404,
+                      "status": "FAILED",
+                      "description": "Balances not found",
+                      "results": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (invalid/expired token or wrong product scope)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
     "/payments-api-service/v1/remittance": {
       "post": {
         "tags": ["Remittance"],
@@ -982,15 +1049,7 @@
               "status": "200.100",
               "code": "ACCEPTED",
               "description": "Accepted for processing",
-              "data": {
-                "amount": 1000,
-                "total_charges": 0,
-                "total_amount": 1000,
-                "transaction_reference": "TXN213687756272200",
-                "payment_uuid": "8837988760786506492",
-                "payment_reference": "1V5ADJM5SO",
-                "time_received": "2025-04-04T02:20:44.967336Z"
-              }
+              "data": {}
             }
           },
           "duplicateIgnored": {
@@ -999,11 +1058,7 @@
               "status": "200.100",
               "code": "REJECTED",
               "description": "Duplicate payout ignored",
-              "data": {
-                "transaction_reference": "TXN213687756272200",
-                "payment_reference": "1V5ADJM5SO",
-                "time_received": "2025-04-04T02:20:44.967336Z"
-              }
+              "data": {}
             }
           },
           "rejected": {
@@ -1016,6 +1071,74 @@
             }
           }
         }
+      },
+
+      "WalletBalance": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "description": "ISO currency code.",
+            "example": "KES"
+          },
+          "actual_balance": {
+            "type": "number",
+            "format": "double",
+            "description": "Total ledger balance.",
+            "example": 1010100.0
+          },
+          "available_balance": {
+            "type": "number",
+            "format": "double",
+            "description": "Spendable amount after holds/reserves.",
+            "example": 910100.0
+          },
+          "alert_limit": {
+            "type": "number",
+            "format": "double",
+            "description": "Configured low-balance alert threshold.",
+            "example": 0.0
+          },
+          "status": {
+            "type": "string",
+            "description": "Wallet status.",
+            "example": "ACTIVE",
+            "enum": ["ACTIVE", "INACTIVE", "SUSPENDED"]
+          }
+        },
+        "required": ["currency", "actual_balance", "available_balance", "alert_limit", "status"]
+      },
+
+      "BalanceListResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "status": { "type": "string", "example": "SUCCESS" },
+          "description": { "type": "string", "example": "Request processed successfully" },
+          "results": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WalletBalance" }
+          }
+        },
+        "required": ["code", "status", "description", "results"]
+      },
+
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 404 },
+          "status": { "type": "string", "example": "FAILED" },
+          "description": { "type": "string", "example": "Balances not found" },
+          "results": {
+            "description": "Error payload or empty object.",
+            "oneOf": [
+              { "type": "object", "additionalProperties": true },
+              { "type": "array", "items": {} }
+            ],
+            "example": {}
+          }
+        },
+        "required": ["code", "status", "description", "results"]
       },
 
       "PayoutStatusResponse": {
@@ -1088,17 +1211,7 @@
               "status": "200.100",
               "code": "ACCEPTED",
               "description": "Accepted for processing",
-              "data": {
-                "amount": 1000,
-                "total_charges": 10,
-                "total_amount": 1010,
-                "transaction_reference": "TXN213687756272200",
-                "payment_uuid": "8837988760786506492",
-                "payment_reference": "1V5ADJM5SO",
-                "state": "processing",
-                "time_received": "2025-04-04T02:20:44.967336Z",
-                "last_updated": "2025-04-04T02:21:10.100000Z"
-              }
+              "data": {}
             }
           },
           "notFound": {
@@ -1604,19 +1717,7 @@
               "code": 102,
               "status": "SUCCESS",
               "description": "Transaction success",
-              "results": {
-                "result_code": "21",
-                "result_description": "The service request is processed successfully",
-                "amount": 1015,
-                "total_charges": 0,
-                "total_amount": "MPESA_KE_MOCK",
-                "account": "254792452002",
-                "original_payment_uuid": "882231418121042119",
-                "original_transaction_reference": "TNC0009886898418",
-                "original_external_reference": "1V1OPZZGHQ",
-                "external_reference": "1V33UUE1IR",
-                "time_processed": "2025-08-26T05:20:27Z"
-              }
+              "results": {}
             }
           },
           "failed": {
@@ -1624,24 +1725,7 @@
               "code": 103,
               "status": "FAILED",
               "description": "Transaction Failed",
-              "results": {
-                "result_code": "No response received",
-                "result_description": "HTTP connect timed out",
-                "amount": 100,
-                "total_charges": 1.5,
-                "total_amount": 101.5,
-                "service_code": "MOCK_MPESA_COL",
-                "account": "254712345678",
-                "transaction_reference": "ref-586351566",
-                "payment_uuid": "345836869386794168",
-                "external_reference": null,
-                "time_processed": "2025-09-09T12:29:21.802553127Z",
-                "validation_hash": "dfda0d2ddf4897c7bea679e356be89f1c9fab306fcf22c9bf9c73f635cf05031",
-                "metadata": {
-                  "note": "This info is returned as part of the callback",
-                  "agent_id": "AGENT456"
-                }
-              }
+              "results": {}
             }
           },
           "unauthorizedInBody": {

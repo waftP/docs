@@ -3,12 +3,12 @@ title: "API Status"
 description: "Run a live health check against the Waftpay API."
 ---
 
-import { useState } from "react";
+{/* No imports — your bundler only allows /snippets/* imports */}
 
 function StatusCheck({ url }) {
-const [state, setState] = useState("idle"); // idle | loading | up | down
-const [latency, setLatency] = useState(null);
-const [detail, setDetail] = useState("");
+const [state, setState] = React.useState("idle"); // idle | loading | up | down
+const [latency, setLatency] = React.useState(null);
+const [detail, setDetail] = React.useState("");
 
 async function run() {
 setState("loading");
@@ -27,9 +27,7 @@ return;
 const data = await res.json().catch(() => ({}));
 if (data?.status === "UP") {
 setState("up");
-setDetail(
-Array.isArray(data?.groups) ? `groups: ${data.groups.join(", ")}` : ""
-);
+setDetail(Array.isArray(data?.groups) ? `groups: ${data.groups.join(", ")}` : "");
 } else {
 setState("down");
 setDetail(typeof data?.status === "string" ? `status: ${data.status}` : "");
@@ -59,17 +57,27 @@ cursor: "pointer"
         {state === "idle" && <span>Click the button to test the API.</span>}
         {state === "loading" && <span>⏳ Contacting health endpoint…</span>}
         {state === "up" && (
-          <span>✅ <strong>Good</strong>{latency !== null ? ` • ${latency} ms` : ""}{detail ? ` • ${detail}` : ""}</span>
+          <span>
+            ✅ <strong>Good</strong>
+            {latency !== null ? ` • ${latency} ms` : ""}
+            {detail ? ` • ${detail}` : ""}
+          </span>
         )}
         {state === "down" && (
-          <span>❌ <strong>Not available</strong>{detail ? ` • ${detail}` : ""}</span>
+          <span>
+            ❌ <strong>Not available</strong>
+            {detail ? ` • ${detail}` : ""}
+          </span>
         )}
       </div>
 
       <details style={{ marginTop: "0.75rem" }}>
         <summary>Troubleshooting (CORS & networking)</summary>
         <ul>
-          <li>If this page can’t reach the API from your browser, ensure the health endpoint allows cross-origin GETs (CORS): <code>Access-Control-Allow-Origin: *</code> (or your docs domain).</li>
+          <li>
+            If this page can’t reach the API from your browser, ensure the health endpoint allows cross-origin GETs (CORS):{" "}
+            <code>Access-Control-Allow-Origin: *</code> (or your docs domain).
+          </li>
           <li>Health URL: <code>{url}</code> (kept out of the UI except here for debugging).</li>
           <li>Firewall/VPN/proxy rules can also block the request from the docs domain.</li>
         </ul>
