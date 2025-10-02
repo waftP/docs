@@ -1,0 +1,16 @@
+---
+title: "Check Refund/Reversal Status"
+description: "Retrieve the latest status of a refund/reversal using your client reference/uuid."
+openapi: "POST /payments-tsq-service/v1/query/payments"
+---
+
+Use your original `transaction.reference` to retrieve the refund/reversal’s latest status.
+
+> **Auth**: Requires a **Collection token** (`Authorization: Bearer <collection_token>`).
+
+---
+
+## Endpoint
+
+```http
+GET {BASE_URL}/payments-tsq-service/v1/query/payments

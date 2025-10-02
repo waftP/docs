@@ -99,7 +99,8 @@
             "pages": [
               "api-reference/collections/collection-initiate",
               "api-reference/collections/collections-status",
-              "api-reference/collections/collections-refund"
+              "api-reference/collections/collections-refund",
+              "api-reference/collections/collections-refund-status"
             ]
           },
           {
