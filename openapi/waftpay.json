@@ -1418,13 +1418,18 @@
             "type": "string",
             "description": "This is the client-generated transaction reference"
           },
+          "request_uuid": {
+            "type": "string",
+            "description": "This is the request UUID."
+          },
           "payment_uuid": {
             "type": "string",
-            "description": "This is either the payment UUID."
+            "description": "This is the payment UUID."
           }
         },
         "examples": [
           { "transaction_reference": "TXN213687756272200" },
+          { "request_uuid": "2BDHAJ8PWR" },
           { "payment_uuid": "1RJITP5HLL" }
         ]
       },
