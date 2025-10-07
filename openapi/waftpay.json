@@ -602,7 +602,9 @@
                       "name": "John Sender",
                       "dob": "1965-01-01",
                       "nationality": "UK",
-                      "id_type": "Passport"
+                      "id_type": "Passport",
+                      "id_number": "PSA010101",
+                      "purpose": "No purpose"
                     },
                     "recipient": {
                       "reference": "Test",
@@ -1870,6 +1872,14 @@
               "id_type": {
                 "type": "string",
                 "description": "Identification type (e.g., Passport, ID, DL)."
+              },
+              "id_number": {
+                "type": "string",
+                "description": "Identification number (e.g., Passport number, ID number, DL number)."
+              },
+              "purpose": {
+                "type": "string",
+                "description": "Purpose of sending the funds."
               }
             }
           },
@@ -1924,7 +1934,9 @@
               "name": "John Sender",
               "dob": "1965-01-01",
               "nationality": "UK",
-              "id_type": "Passport"
+              "id_type": "Passport",
+              "id_number": "PSA010101",
+              "purpose": "No purpose"
             },
             "recipient": {
               "reference": "Test",
