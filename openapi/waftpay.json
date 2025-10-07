@@ -333,7 +333,8 @@
                       "amount": 1000,
                       "currency": "KES",
                       "description": "Test description",
-                      "timestamp": "2025-01-21T12:30:10Z"
+                      "timestamp": "2025-01-21T12:30:10Z",
+                      "service_code": "MPESAB2C"
                     },
                     "originator": {
                       "msisdn": "254708374149",
@@ -341,7 +342,6 @@
                       "country": "KE"
                     },
                     "recipient": {
-                      "service_code": "MPESAB2C",
                       "reference": "INVJMA02",
                       "account": "254708374149"
                     },
@@ -395,7 +395,8 @@
                       "amount": 1000,
                       "currency": "KES",
                       "description": "Test description",
-                      "timestamp": "2025-01-21T12:30:10Z"
+                      "timestamp": "2025-01-21T12:30:10Z",
+                      "service_code": "RMT_WU"
                     },
                     "originator": {
                       "msisdn": "254712345678",
@@ -405,7 +406,6 @@
                       "purpose": "Salary Payment"
                     },
                     "recipient": {
-                      "service_code": "RMT_WU",
                       "invoice_number": "3456789987654",
                       "reference": "INVJMA01",
                       "account": "254712345678"
@@ -591,7 +591,8 @@
                       "amount": 100,
                       "currency": "KES",
                       "description": "Test",
-                      "timestamp": "2025-01-21 12:30:10"
+                      "timestamp": "2025-01-21 12:30:10",
+                      "service_code": "ewqeqw"
                     },
                     "originator": {
                       "msisdn": "254722111999",
@@ -604,7 +605,6 @@
                       "id_type": "Passport"
                     },
                     "recipient": {
-                      "service_code": "ewqeqw",
                       "reference": "Test",
                       "account": "Test",
                       "name": "John Doe Init"
@@ -959,7 +959,8 @@
               "amount": 1000,
               "currency": "KES",
               "description": "Vendor payout",
-              "timestamp": "2025-01-21T12:30:10Z"
+              "timestamp": "2025-01-21T12:30:10Z",
+              "service_code": "MPESAB2C"
             },
             "originator": {
               "msisdn": "254708374149",
@@ -969,7 +970,6 @@
               "purpose": "Transaction Payment"
             },
             "recipient": {
-              "service_code": "MPESAB2C",
               "reference": "INVJMA02",
               "account": "254708374149"
             },
@@ -1323,7 +1323,8 @@
               "amount": 1000,
               "currency": "KES",
               "description": "Test description",
-              "timestamp": "2025-01-21T12:30:10Z"
+              "timestamp": "2025-01-21T12:30:10Z",
+              "service_code": "RMT_WU"
             },
             "originator": {
               "msisdn": "254712345678",
@@ -1333,7 +1334,6 @@
               "purpose": "Salary Payment"
             },
             "recipient": {
-              "service_code": "RMT_WU",
               "invoice_number": "3456789987654",
               "reference": "INVJMA01",
               "account": "254712345678"
@@ -1913,7 +1913,8 @@
               "amount": 100,
               "currency": "KES",
               "description": "Test",
-              "timestamp": "2025-01-21 12:30:10"
+              "timestamp": "2025-01-21 12:30:10",
+              "service_code": "ewqeqw"
             },
             "originator": {
               "msisdn": "254722111999",
@@ -1926,7 +1927,6 @@
               "id_type": "Passport"
             },
             "recipient": {
-              "service_code": "ewqeqw",
               "reference": "Test",
               "account": "Test",
               "name": "John Doe Init"
