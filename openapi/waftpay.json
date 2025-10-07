@@ -1839,7 +1839,7 @@
           },
           "originator": {
             "type": "object",
-            "required": ["msisdn", "channel", "country", "Service_provider", "name", "dob", "nationality", "id_type"],
+            "required": ["msisdn", "channel", "country", "Service_provider", "name", "dob", "nationality", "id_type", "id_number", "purpose"],
             "properties": {
               "msisdn": {
                 "type": "string",
