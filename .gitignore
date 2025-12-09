@@ -1,0 +1,16 @@
+# Node/Mintlify
+node_modules/
+.mintlify/
+.cache/
+
+# Env/config
+.env
+.env.local
+
+# Editors/OS
+.DS_Store
+.idea/
+
+# Output
+dist/
+build/

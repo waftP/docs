@@ -114,6 +114,8 @@
             "group": "Webhooks",
             "pages": [
               "pages/webhooks/overview",
+              "pages/webhooks/consumer-service",
+              "pages/webhooks/event-types",
               "pages/webhooks/payload",
               "pages/webhooks/verify-signature",
               "pages/webhooks/retries-and-idempotency",
@@ -130,7 +132,7 @@
       "anchors": [
         {
           "anchor": "Run in Postman",
-          "href": "https://app.postman.com/run-collection/YOUR_COLLECTION_ID?env=YOUR_ENV_ID",
+          "href": "https://waftpay.io/openapi/waftpay.postman.json",
           "icon": "circle-play"
         },
         {
@@ -141,7 +143,7 @@
       ]
     }
   },
-  "openapi": "/openapi/waftpay.merged.json",
+  "openapi": "/openapi/waftpay.json",
   "api": {
     "baseUrl": [
       "https://payments-api.dev.pockets-pay.com"

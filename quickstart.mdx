@@ -62,7 +62,7 @@ A successful response returns JSON with `access_token` and `expires_in`.
 
 ## 3) Sign your request
 
-Each write operation must include `X-Custom-Signature`. The signature is computed from a **canonical string** derived from the request (method, path, timestamp, body hash). See full rules in [/signing-requests](/signing-requests).
+Each write operation must include `X-Custom-Signature`. The signature is computed from a **canonical string** derived from the request (method, path, timestamp, body hash). See full rules in [/api-reference/signatures/signature-generate](/api-reference/signatures/signature-generate).
 
 **Pseudo (Node.js)**
 ```ts

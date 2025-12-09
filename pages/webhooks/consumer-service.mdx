@@ -1,0 +1,101 @@
+---
+title: Webhook Consumer Service
+description: How Waftpay consumes, validates, transforms, and delivers webhook notifications end-to-end.
+---
+
+This page documents the internal **Webhook Consumer Service** that powers webhook delivery. It shows how events move from RabbitMQ to your callback URL, what validation happens, and how retries are handled.
+
+## Architecture & responsibilities
+- **Tech stack:** Java 21, Spring Boot 3.5, RabbitMQ, MySQL, Jackson, Jakarta Validation, SLF4J/Logback.
+- **Queues:** primary `PAYMENTS.WEBHOOK.QUEUE`; delay/TTL queue `PAYMENTS.WEBHOOK.DELAY.QUEUE` for retries.
+- **Database:** tracks notification status, attempt count, and last sent timestamp per payment.
+- **Health/metrics:** Spring Actuator endpoints (health, metrics, flyway).
+
+## Input payload (from RabbitMQ)
+Example message consumed from the queue (validated before processing):
+
+```json
+{
+  "payment_id": 145,
+  "payment_uuid": "422664585064023059",
+  "client_reference": "TRD99672118069255",
+  "payment_status": "SUCCESS",
+  "payment_status_code": 102,
+  "payment_status_description": "SUCCESS",
+  "mno_reference": "ws_CO_11062025125308639792002",
+  "msisdn": "254712345678",
+  "amount": 1000,
+  "charge": 10,
+  "total_amount": 1000,
+  "final_status_code": "0",
+  "final_status_description": "Transaction complete",
+  "metadata": {
+    "note": "This info is returned as part of the callback",
+    "agent_id": "AGENT456"
+  },
+  "callback_url": "https://example.com/webhooks/payments",
+  "attempts": 0
+}
+```
+
+**Validation rules**
+- `payment_id` positive and present.
+- `payment_uuid`, `client_reference`, `callback_url` non-blank.
+- `amount` non-negative.
+- Violations throw a validation exception and are **not re-queued**.
+
+## Notification payload (to your callback)
+Transformed JSON sent via HTTP `POST` to `callback_url`. See `/pages/webhooks/payload` for full schema; example:
+
+```json
+{
+  "status": "SUCCESS",
+  "code": "102",
+  "description": "SUCCESS",
+  "results": {
+    "result_code": "0",
+    "result_description": "Transaction complete",
+    "amount": 1000.0,
+    "total_charges": 10.0,
+    "total_amount": 1000.0,
+    "msisdn": "254712345678",
+    "transaction_reference": "TRD99672118069255",
+    "payment_uuid": "422664585064023059",
+    "external_reference": "ws_CO_11062025125308639792002",
+    "time_processed": "2025-06-18T08:28:16.090966",
+    "validation_hash": "2b9e9d...a9db1",
+    "metadata": {
+      "note": "This info is returned as part of the callback",
+      "agent_id": "AGENT456"
+    }
+  }
+}
+```
+
+Status codes are consistent with `/pages/webhooks/payload` (`100` CREATED, `101` PENDING, `102` SUCCESS, `103` FAILED, `104` ESCALATED, `105` EXPIRED, `106` REFUNDED, `107` REVERSED).
+
+## Processing flow
+1) **Consume** from `PAYMENTS.WEBHOOK.QUEUE` (or `PAYMENTS.WEBHOOK.DELAY.QUEUE` for retries).  
+2) **Validate** via Bean Validation; invalid messages are rejected (no requeue).  
+3) **Attempts guard:** if `attempts >= maxAttempts` (default **3**), mark failed and stop.  
+4) **Build notification** payload with `validation_hash` and `time_processed`.  
+5) **Send HTTP POST** to `callback_url` (treat **200/201/202** as success).  
+6) **Persist**: on success set `notification_status = SUCCESS`, store attempts + timestamp; on failure increment attempts and mark `NOT_SENT`.  
+7) **Retry**: publish failures to `PAYMENTS.WEBHOOK.DELAY.QUEUE` (TTL default **60s**) before returning to the primary queue.  
+8) **Error handling**: HTTP/network errors retry; DB errors log/rollback; validation errors stop processing.
+
+## Integrity check (validation_hash)
+- Computed as **SHA-256** over `amount + client_reference + payment_uuid + payment_id`.
+- Included in `results.validation_hash` so you can recompute and verify. See `/pages/webhooks/verify-signature` for verification snippets and stronger HMAC guidance.
+
+## Operational notes
+- **Concurrency:** Rabbit listener concurrency is tunable (e.g., 25–100 consumers) with prefetch=1 to balance throughput and fairness.
+- **Durability:** Queues are durable; delay queue handles backoff. Maximum attempts and delay are configurable (`webhook.max-attempts`, `webhook.delay-seconds`).
+- **Observability:** Structured logs (SLF4J/Logback) include payment identifiers for traceability. Actuator endpoints expose health/metrics; integrate with your logging/monitoring stack.
+- **Deployment:** Containerized Spring Boot service; config driven by environment-specific `application-*.yml`. Scales horizontally (multiple consumers) as RabbitMQ distributes messages.
+
+## Assumptions & limitations
+- Requires reachable RabbitMQ and MySQL backends; callback URLs must accept HTTPS `POST` with JSON.
+- Fixed retry delay (default 60s) and max attempts (default 3); adjust if your outage patterns require different backoff.
+- Validation failures are dropped (not requeued); add a dead-letter queue if you need to capture malformed messages.
+- Uses a simple SHA-256 hash for integrity; for stronger guarantees, migrate to HMAC with per-client secrets.

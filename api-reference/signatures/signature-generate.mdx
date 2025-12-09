@@ -7,10 +7,10 @@ Some Waftpay APIs (notably **Payouts** and **Remittance**) require a request hea
 This signature lets our platform verify **who sent the request** and that its **key fields weren’t altered** in transit.
 
 > **TL;DR**
-> 1) Generate an RSA key pair (keep the private key secret; register the public key with Waftpay)
-> 2) Build the **signing string** by concatenating four fields **in order**, with **no separators**
-> 3) Sign that string using **RSA + SHA-256** (a.k.a. `SHA256withRSA` / `RS256`)
-> 4) Base64-encode the raw signature bytes and send it in the `X-Custom-Signature` header
+> 1) Get a **Bearer token** ([Auth token](/api-reference/auth/auth-token)).  
+> 2) Generate an **RSA 2048** key pair; register your **public** key with Waftpay.  
+> 3) Build the signing string: `transaction.reference + transaction.amount + originator.country + recipient.service_code` (no separators).  
+> 4) Sign with **RSA + SHA-256** (`RS256`), Base64-encode the signature bytes, and send it in `X-Custom-Signature`.
 
 ---
 
@@ -23,6 +23,13 @@ These endpoints also require **Bearer auth** in the `Authorization` header.
 
 ---
 
+## Prerequisites
+- Valid **Bearer token** in `Authorization: Bearer <access_token>` (see [Auth token](/api-reference/auth/auth-token)).
+- **RSA 2048** key pair in PEM; public key registered with Waftpay (we reject unknown keys).
+- Make sure the values you sign **exactly** match the payload you send (including casing/formatting).
+
+---
+
 ## 1) Create your key pair (RSA 2048)
 
 You need an **RSA 2048** key pair in **PEM** format:
@@ -30,11 +37,25 @@ You need an **RSA 2048** key pair in **PEM** format:
 - **Private key**: PKCS#8 PEM (`-----BEGIN PRIVATE KEY-----`)
 - **Public key**: X.509 SubjectPublicKeyInfo PEM (`-----BEGIN PUBLIC KEY-----`)
 
+---
+
+## 2) Build the signing string
+
+Concatenate these fields **in order** with **no separators**:
+
+```
+transaction.reference + transaction.amount + originator.country + recipient.service_code
+```
+
+- Use the **exact strings** you send in the JSON (e.g., amount `"100.00"`, country `"KE"` vs `"KEN"`).
+- Do not trim, pad, or change case once you build the payload.
+
+**Example signing string**
+```
+TXN123654573100.00KENewqeqw
+```
 
 ## Generate `X-Custom-Signature`
-
-**String to sign (example):** `TXN123654573100KENewqeqw`
-(Use your exact payload values and casing.)
 
 <Tabs>
     <Tab title="Node.js">
@@ -70,7 +91,7 @@ You need an **RSA 2048** key pair in **PEM** format:
         signing_string = f"{tx_ref}{amount}{country}{service}".encode("utf-8")
 
         with open("client_private.pem", "rb") as f:
-        key = serialization.load_pem_private_key(f.read(), password=None)
+            key = serialization.load_pem_private_key(f.read(), password=None)
 
         sig = key.sign(signing_string, padding.PKCS1v15(), hashes.SHA256())
         print(base64.b64encode(sig).decode("utf-8"))  # -> X-Custom-Signature

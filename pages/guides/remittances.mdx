@@ -3,7 +3,7 @@ title: "Remittances"
 description: "Move funds between financial entities; KYC fields, signing, acceptance, and delivery confirmation."
 ---
 
-Remittances transfer funds between financial entities (domestic or cross‑border). The flow mirrors payouts/collections with additional **KYC** fields.
+Remittances transfer funds between financial entities (domestic or cross‑border). The flow mirrors payouts/collections with additional <Tooltip tip="Know Your Customer details required by regulators/corridors">KYC</Tooltip> fields.
 
 ---
 
@@ -80,5 +80,5 @@ Headers and signing are identical to payouts (same canonical string & rules).
 
 ## 6) Error & Retry Strategy
 
-- Use **idempotent** retries with the same `X-Idempotency-Key` on transient errors (HTTP `5xx`, `429`).  
+- Use <Tooltip tip="Same idempotency key prevents duplicate processing on retries">idempotent</Tooltip> retries with the same `X-Idempotency-Key` on transient errors (HTTP `5xx`, `429`).  
 - Do **not** retry `400`/`403` without fixing the root cause.

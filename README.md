@@ -1,44 +1,22 @@
-# Mintlify Starter Kit
+# Waftpay Developer Docs
 
-Use the starter kit to get your docs deployed and ready to customize.
+Mintlify project for Waftpay’s developer documentation (guides, API reference, webhooks).
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## Prerequisites
+- Node.js **20.18.1** (`nvm use` will pick it up from `.nvmrc`)
+- Mintlify CLI: `npm i -g mint`
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
-
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
+## Local preview
 ```
-npm i -g mint
-```
-
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
+nvm use
 mint dev
 ```
+Preview runs at `http://localhost:3000`.
 
-View your local preview at `http://localhost:3000`.
+## Common issues
+- CLI rejects Node version: ensure `nvm use` selects 20.18.1 before running `mint dev`.
+- 404 on a page: confirm the page path exists and is listed in `docs.json`.
 
-## Publishing changes
-
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
-
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
-- [Mintlify community](https://mintlify.com/community)
+## Useful links
+- [Mintlify docs](https://mintlify.com/docs)
+- [Waftpay dashboard](https://dashboard.waftpay.io)

@@ -6,10 +6,15 @@ description: Delivery guarantees, retry policy, and how to make your endpoint id
 ## Delivery behavior
 
 - We `POST` to your callback URL and treat **HTTP 200/201/202** as delivered.
-- On non-2xx or network/timeout errors, we **retry** after a short delay, up to a small maximum number of attempts.  
+- On non-2xx or network/timeout errors, we **retry** after a short delay, up to a small maximum number of attempts.
 - After the maximum is reached, we stop retrying.
 
 > **Your responsibility:** Always return a 2xx once you’ve **safely persisted** the event.
+
+### Default retry schedule (service)
+- **Max attempts:** 3 (initial send + up to 2 retries)
+- **Delay between attempts:** 60 seconds via delay queue
+- **Success criteria:** HTTP 200/201/202
 
 ## Building idempotency
 

@@ -3,7 +3,7 @@ title: "Collections"
 description: "Receive incoming customer payments; end‑to‑end flow with signing, acceptance, webhooks, and reconciliation."
 ---
 
-Collections represent **incoming customer payments** (e.g., paybill/till). The API is **asynchronous** and uses the same auth/signing model as payouts.
+Collections represent **incoming customer payments** (e.g., paybill/till). The API is <Tooltip tip="You get 202 immediately; the final result arrives later via webhook">asynchronous</Tooltip> and uses the same auth/signing model as payouts.
 
 > **Flow**: Authenticate → Sign → Send collection → Receive **202** → Get **webhook** (SUCCESS/FAILED) → Reconcile (optional poll).
 
@@ -13,7 +13,7 @@ Collections represent **incoming customer payments** (e.g., paybill/till). The A
 
 **POST** `/payments-api-service/v1/collections`
 
-Headers are identical to payouts (see that guide). Use `X-Idempotency-Key: <transaction.reference>`.
+Headers are identical to payouts (see that guide). Use `X-Idempotency-Key: <transaction.reference>` <Tooltip tip="Dedupes retries for the same collection request">?</Tooltip>.
 
 ---
 
@@ -52,6 +52,7 @@ Headers are identical to payouts (see that guide). Use `X-Idempotency-Key: <tran
 **Notes**
 - Use `external_reference` when you need to carry your invoice/order id to downstreams.
 - `account` is the target/payee account in the receiving system context.
+- `msisdn` should be in <Tooltip tip="International phone format; no leading +">E.164</Tooltip> without the `+`.
 
 ---
 

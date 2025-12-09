@@ -1,0 +1,48 @@
+---
+title: Event Types
+description: Quick reference for webhook statuses and example payloads.
+---
+
+Use this page to map webhook `status` / `code` pairs to their meaning and expected payload fields.
+
+## Status codes
+
+| status        | code | Meaning                                                                 |
+|---------------|------|-------------------------------------------------------------------------|
+| CREATED       | 100  | Request created, awaiting processing.                                  |
+| PENDING       | 101  | In progress and awaiting confirmation.                                 |
+| SUCCESS       | 102  | Completed successfully.                                                 |
+| FAILED        | 103  | Attempt failed.                                                         |
+| ESCALATED     | 104  | Needs further review/manual intervention.                              |
+| EXPIRED       | 105  | Request expired before completion.                                     |
+| REFUNDED      | 106  | Payment successfully refunded.                                         |
+| REVERSED      | 107  | Payment reversed; funds returned due to error or cancellation.         |
+
+## Example payload (SUCCESS)
+
+```json
+{
+  "status": "SUCCESS",
+  "code": "102",
+  "description": "SUCCESS",
+  "results": {
+    "result_code": "0",
+    "result_description": "Transaction complete",
+    "amount": 1000.0,
+    "total_charges": 10.0,
+    "total_amount": 1000.0,
+    "msisdn": "254712345678",
+    "transaction_reference": "TRD99672118069255",
+    "payment_uuid": "422664585064023059",
+    "external_reference": "ws_CO_11062025125308639792002",
+    "time_processed": "2025-06-18T08:28:16.090966",
+    "validation_hash": "2b9e9d...a9db1",
+    "metadata": {
+      "note": "This info is returned as part of the callback",
+      "agent_id": "AGENT456"
+    }
+  }
+}
+```
+
+For the full field list, see `/pages/webhooks/payload`. Verify the integrity hash as shown in `/pages/webhooks/verify-signature`.
