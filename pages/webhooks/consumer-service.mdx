@@ -45,7 +45,7 @@ Example message consumed from the queue (validated before processing):
 - Violations throw a validation exception and are **not re-queued**.
 
 ## Notification payload (to your callback)
-Transformed JSON sent via HTTP `POST` to `callback_url`. See `/pages/webhooks/payload` for full schema; example:
+Transformed JSON sent via HTTP `POST` to `callback_url`. See [Webhook payload](/pages/webhooks/payload) for full schema; example:
 
 ```json
 {
@@ -72,7 +72,7 @@ Transformed JSON sent via HTTP `POST` to `callback_url`. See `/pages/webhooks/pa
 }
 ```
 
-Status codes are consistent with `/pages/webhooks/payload` (`100` CREATED, `101` PENDING, `102` SUCCESS, `103` FAILED, `104` ESCALATED, `105` EXPIRED, `106` REFUNDED, `107` REVERSED).
+Status codes are consistent with [Webhook payload](/pages/webhooks/payload) (`100` CREATED, `101` PENDING, `102` SUCCESS, `103` FAILED, `104` ESCALATED, `105` EXPIRED, `106` REFUNDED, `107` REVERSED).
 
 ## Processing flow
 1) **Consume** from `PAYMENTS.WEBHOOK.QUEUE` (or `PAYMENTS.WEBHOOK.DELAY.QUEUE` for retries).  
@@ -86,7 +86,7 @@ Status codes are consistent with `/pages/webhooks/payload` (`100` CREATED, `101`
 
 ## Integrity check (validation_hash)
 - Computed as **SHA-256** over `amount + client_reference + payment_uuid + payment_id`.
-- Included in `results.validation_hash` so you can recompute and verify. See `/pages/webhooks/verify-signature` for verification snippets and stronger HMAC guidance.
+- Included in `results.validation_hash` so you can recompute and verify. See [Verify signature](/pages/webhooks/verify-signature) for verification snippets and stronger HMAC guidance.
 
 ## Operational notes
 - **Concurrency:** Rabbit listener concurrency is tunable (e.g., 25–100 consumers) with prefetch=1 to balance throughput and fairness.

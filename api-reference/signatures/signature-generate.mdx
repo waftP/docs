@@ -31,6 +31,15 @@ These endpoints also require **Bearer auth** in the `Authorization` header.
 
 ---
 
+## Key handling and security
+
+- **Never commit private keys** to your repo or docs site. Treat them as secrets.
+- Store private keys in a secure vault or encrypted filesystem and load them at runtime.
+- Rotate keys periodically and re-register the **public** key with Waftpay.
+- Use different key pairs for sandbox and production.
+
+---
+
 ## 1) Create your key pair (RSA 2048)
 
 You need an **RSA 2048** key pair in **PEM** format:
@@ -59,6 +68,8 @@ TXN123654573100.00KENewqeqw
 ---
 
 ## Generate `X-Custom-Signature`
+
+> Keep your private key outside the repo (for example, `./keys/client_private.pem`) and load it at runtime.
 
 <Tabs>
   <Tab title="Node.js">
@@ -178,6 +189,16 @@ TXN123654573100.00KENewqeqw
 <Note>
   Use <em>standard Base64</em> (not Base64URL). Algorithm is <strong>RS256</strong> (RSA PKCS#1 v1.5 + SHA-256).
 </Note>
+
+---
+
+## Common mistakes
+
+- **Mismatched amount formatting**: if you send `"100.00"` you must sign `"100.00"` (not `"100"`).
+- **Country/service casing**: `KE` vs `KEN` or service code casing must match exactly.
+- **Wrong key format**: use PKCS#8 (`BEGIN PRIVATE KEY`), not PKCS#1 (`BEGIN RSA PRIVATE KEY`).
+- **Base64URL vs Base64**: use standard Base64 (`+` and `/`), not URL-safe Base64.
+- **Payload mismatch**: any difference between the signed string and the sent JSON will fail verification.
 
 ---
 

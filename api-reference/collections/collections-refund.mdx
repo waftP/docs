@@ -1,27 +1,63 @@
 ---
-title: "Initiate Refund/Reversal"
-description: "Query the status of a refund/reversal by request."
+title: "Refund/Reversal Status"
+description: "Query the latest status of a refund or reversal request."
 openapi: "POST /refund-reversal"
 ---
 
-<Note>
-    This endpoint **does not create** a refund; it **queries the status** of an already-initiated refund using a <code>request_uuid</code>.
-</Note>
+## Overview
 
-## Introduction
+Use this endpoint to check the status of a refund or reversal request that was previously initiated in the platform.
 
-- The RnR service is responsible for processing refund and reversal requests across various service channels. It serves as the core transactional
-handler for initiating, approving, and processing refunds/reversals both manually (via UI) and automatically (via API).
-
-## Prerequisites
-
-- **Bearer token** from `POST /authentication-service/v1/api/generate-token` (Only use the **COLLECTIONS** key/secret for generation of this token)
-- **Content-Type**: `application/json`
+> **Auth**: Requires a **Collection token** (`Authorization: Bearer <collection_token>`).
 
 ---
 
-## Required headers
+## Endpoint
 
 ```http
-Authorization: Bearer <token>
-Content-Type: application/json
+POST {BASE_URL}/refund-reversal
+```
+
+---
+
+## Request body
+
+Provide the `request_uuid` you received when the refund/reversal was created.
+
+```json
+{
+  "request_uuid": "A333RTYUT"
+}
+```
+
+---
+
+## Example response
+
+```json
+{
+  "code": 102,
+  "status": "SUCCESS",
+  "description": "Transaction success",
+  "results": {
+    "result_code": "21",
+    "result_description": "The service request is processed successfully",
+    "amount": "1015.00",
+    "total_charges": "0.00",
+    "total_amount": "1015.00",
+    "account": "254792452002",
+    "original_payment_uuid": "882231418121042119",
+    "original_transaction_reference": "TNC0009886898418",
+    "original_external_reference": "1V1OPZZGHQ",
+    "external_reference": "1V33UUE1IR",
+    "time_processed": "2025-08-26T05:20:27Z"
+  }
+}
+```
+
+---
+
+## Notes
+
+- If the refund/reversal is not found, the response body will include a `NOT FOUND` status.
+- Errors follow the standard error shape. See [Errors](/errors).

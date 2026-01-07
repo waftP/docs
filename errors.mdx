@@ -141,7 +141,7 @@ You’ll see the HTTP status in the response and the extended code in the body (
 }
 ```
 
-**Fix:** Refresh OAuth token and send `Authorization: Bearer <token>`.
+**Fix:** Refresh your Bearer token and send `Authorization: Bearer <token>`.
 
 ### 3) Signature validation failed
 
@@ -230,7 +230,7 @@ export function interpretError(res: Response, body: WaftpayError) {
 - **Don’t retry 4xx** (unless you’ve corrected the payload or credentials).
 - **Backoff on 5xx** (`500.001.xxx`) and monitor for sustained failures.
 - **Validate locally** (types, formats, required fields) before sending.
-- **Secure your auth** (valid OAuth Bearer token) and **sign requests** exactly as specified.
+- **Secure your auth** (valid Bearer token) and **sign requests** exactly as specified.
 - **Whitelist your `callback_url`** and ensure it is an **HTTPS** URL that returns **2xx** swiftly.
 
 ---

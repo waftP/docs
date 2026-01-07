@@ -1,36 +1,10 @@
 ---
-title: "Get OAuth token"
-description: "Exchange client credentials for a short-lived Bearer token."
+title: "Get OAuth Token (Legacy)"
+description: "OAuth2 client-credentials flow for legacy integrations."
 openapi: "POST /oauth/token"
 mode: "wide"
 ---
 
-> Use **client_credentials** from your server. This endpoint does not require a Bearer token.
+Most integrations should use the standard token endpoint: [Get Authentication Token](/api-reference/auth/auth-token).
 
-# OAuth2 – Client Credentials Flow
-
-The Waftpay API uses **OAuth2 Client Credentials** for server-to-server authentication.
-This flow is **not a user login** – you do not pass email or password here. Instead, your application authenticates using a **Client ID** and **Client Secret** that Waftpay issues to you.
-
----
-
-## How to Use this
-
-- API keys and secrets should never be exposed in logs or error messages.
-- Use **Client ID \+ Client Secret** when your **server application** (backend) calls Waftpay APIs directly.
-- Do **not** embed secrets in browsers or mobile apps. If you need user login (e.g. phone \+ password), see the **User Login Authentication** section.
-
----
-
-## When to use this
-
-- Use **Client ID \+ Client Secret** when your **server application** (backend) calls Waftpay APIs directly.
-- Do **not** embed secrets in browsers or mobile apps. If you need user login (e.g. phone \+ password), see the **User Login Authentication** section.
-
----
-
-## Endpoint
-
-```http
-POST {BASE_URL}/oauth/token
-```
+If your account is configured for OAuth2, use the **client_credentials** flow on this endpoint. Contact Waftpay support if you are unsure which token flow applies to your account.

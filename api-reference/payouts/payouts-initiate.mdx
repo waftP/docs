@@ -4,28 +4,123 @@ description: "Send money to a customer using Waftpay Payouts API."
 openapi: "POST /payments-api-service/v1/payouts"
 ---
 
-# Initiate Payout
+## Overview
 
-The **Payouts API** disburses funds from your Waftpay account to customers, vendors, or partners.
+Use the Payouts API to disburse funds from your Waftpay wallet to a customer, vendor, or partner. Payouts are asynchronous: you receive an acceptance response immediately, then a final outcome via webhook.
 
-This call is **idempotent**: reuse the same `transaction.reference` to safely retry.
-Duplicates are ignored with status **`REJECTED`**.
-
----
-
-## Required Headers
-
-| Header               | Required | Notes |
-|----------------------|--------- |------|
-| `Authorization`      | ✅       | `Bearer <payout_token>` (Payout token only  Collection/Remittance tokens won’t work) |
-| `X-Custom-Signature` | ✅       | Base64 RSA signature (see below) |
+This call is **idempotent**. Reuse the same `transaction.reference` to safely retry the same logical payout.
 
 ---
 
-## Timestamp Format
+## Authentication and signature
 
-All date-times are **ISO 8601 UTC**.
-Example:
+**Required headers**
+
+| Header | Required | Notes |
+|---|---|---|
+| `Authorization` | Yes | `Bearer <payout_token>` (payout product token only) |
+| `X-Custom-Signature` | Yes | Base64 RSA signature. See [Signature generation](/api-reference/signatures/signature-generate). |
+| `Content-Type` | Yes | `application/json` |
+
+---
+
+## Request body
+
+**Top-level fields**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `transaction` | object | Yes | Payout details and idempotency reference. |
+| `originator` | object | Yes | Sender details. |
+| `recipient` | object | Yes | Recipient details and service code. |
+| `callback_url` | string | Yes | HTTPS URL for final status callbacks. |
+| `meta` | object | No | Arbitrary key/value metadata echoed in callbacks. |
+
+**transaction**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `reference` | string | Yes | Client-generated unique reference (idempotency key). |
+| `amount` | integer | Yes | Amount in major units (e.g., 1000 = 1000 KES). |
+| `currency` | string | Yes | ISO 4217 currency code (e.g., KES, USD). |
+| `description` | string | Yes | Short narrative for the payout. |
+| `timestamp` | string | Yes | ISO 8601 UTC timestamp (must end with `Z`). |
+
+**originator**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `msisdn` | string | Yes | MSISDN format (e.g., 2547XXXXXXXX). |
+| `channel` | string | Yes | Initiation channel (e.g., USSD, API). |
+| `country` | string | Yes | ISO 3166-1 country code (e.g., KE). |
+| `name` | string | Yes | Originator name. |
+| `purpose` | string | Yes | Reason for the payout. |
+
+**recipient**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `service_code` | string | Yes | Service to use (e.g., MPESAB2C). |
+| `reference` | string | Yes | Client-generated reference for recipient-side tracking. |
+| `account` | string | Yes | Recipient account identifier (phone, wallet, bank account). |
+
+---
+
+## Example request
 
 ```json
-"timestamp": "2025-01-21T12:30:10Z"
+{
+  "transaction": {
+    "reference": "TXN213687756272200",
+    "amount": 1000,
+    "currency": "KES",
+    "description": "Vendor payout",
+    "timestamp": "2025-01-21T12:30:10Z"
+  },
+  "originator": {
+    "msisdn": "254708374149",
+    "channel": "USSD",
+    "country": "KE",
+    "name": "Payment",
+    "purpose": "Transaction Payment"
+  },
+  "recipient": {
+    "service_code": "MPESAB2C",
+    "reference": "INVJMA02",
+    "account": "254708374149"
+  },
+  "callback_url": "https://merchant.example.com/callbacks/payout",
+  "meta": {
+    "note": "This info is returned as part of the callback",
+    "agent_id": "AGENT458"
+  }
+}
+```
+
+---
+
+## Example response (accepted)
+
+```json
+{
+  "status": "200.100",
+  "code": "ACCEPTED",
+  "description": "Accepted for processing",
+  "data": {
+    "amount": 1000,
+    "total_charges": 0,
+    "total_amount": 1000,
+    "transaction_reference": "TXN213687756272200",
+    "payment_uuid": "8363546214883574601",
+    "payment_reference": "1RJITP5HLL",
+    "time_received": "2025-04-04T06:13:52.585619Z"
+  }
+}
+```
+
+---
+
+## Notes
+
+- Final outcome is delivered via webhook. See [Webhooks overview](/pages/webhooks/overview).
+- Errors follow the standard error shape. See [Errors](/errors).

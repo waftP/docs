@@ -4,10 +4,125 @@ description: "Create a customer collection request."
 openapi: "POST /payments-api-service/v1/user/collections"
 ---
 
-<Note>
-    <strong>Idempotency:</strong> Reuse the same <code>transaction.reference</code> to safely retry the same request.
-</Note>
+## Overview
 
-## Prerequisites
+Use the Collections API to request money from a customer. Collections are asynchronous: you receive an acceptance response immediately, then a final outcome via webhook.
 
-- **Bearer token** from `POST /authentication-service/v1/api/generate-token`
+This call is **idempotent**. Reuse the same `transaction.reference` to safely retry the same logical collection.
+
+---
+
+## Authentication and signature
+
+**Required headers**
+
+| Header | Required | Notes |
+|---|---|---|
+| `Authorization` | Yes | `Bearer <collection_token>` |
+| `X-Custom-Signature` | Yes | Base64 RSA signature. See [Signature generation](/api-reference/signatures/signature-generate). |
+| `Content-Type` | Yes | `application/json` |
+
+---
+
+## Request body
+
+**Top-level fields**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `transaction` | object | Yes | Collection details and idempotency reference. |
+| `originator` | object | Yes | Customer details. |
+| `recipient` | object | Yes | Collection recipient details. |
+| `callback_url` | string | Yes | HTTPS URL for final status callbacks. |
+| `meta` | object | No | Arbitrary key/value metadata echoed in callbacks. |
+
+**transaction**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `reference` | string | Yes | Client-generated unique reference (idempotency key). |
+| `amount` | integer | Yes | Amount in major units (e.g., 1000 = 1000 KES). |
+| `currency` | string | Yes | ISO 4217 currency code (e.g., KES, USD). |
+| `description` | string | Yes | Short narrative for the collection. |
+| `timestamp` | string | Yes | ISO 8601 UTC timestamp (must end with `Z`). |
+| `service_code` | string | No | Collection service code if enabled on your account. |
+
+**originator**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `msisdn` | string | Yes | MSISDN format (e.g., 2547XXXXXXXX). |
+| `channel` | string | Yes | Initiation channel (e.g., USSD, API). |
+| `country` | string | Yes | ISO 3166-1 country code (e.g., KE). |
+| `name` | string | Yes | Customer full name. |
+| `purpose` | string | Yes | Purpose of the collection. |
+
+**recipient**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `invoice_number` | string | No | Invoice number for reconciliation (if applicable). |
+| `reference` | string | Yes | Client-generated reference for recipient-side tracking. |
+| `account` | string | Yes | Recipient account identifier (phone, wallet, or bank account). |
+
+---
+
+## Example request
+
+```json
+{
+  "transaction": {
+    "reference": "TNC000008",
+    "amount": 1000,
+    "currency": "KES",
+    "description": "Test description",
+    "timestamp": "2025-01-21T12:30:10Z",
+    "service_code": "RMT_WU"
+  },
+  "originator": {
+    "msisdn": "254712345678",
+    "channel": "USSD",
+    "country": "KE",
+    "name": "John Doe",
+    "purpose": "Salary Payment"
+  },
+  "recipient": {
+    "invoice_number": "3456789987654",
+    "reference": "INVJMA01",
+    "account": "254712345678"
+  },
+  "callback_url": "https://merchant.example.com/callbacks/collection",
+  "meta": {
+    "note": "This info is returned as part of the callback",
+    "agent_id": "AGENT456"
+  }
+}
+```
+
+---
+
+## Example response (accepted)
+
+```json
+{
+  "status": "200.100",
+  "code": "ACCEPTED",
+  "description": "Accepted for processing",
+  "data": {
+    "amount": 1000,
+    "total_charges": 0,
+    "total_amount": 1000,
+    "transaction_reference": "TNC000009",
+    "payment_uuid": "8363546214883574601",
+    "payment_reference": "1RJITP5HLL",
+    "time_received": "2025-04-04T06:13:52.585619Z"
+  }
+}
+```
+
+---
+
+## Notes
+
+- Final outcome is delivered via webhook. See [Webhooks overview](/pages/webhooks/overview).
+- Errors follow the standard error shape. See [Errors](/errors).

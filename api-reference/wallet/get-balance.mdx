@@ -17,6 +17,14 @@ Optionally filter by a specific `currency` (e.g., `KES`). If omitted, **all bala
 GET /payments-tsq-service/v1/wallet-balances?currency={CURRENCY}
 ```
 
+## Example request
+
+```bash
+curl -X GET \
+  'https://sandbox.waftpay.io/api/payments-tsq-service/v1/wallet-balances?currency=KES' \
+  -H 'Authorization: Bearer <access_token>'
+```
+
 ## Authentication
 
 This endpoint **requires** a Bearer token that is **scoped to the product** you are querying (e.g., a *Collections* token can only view Collections balances; a *Payouts* token can only view Payouts balances).
@@ -77,7 +85,7 @@ If the token is invalid, expired, or not authorized for the requested product, y
 > - `actual_balance` is the total ledger balance.
 > - `available_balance` is the spendable amount after holds/reserves.
 > - `alert_limit` is your configured low-balance threshold (if any).
-> - `status` reflects wallet state (e.g., `ACTIVE`).
+> - `status` reflects wallet state (e.g., `ACTIVE`, `INACTIVE`, `SUSPENDED`).
 
 ---
 
@@ -112,5 +120,6 @@ If the token is invalid, expired, or not authorized for the requested product, y
 - **Idempotency:** This is a `GET` and does not change state; no idempotency key required.
 - **Caching:** Avoid caching balances client‑side if you need real‑time accuracy.
 - **Rate limits:** Standard platform rate limits apply. Handle `429` with retries and backoff.
+- **Currency codes:** Must be ISO 4217 uppercase; unrecognized codes return `404` or an empty list depending on provisioning.
 
 ---

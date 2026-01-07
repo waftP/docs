@@ -1,35 +1,58 @@
 ---
 title: "Remittances"
-description: "Move funds between financial entities; KYC fields, signing, acceptance, and delivery confirmation."
+description: "Cross-border payouts with KYC fields, signing, acceptance, and delivery confirmation."
 ---
 
-Remittances transfer funds between financial entities (domestic or cross‑border). The flow mirrors payouts/collections with additional <Tooltip tip="Know Your Customer details required by regulators/corridors">KYC</Tooltip> fields.
-
----
-
-## 1) Endpoint & Headers
-
-**POST** `/payments-api-service/v1/remittances`
-
-Headers and signing are identical to payouts (same canonical string & rules).
+Remittances move funds across corridors and require extra KYC fields. The flow mirrors payouts/collections: accept immediately, then finalize via webhook.
 
 ---
 
-## 2) Request Body (example)
+## Quick flow
+
+Authenticate -> Sign -> Send remittance -> Receive acceptance -> Receive webhook -> Reconcile (optional status check).
+
+---
+
+## Prerequisites
+
+- Product-scoped Bearer token from [Authentication API](/api-reference/auth/auth-token).
+- RSA 2048 key pair registered with Waftpay. See [Signature generation](/api-reference/signatures/signature-generate).
+- Correct base URL for your environment. See [Environments](/environments).
+
+---
+
+## Endpoint
+
+**POST** `/payments-api-service/v1/remittance`
+
+**Required headers**
+
+```http
+Authorization: Bearer <access_token>
+Content-Type: application/json
+X-Custom-Signature: <base64-signature>
+```
+
+**Idempotency**: reuse the same `transaction.reference` for retries of the same logical remittance.
+
+---
+
+## Request body (example)
 
 ```json
 {
   "transaction": {
     "reference": "TXN123654573",
-    "amount": "100.00",
+    "amount": 100,
     "currency": "KES",
     "description": "Family support",
-    "timestamp": "2025-01-21T12:30:10+03:00"
+    "timestamp": "2025-01-21 12:30:10"
   },
   "originator": {
     "msisdn": "254722111999",
     "channel": "APP",
-    "country": "KE",
+    "country": "KEN",
+    "Service_provider": "TELCOM-UK",
     "name": "John Sender",
     "dob": "1965-01-01",
     "nationality": "UK",
@@ -40,7 +63,7 @@ Headers and signing are identical to payouts (same canonical string & rules).
   "recipient": {
     "service_code": "RMT_WU",
     "reference": "REM-2025-01",
-    "account": "John Doe Init",
+    "account": "254701234567",
     "name": "John Doe Init"
   },
   "callback_url": "https://merchant.example.com/webhooks/remittances",
@@ -51,34 +74,42 @@ Headers and signing are identical to payouts (same canonical string & rules).
 }
 ```
 
-**KYC Guidance**
-- Provide full legal **name**, **DOB**, **nationality**, and **ID type** if the corridor mandates it.  
-- We may request additional attributes depending on corridor/regulator.
+**Notes**
+
+- `transaction.timestamp` for remittance uses `YYYY-MM-DD HH:mm:ss` (no timezone suffix).
+- KYC fields are required per corridor. Provide full name, DOB, nationality, and ID details.
 
 ---
 
-## 3) Acceptance & Completion
+## Acceptance response (immediate)
 
-- **HTTP 202** upon acceptance (same envelope as payouts).  
-- Webhook provides **final result** with downstream references, timestamps, and `payment_uuid`.
-
----
-
-## 4) Corridor & Currency Considerations
-
-- Always sign with the **same `currency`** you send in the payload.  
-- Ensure FX conversions (if any) are handled by your upstream system before you submit the remittance unless your commercial setup includes FX.
+The acceptance response uses the same envelope as payouts. See [Initiate remittance API](/api-reference/remittance/remittance-initiate).
 
 ---
 
-## 5) Compliance & Risk
+## Webhook (final outcome)
 
-- Ensure sanctions/PEP screening where applicable.  
-- We may block or pend transactions for additional review; in that case, TSQ shows `PENDING/REVIEW` until resolved.
+We POST to your `callback_url` when the remittance completes. See [Webhook payload](/pages/webhooks/payload).
 
 ---
 
-## 6) Error & Retry Strategy
+## Status checks (optional)
 
-- Use <Tooltip tip="Same idempotency key prevents duplicate processing on retries">idempotent</Tooltip> retries with the same `X-Idempotency-Key` on transient errors (HTTP `5xx`, `429`).  
-- Do **not** retry `400`/`403` without fixing the root cause.
+If a webhook is delayed or missing, query status using [Check remittance status](/api-reference/remittance/remittance-status) or [Status checks](/pages/guides/status-checks).
+
+---
+
+## Common issues
+
+- **Signature mismatch**: ensure the string-to-sign matches the payload exactly. See [Signature generation](/api-reference/signatures/signature-generate).
+- **Wrong token**: use a remittance-scoped Bearer token.
+- **Timestamp format**: remittance uses `YYYY-MM-DD HH:mm:ss`.
+
+---
+
+## Related links
+
+- [Initiate remittance API](/api-reference/remittance/remittance-initiate)
+- [Check remittance status](/api-reference/remittance/remittance-status)
+- [Webhooks overview](/pages/webhooks/overview)
+- [Errors](/errors)

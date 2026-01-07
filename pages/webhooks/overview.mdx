@@ -18,7 +18,8 @@ Webhooks let Waftpay notify your server about payment status events (e.g., `SUCC
 > **Note**: Webhooks report status; they don’t accept commands. Use the Payments API for actions.
 
 #### Where to go next
-- See `/pages/webhooks/event-types` for the status/code matrix.
-- See `/pages/webhooks/payload` for the exact JSON shape.
-- See `/pages/webhooks/retries-and-idempotency` for retry rules and deduping.
-- See `/pages/webhooks/consumer-service` for the internal queue → delivery flow.
+- See [Event types](/pages/webhooks/event-types) for the status/code matrix.
+- See [Webhook payload](/pages/webhooks/payload) for the exact JSON shape.
+- See [Retries & idempotency](/pages/webhooks/retries-and-idempotency) for retry rules and deduping.
+- See [Build your endpoint](/pages/webhooks/building-your-endpoint) for handler patterns.
+- See [Consumer service](/pages/webhooks/consumer-service) for the internal queue → delivery flow.

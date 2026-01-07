@@ -1,43 +1,82 @@
 ---
-
 title: "Initiate Remittance"
-description: "Create a remittance request"
+description: "Create a remittance request."
 openapi: "POST /payments-api-service/v1/remittance"
+---
+
+## Overview
+
+Use the Remittance API to send cross-border payouts. Remittances are asynchronous: you receive an acceptance response immediately, then a final outcome via webhook.
+
+This call is **idempotent**. Reuse the same `transaction.reference` to safely retry the same logical remittance.
 
 ---
 
-<Note>
-    <strong>Idempotency:</strong> Reuse the same <code>transaction.reference</code> to safely retry the same request.
-</Note>
+## Authentication and signature
 
-## Prerequisites
+**Required headers**
 
-- **Bearer token** from `POST /authentication-service/v1/api/generate-token`
-- **Signature header** `X-Custom-Signature` (RS256 over the concatenation below)
-- **Public key** registered with Waftpay (your private key stays on your server)
+| Header | Required | Notes |
+|---|---|---|
+| `Authorization` | Yes | `Bearer <remittance_token>` |
+| `X-Custom-Signature` | Yes | Base64 RSA signature. See [Signature generation](/api-reference/signatures/signature-generate). |
+| `Content-Type` | Yes | `application/json` |
 
-**Signing string (no separators):**
+**String to sign (no separators)**
+
 ```
 transaction.reference + transaction.amount + originator.country + recipient.service_code
 ```
 
-<Info>
-    See <strong>X-Custom-Signature</strong> for key generation, signing examples, and local verification.
-</Info>
-
-<Warning>
-    <strong>Timestamp format:</strong> ISO-8601, use <code>2025-01-21T12:30:10Z</code>.
-</Warning>
+Use the exact string values you send in the JSON (including casing).
 
 ---
 
-## Required headers
+## Request body
 
-```http
-Authorization: Bearer <token>
-X-Custom-Signature: <base64-rsa-sha256-signature>
-Content-Type: application/json
-```
+**Top-level fields**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `transaction` | object | Yes | Remittance details and idempotency reference. |
+| `originator` | object | Yes | Sender details. |
+| `recipient` | object | Yes | Recipient details and service code. |
+| `callback_url` | string | Yes | HTTPS URL for final status callbacks. |
+| `meta` | object | No | Arbitrary key/value metadata echoed in callbacks. |
+
+**transaction**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `reference` | string | Yes | Client-generated unique reference (idempotency key). |
+| `amount` | integer | Yes | Amount in major units (e.g., 100 = 100 KES). |
+| `currency` | string | Yes | ISO 4217 currency code (e.g., KES, USD). |
+| `description` | string | Yes | Short narrative for the remittance. |
+| `timestamp` | string | Yes | Format: `YYYY-MM-DD HH:mm:ss`. |
+
+**originator**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `msisdn` | string | Yes | MSISDN format (e.g., 2547XXXXXXXX). |
+| `channel` | string | Yes | Initiation channel (e.g., USSD, API). |
+| `country` | string | Yes | Country code (ISO-2 or ISO-3 as configured on your account). |
+| `Service_provider` | string | Yes | Sending provider name (corridor-specific). |
+| `name` | string | Yes | Originator full name. |
+| `dob` | string | Yes | Date of birth (YYYY-MM-DD). |
+| `nationality` | string | Yes | Originator nationality (e.g., UK). |
+| `id_type` | string | Yes | Identification type (e.g., Passport). |
+| `id_number` | string | Yes | Identification number. |
+| `purpose` | string | Yes | Purpose of sending the funds. |
+
+**recipient**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `service_code` | string | Yes | Corridor/payout rail code. |
+| `reference` | string | Yes | Client-generated reference for recipient context. |
+| `account` | string | Yes | Recipient account identifier. |
+| `name` | string | Yes | Recipient full name. |
 
 ---
 
@@ -80,137 +119,7 @@ Content-Type: application/json
 
 ---
 
-## cURL
-
-```bash
-curl --request POST   --url https://sandbox.waftpay.io/api/payments-api-service/v1/remittance   --header "Authorization: Bearer <token>"   --header "X-Custom-Signature: <base64-rsa-sha256-signature>"   --header "Content-Type: application/json"   --data '{
-    "transaction": {
-      "reference": "TXN123654573",
-      "amount": 100,
-      "currency": "KES",
-      "description": "Test",
-      "timestamp": "2025-01-21 12:30:10"
-    },
-    "originator": {
-      "msisdn": "254722111999",
-      "channel": "Test",
-      "country": "KEN",
-      "Service_provider": "TELCOM-UK",
-      "name": "John Sender",
-      "dob": "1965-01-01",
-      "nationality": "UK",
-      "id_type": "Passport",
-      "id_number": "PSA010101",
-      "purpose": "No purpose"
-    },
-    "recipient": {
-      "service_code": "ewqeqw",
-      "reference": "Test",
-      "account": "Test",
-      "name": "John Doe Init"
-    },
-    "callback_url": "https://www.google.com",
-    "meta": {
-      "note": "Test",
-      "agent_id": "Test"
-    }
-  }'
-```
-
-## Remittance Request — Process Flow (end-to-end)
-
-This section documents the complete server flow so you can integrate and debug confidently.
-
-### Step-by-step detail
-
-#### Step 1: Incoming Request
-- **Endpoint:** `POST /payments-api-service/v1/remittance`
-- **Headers:** `Authorization: Bearer <JWT>`, `X-Custom-Signature: <base64>`
-- **Body:** Valid JSON matching the Remittance schema
-
-#### Step 2: `doFilterInternal` — Authentication & Authorization Filter
-- **Skip check:** Allows Swagger, actuator, and documentation routes to pass unfiltered.
-- **Authorization header validation:**
-- Must be present and start with **`Bearer `**.
-- If missing/invalid → **401 Unauthorized**.
-- **JWT token parsing:** Parse and extract claims; build **ClientDetails** (client/product/entitlements).
-- **Service code authorization:**
-- Read `recipient.service_code` from request body.
-- Verify client is entitled to that service.
-- If unauthorized → **persist invalid request** for audit and return **403 Forbidden**.
-- **Session data setup:** Populate ThreadLocal `SessionData` with `clientId`, `productId`, `serviceCode`, `signature` (raw header), for downstream access.
-
-#### Step 3: Controller (`RemittanceController`)
-- **Endpoint:** `POST /payments-api-service/v1/remittance`
-- **Validation:** `@Validated(RemittanceRequest.ValidateRequest.class)` on body.
-- **Delegation:** Calls `remittanceService.processRemittanceRequest(...)`.
-
-#### Step 4: Business Logic in `processRemittanceRequest(...)`
-- **Signature validation:**
-- Construct the data string:
-```
-transaction.reference + transaction.amount + originator.country + recipient.service_code
-    ```
-- Use `publicKeyService` to verify `X-Custom-Signature` (RSA-2048 + SHA-256, PKCS#1 v1.5).
-- If invalid → **persist as BAD_REQUEST** and map `SignatureVerificationException` to **400 Bad Request**.
-- **Save request for processing:**
-- `paymentService.savePaymentRequest(...)` and mark state **ACCEPTED**.
-- **Publish request for processing:**
-- Build a `PaymentAPIRequest` containing required metadata and the original payload.
-- Publish to **RabbitMQ** queue **`PAYMENTS.ROUTING.QUEUE`** (durable; DLQ recommended).
-
-**Sample published message**
-
-```json
-{
-  "amount": 1000,
-  "client_id": 1,
-  "service_code": "MPESAB2C",
-  "payment_uuid": 109091010100010001010,
-  "client_reference": "ref-115139914",
-  "account": "254712345678",
-  "payload": {
-    "transaction": {
-      "reference": "ref-115139914",
-      "amount": 1000,
-      "currency": "KES",
-      "description": "Test description",
-      "timestamp": "2025-01-21 12:30:10"
-    },
-    "originator": {
-      "msisdn": "254712345678",
-      "channel": "USSD",
-      "country": "KE",
-      "name": "254712345678",
-      "purpose": "Collections"
-    },
-    "recipient": {
-      "service_code": "MPESAB2C",
-      "pay_bill_number": "600987",
-      "store_number": "600987",
-      "reference": "INVJMA01",
-      "account": "254712345678"
-    },
-    "callback_url": "https://www.google.com",
-    "meta_data": {
-      "note": "This info is returned as part of the callback",
-      "agent_id": "AGENT456"
-    }
-  }
-}
-```
-
-#### Step 5: Response Handling in Filter
-- Intercepts and reads the response body.
-- Parses into `APIResponse`.
-- If `description` **starts with "Field..."** (field-level validation errors):
-- **Re-save** the original request as **BAD_REQUEST**.
-- Respond with the error message and **400** status.
-- If everything is valid: **pass through** the controller’s response to the client.
-
----
-
-## Successful response (example)
+## Example response (accepted)
 
 ```json
 {
@@ -231,29 +140,7 @@ transaction.reference + transaction.amount + originator.country + recipient.serv
 
 ---
 
-## Common errors & fixes
+## Notes
 
-- **401 Unauthorized** — Missing/invalid Bearer token. Ensure you’re using a valid token for the **Remittance** product.
-- **403 Forbidden** — Client is not authorized for the given `recipient.service_code`. Confirm entitlements.
-- **400 Bad Request** — Signature verification failed; field/timestamp validation errors; schema violations.
-- **409 Conflict** — Duplicate `transaction.reference` (idempotency hit). Expect prior response shape.
-- **5xx Internal** — Transient error; retry with the same idempotency key.
-
----
-
-## Ops & reliability tips
-
-- Use **durable** queues and a **DLQ** for `PAYMENTS.ROUTING.QUEUE`.
-- Emit metrics: request rate, accept/reject counts, signature failures, DLQ depth, p95/p99 latency.
-- Use **structured logging** with: `client_id`, `service_code`, `transaction.reference`, `payment_uuid`, and correlation IDs.
-- Never log secrets, private keys, raw signatures, or full tokens (redact/hash sensitive values).
-
----
-
-## Pre-flight checklist
-
-- [ ] Bearer token for **Remittance** product (not Payouts/Collections)
-- [ ] `X-Custom-Signature` computed over the correct field order (no separators)
-- [ ] Payload values match what was signed (amount format, `originator.country` casing, `recipient.service_code`)
-- [ ] `callback_url` is HTTPS and reachable
-- [ ] `transaction.reference` is unique per logical request (idempotency)
+- Final outcome is delivered via webhook. See [Webhooks overview](/pages/webhooks/overview).
+- Errors follow the standard error shape. See [Errors](/errors).

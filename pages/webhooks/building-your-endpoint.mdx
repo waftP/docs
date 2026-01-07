@@ -8,6 +8,8 @@ description: Minimal, fast, and secure callback handler patterns.
 - Accept `POST` with `Content-Type: application/json`.
 - Return **2xx** quickly (store → ack → process async).
 
+Use [Verify signature](/pages/webhooks/verify-signature) if you want to validate `validation_hash`.
+
 ## Example handlers
 
 ### Node.js (Express)

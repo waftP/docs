@@ -13,10 +13,11 @@ description: Common integration pitfalls and how to fix them.
 
 #### Signature mismatch
 - Ensure you build the hash exactly as documented (no separators, consistent string formats).  
-- Watch out for number formatting on `amount`.
+- Watch out for number formatting on `amount`.  
+- See [Verify signature](/pages/webhooks/verify-signature) for examples.
 
 #### Timeouts
 - Read the body, **persist**, and return **2xx** quickly; do heavy work async.
 
 #### Metadata not present
-- `metadata` is optional; code defensively.
+- `metadata` is optional; code defensively. See [Webhook payload](/pages/webhooks/payload).

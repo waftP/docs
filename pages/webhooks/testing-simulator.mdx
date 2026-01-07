@@ -8,7 +8,10 @@ Use our sandbox to simulate webhook deliveries to your callback URL.
 ## Quick start (cURL)
 
 ```bash
-curl --request POST           --url https://sandbox.your-domain.example/developer-tools/webhooks/send-test           --header 'Content-Type: application/json'           --data '{
+curl -X POST \
+  https://sandbox.waftpay.io/api/developer-tools/webhooks/send-test \
+  -H 'Content-Type: application/json' \
+  -d '{
     "callback_url": "https://merchant.example.com/webhooks/payments",
     "status": "SUCCESS",
     "code": "102",
@@ -20,5 +23,5 @@ curl --request POST           --url https://sandbox.your-domain.example/develope
   }'
 ```
 
-> The simulator **sends** a webhook to your `callback_url` using the same payload format as production (see **Webhook Payload**).  
+> The simulator **sends** a webhook to your `callback_url` using the same payload format as production (see [Webhook payload](/pages/webhooks/payload)).  
 > In your logs, confirm receipt and your 2xx response.

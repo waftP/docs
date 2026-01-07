@@ -2,3 +2,10 @@
     background: linear-gradient(135deg, #064E3B 0%, #16A34A 50%, #15803D 100%);
     color: white;
 }
+
+@media (min-width: 1024px) {
+    header img[src*="/logo/"] {
+        transform: scale(1.3);
+        transform-origin: left center;
+    }
+}

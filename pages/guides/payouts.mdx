@@ -1,228 +1,125 @@
 ---
 title: "Payouts"
-description: "End-to-end guide to sending outgoing payments: auth, signing, headers, payloads, idempotency, callbacks, and troubleshooting."
+description: "End-to-end guide to sending payouts: auth, signing, request shape, callbacks, and reconciliation."
 ---
 
-This guide walks you through **everything** required to send a payout successfully, from account setup to verifying completion. It’s written to be friendly for both first‑time integrators and senior engineers who want the crisp details.
-
-> **TL;DR**  
-> • Authenticate → Sign → Send → Receive callback → (Optionally) Poll status  
-> • Payouts are **asynchronous**. You’ll receive **202 Accepted** immediately and a **webhook** with the final outcome.  
-> • Use `X-Idempotency-Key` to prevent duplicates.  
-> • Requests must be **digitally signed** with your **RSA 2048** key.
+Use this guide to build a reliable payout flow with Waftpay. Payouts are asynchronous: you receive an acceptance response first, then a final outcome via webhook.
 
 ---
 
-## 0) Environments & Base URLs
+## Quick flow
 
-- **Sandbox**: `https://sandbox.api.waftpay.com`
-- **Production**: `https://api.waftpay.com`
-
-All examples below use Production paths. Swap the host for Sandbox as needed.
+Authenticate -> Sign -> Send payout -> Receive acceptance -> Receive webhook -> Reconcile (optional status check).
 
 ---
 
-## 1) Authenticate (Bearer JWT)
+## Prerequisites
 
-Obtain a Bearer token from the [Authentication API](/api-reference/auth/auth-token) using your `api_key` and `api_secret` (scoped to the **PAYMENTS** product).
-
-- **Header** to send later: `Authorization: Bearer <access_token>`
-- Tokens expire; refresh before expiry.
-
-> **Tip**: Cache tokens in memory with a safety refresh window (e.g., refresh when ≤ 5 minutes remain).
+- Product-scoped Bearer token from [Authentication API](/api-reference/auth/auth-token).
+- RSA 2048 key pair registered with Waftpay. See [Signature generation](/api-reference/signatures/signature-generate).
+- Correct base URL for your environment. See [Environments](/environments).
 
 ---
 
-## 2) Generate & Register Your Signing Key
-
-- Create an **RSA 2048** key pair (PEM, with `BEGIN/END` markers).  
-- Share your **public key** (and a `kid` identifier) with us via the onboarding portal.  
-- Keep your **private key** secure (HSM/Vault recommended). Rotate on a schedule.
-
-> **Security**: Never log the private key, signatures, or full payloads containing PII. Mask MSISDNs in logs.
-
----
-
-## 3) Build the Canonical String (Signing)
-
-Your payout requests must be signed over the following canonical string (UTF‑8 bytes), in this **exact** order:
-
-```text
-reference=<transaction.reference>&amount=<amount_2dp>&currency=<ISO4217>&country=<originator.country>&service_code=<recipient.service_code>
-```
-
-**Rules**
-- `reference`: as is (e.g., `TXN21************`).
-- `amount`: normalized to **two decimals** (e.g., `100.00`).
-- `currency`: ISO‑4217 (e.g., `KES`).
-- `country`: ISO‑3166‑1 **alpha‑2** (e.g., `KE`).
-- Concatenate with `&` separators; **no URL‑encoding** inside the string.
-
-**Sign** the canonical string with **RSA‑PSS SHA‑256** `RS256`.
-Encode the resulting signature as <Tooltip tip="URL-safe base64 variant; uses - and _ instead of + and /">Base64URL</Tooltip>.
-
----
-
-## 4) Required Headers
-
-```http
-Authorization: Bearer `<access_token>`
-Content-Type: application/json
-X-Idempotency-Key: `<transaction.reference>` <Tooltip tip="Client-provided key to dedupe retries on the same logical operation">?</Tooltip>
-X-Custom-Signature: `<base64url_signature>`
-```
-
-> **Idempotency**: We guarantee at‑most‑once processing per `(client_id, X-Idempotency-Key)`. Retries with the same idempotency key return a rejected result.
-
----
-
-## 5) Endpoint
+## Endpoint
 
 **POST** `/payments-api-service/v1/payouts`
 
-### Request Body (authoritative schema)
+**Required headers**
+
+```http
+Authorization: Bearer <access_token>
+Content-Type: application/json
+X-Custom-Signature: <base64-signature>
+```
+
+**Idempotency**: reuse the same `transaction.reference` for retries of the same logical payout.
+
+---
+
+## Request body (example)
 
 ```json
 {
   "transaction": {
-    "reference": "TXN123654671",
-    "amount": "100.00",
+    "reference": "TXN213687756272200",
+    "amount": 1000,
     "currency": "KES",
     "description": "Vendor payout",
     "timestamp": "2025-01-21T12:30:10Z"
   },
   "originator": {
-    "msisdn": "254712345678",
+    "msisdn": "254708374149",
     "channel": "USSD",
-    "country": "KE"
+    "country": "KE",
+    "name": "Payment",
+    "purpose": "Transaction Payment"
   },
   "recipient": {
     "service_code": "MPESAB2C",
-    "pay_bill_number": "600987",
-    "store_number": "600987",
     "reference": "INVJMA02",
-    "account": "686774899677388"
+    "account": "254708374149"
   },
-  "callback_url": "https://merchant.example.com/webhooks/payments",
+  "callback_url": "https://merchant.example.com/callbacks/payout",
   "meta": {
-    "note": "Settlement for invoice INVJMA02",
+    "note": "This info is returned as part of the callback",
     "agent_id": "AGENT458"
   }
 }
 ```
 
-**Validation highlights**
-- `transaction.reference`: unique per client; 1–64 chars; letters, digits, `-`/`_`.
-- `amount`: decimal string with 2dp, `0.01`–`9,999,999,999.99`. (Decimal places are not always utilized with some service providers)
-- `originator.msisdn`: <Tooltip tip="International phone format; no leading +">E.164</Tooltip> without `+` (e.g., `2547…`).
-- `recipient.service_code`: assigned by us; determines routing.
-- `callback_url`: HTTPS only, responds **200 OK** to acknowledge.
+**Notes**
+
+- `amount` is in major units (e.g., 1000 = 1000 KES).
+- `timestamp` must be ISO 8601 UTC (ends with `Z`).
+- `recipient.service_code` is assigned by Waftpay; confirm entitlement before go-live.
 
 ---
 
-## 6) Responses
+## Acceptance response (immediate)
 
-### 6.1 Immediate (asynchronous accept)
-
-- **HTTP 202**
 ```json
 {
-  "code": "200.100",
-  "status": "ACCEPTED",
+  "status": "200.100",
+  "code": "ACCEPTED",
   "description": "Accepted for processing",
   "data": {
-    "amount": "100.00",
-    "total_charges": "0.00",
-    "total_amount": "100.00",
-    "transaction_reference": "TXN123654671",
-    "payment_uuid": "8532732771864300709",
-    "payment_reference": "1STSPBSS8G",
-    "time_received": "2025-04-04T05:33:04.893Z"
+    "amount": 1000,
+    "total_charges": 0,
+    "total_amount": 1000,
+    "transaction_reference": "TXN213687756272200",
+    "payment_uuid": "8363546214883574601",
+    "payment_reference": "1RJITP5HLL",
+    "time_received": "2025-04-04T06:13:52.585619Z"
   }
 }
 ```
 
-### 6.2 Webhook (final outcome)
+---
 
-We POST to your `callback_url` when complete.
+## Webhook (final outcome)
 
-```json
-{
-  "code": "200.200",
-  "status": "SUCCESS",
-  "description": "Payout completed",
-  "results": {
-    "result_code": "0",
-    "result_description": "Success",
-    "amount": "100.00",
-    "total_charges": "0.00",
-    "total_amount": "100.00",
-    "service_code": "MPESAB2C",
-    "msisdn": "254712345678",
-    "transaction_reference": "TXN123654671",
-    "payment_uuid": "8532732771864300709",
-    "external_reference": "MNO123456",
-    "time_processed": "2025-04-04T05:35:09.102Z"
-  }
-}
-```
-
-> **Webhook acks**: Respond with **200** within 5s. We retry (exponential backoff) on non‑2xx/timeout up to a max window (documented in your contract).
+We POST to your `callback_url` when the payout completes. See [Webhook payload](/pages/webhooks/payload).
 
 ---
 
-## 7) Status Polling (Optional)
+## Status checks (optional)
 
-Instead of (or in addition to) webhooks, use the **Status Checks** endpoint with `transaction_reference` or `payment_uuid`. See `status.mdx`.
-
----
-
-## 8) Rate Limits & Throughput
-
-- Default: **60 requests/min/client** (burst 120).  
-- If you need more, contact support for a plan change.  
-- Respect **HTTP 429** with `Retry-After` in seconds.
+If a webhook is delayed or missing, query status using [Check payout status](/api-reference/payouts/retrieve) or [Status checks](/pages/guides/status-checks).
 
 ---
 
-## 9) Common Pitfalls & How to Avoid Them
+## Common issues
 
-- **Wrong country format**: Use `KE` not `KEN`.
-- **Unsigned or mismatched signature**: Make sure you sign the canonical string, not the raw JSON. Use **Base64URL** encoding.
-- **Clock skew**: Keep server time in sync (NTP). We reject timestamps older/newer than our allowed window.
-- **Missing idempotency**: Always send `X-Idempotency-Key`.
-- **Callback blocked by firewall**: Allow our IPs, or use a public ingress with mTLS.
+- **Signature mismatch**: ensure the string-to-sign matches the payload exactly. See [Signature generation](/api-reference/signatures/signature-generate).
+- **Wrong token**: use a payout-scoped Bearer token.
+- **Duplicate references**: reuse `transaction.reference` only for safe retries.
 
 ---
 
-## 10) Observability
+## Related links
 
-- Include and log `X-Request-Id` you send to us (or we generate).  
-- We include `payment_uuid` in responses and callbacks  store it for audits.
-
----
-
-## 11) Error Reference
-
-| HTTP | code     | meaning                 |
-|------|----------|-------------------------|
-| 202  | 200.100  | Accepted (async)        |
-| 400  | 400.100  | Validation failed       |
-| 401  | 400.200  | Authentication failed   |
-| 403  | 403.300  | Authorization failed    |
-| 404  | 400.600  | Not found               |
-| 409  | 409.100  | Idempotency conflict    |
-| 429  | 429.100  | Rate limited            |
-| 500  | 400.500  | Internal error          |
-
----
-
-## 12) Go‑Live Checklist
-
-- [ ] RSA 2048 key pair generated; **public key** + `kid` registered.  
-- [ ] Sandbox end‑to‑end tested (auth → sign → send → callback).  
-- [ ] Retries implemented with same `X-Idempotency-Key`.  
-- [ ] Webhook endpoint secured (TLS, auth verification).  
-- [ ] Logging masks PII; no secrets in logs.  
-- [ ] Rate‑limit handling.  
-- [ ] Time sync.
+- [Initiate payout API](/api-reference/payouts/payouts-initiate)
+- [Check payout status](/api-reference/payouts/retrieve)
+- [Webhooks overview](/pages/webhooks/overview)
+- [Errors](/errors)

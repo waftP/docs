@@ -333,8 +333,7 @@
                       "amount": 1000,
                       "currency": "KES",
                       "description": "Test description",
-                      "timestamp": "2025-01-21T12:30:10Z",
-                      "service_code": "MPESAB2C"
+                      "timestamp": "2025-01-21T12:30:10Z"
                     },
                     "originator": {
                       "msisdn": "254708374149",
@@ -342,6 +341,7 @@
                       "country": "KE"
                     },
                     "recipient": {
+                      "service_code": "MPESAB2C",
                       "reference": "INVJMA02",
                       "account": "254708374149"
                     },
@@ -395,8 +395,7 @@
                       "amount": 1000,
                       "currency": "KES",
                       "description": "Test description",
-                      "timestamp": "2025-01-21T12:30:10Z",
-                      "service_code": "RMT_WU"
+                      "timestamp": "2025-01-21T12:30:10Z"
                     },
                     "originator": {
                       "msisdn": "254712345678",
@@ -470,16 +469,17 @@
               "examples": {
                 "byTransactionReference": {
                   "value": {
-                    "reference": "TXN213687756272200",
-                    "reference_type": "transaction_reference",
-                    "product": "payout"
+                    "transaction_reference": "TXN213687756272200"
                   }
                 },
-                "byPaymentReference": {
+                "byPaymentUuid": {
                   "value": {
-                    "reference": "1RJITP5HLL",
-                    "reference_type": "payment_reference",
-                    "product": "collection"
+                    "payment_uuid": "8363546214883574601"
+                  }
+                },
+                "byRequestUuid": {
+                  "value": {
+                    "request_uuid": "2BDHAJ8PWR"
                   }
                 }
               }
@@ -591,8 +591,7 @@
                       "amount": 100,
                       "currency": "KES",
                       "description": "Test",
-                      "timestamp": "2025-01-21 12:30:10",
-                      "service_code": "ewqeqw"
+                      "timestamp": "2025-01-21 12:30:10"
                     },
                     "originator": {
                       "msisdn": "254722111999",
@@ -607,6 +606,7 @@
                       "purpose": "No purpose"
                     },
                     "recipient": {
+                      "service_code": "ewqeqw",
                       "reference": "Test",
                       "account": "Test",
                       "name": "John Doe Init"
@@ -642,7 +642,7 @@
         "tags": ["Refunds"],
         "summary": "Query Refund Reversal",
         "operationId": "queryRefundReversal",
-        "description": "Query the status of a refund reversal by request UUID. Returns a standardized APIResponse with status and transaction details when found. If not found, a NOT FOUND-style response is returned in the payload. This endpoint requires a Bearer token.",
+        "description": "Query the status of a refund reversal by request_uuid. Returns a standardized APIResponse with status and transaction details when found. If not found, a NOT FOUND-style response is returned in the payload. This endpoint requires a Bearer token.",
         "security": [
           { "bearerAuth": [] }
         ],
@@ -961,8 +961,7 @@
               "amount": 1000,
               "currency": "KES",
               "description": "Vendor payout",
-              "timestamp": "2025-01-21T12:30:10Z",
-              "service_code": "MPESAB2C"
+              "timestamp": "2025-01-21T12:30:10Z"
             },
             "originator": {
               "msisdn": "254708374149",
@@ -972,6 +971,7 @@
               "purpose": "Transaction Payment"
             },
             "recipient": {
+              "service_code": "MPESAB2C",
               "reference": "INVJMA02",
               "account": "254708374149"
             },
@@ -1615,38 +1615,12 @@
 
       "RefundReversalTsqRequest": {
         "type": "object",
-        "required": ["transaction_reference", "payment_uuid", "amount", "notification_url"],
+        "required": ["request_uuid"],
         "properties": {
-          "transaction_reference": {
+          "request_uuid": {
             "type": "string",
-            "description": "Client-generated reference of the ORIGINAL collection that this refund or reversal applies to. Use the same reference you used when creating the original transaction (idempotency-friendly).",
-            "example": "TNC0009886898418"
-          },
-          "payment_uuid": {
-            "type": "string",
-            "description": "Waftpay platform UUID of the ORIGINAL payment being refunded/reversed.",
-            "example": "882231418121042119"
-          },
-          "amount": {
-            "type": "integer",
-            "description": "Refund/reversal amount in major currency units (e.g., 1015 = 1015 KES). Must be less than or equal to the original transaction amount.",
-            "example": 1015
-          },
-          "notification_url": {
-            "type": "string",
-            "format": "uri",
-            "description": "Public HTTPS webhook to receive asynchronous status updates for this refund/reversal.",
-            "example": "https://merchant.example.com/callbacks/refund-reversal"
-          },
-          "remarks": {
-            "type": "string",
-            "description": "Optional free-form reason or note for the refund/reversal. Included in dashboards and echoed in webhooks.",
-            "example": "Duplicate charge reversal for order #A-4452"
-          },
-          "meta": {
-            "type": "object",
-            "description": "Arbitrary key-value metadata echoed back in callbacks.",
-            "additionalProperties": true
+            "description": "Refund/reversal request UUID returned when the refund/reversal was created.",
+            "example": "A333RTYUT"
           }
         }
       },
@@ -1923,8 +1897,7 @@
               "amount": 100,
               "currency": "KES",
               "description": "Test",
-              "timestamp": "2025-01-21 12:30:10",
-              "service_code": "ewqeqw"
+              "timestamp": "2025-01-21 12:30:10"
             },
             "originator": {
               "msisdn": "254722111999",
@@ -1939,6 +1912,7 @@
               "purpose": "No purpose"
             },
             "recipient": {
+              "service_code": "ewqeqw",
               "reference": "Test",
               "account": "Test",
               "name": "John Doe Init"

@@ -1,10 +1,12 @@
 ---
 title: "Check Payout Status"
-description: "Retrieve the latest status of a payout using your client reference."
+description: "Retrieve the latest status of a payout using a reference or UUID."
 openapi: "POST /payments-tsq-service/v1/query/payments"
 ---
 
-Use your original `transaction.reference` to retrieve the payout’s latest status.
+## Overview
+
+Query the current status of a payout using one of your identifiers. This endpoint is useful for reconciliation or when webhooks are delayed.
 
 > **Auth**: Requires a **Payout token** (`Authorization: Bearer <payout_token>`).
 
@@ -14,3 +16,64 @@ Use your original `transaction.reference` to retrieve the payout’s latest stat
 
 ```http
 POST {BASE_URL}/payments-tsq-service/v1/query/payments
+```
+
+---
+
+## Request body
+
+Provide **one** of the following fields:
+
+| Field | Type | Notes |
+|---|---|---|
+| `transaction_reference` | string | Your client reference used when creating the payout. |
+| `request_uuid` | string | Request UUID returned by the platform (if provided). |
+| `payment_uuid` | string | Waftpay payment UUID (numeric string). |
+
+### Example (by transaction reference)
+
+```json
+{
+  "transaction_reference": "TXN213687756272200"
+}
+```
+
+### Example (by payment UUID)
+
+```json
+{
+  "payment_uuid": "8363546214883574601"
+}
+```
+
+---
+
+## Example response
+
+```json
+{
+  "status": "200.100",
+  "code": "ACCEPTED",
+  "description": "Accepted for processing",
+  "data": {
+    "amount": 1000,
+    "total_charges": 0,
+    "total_amount": 1000,
+    "transaction_reference": "TXN213687756272200",
+    "payment_uuid": "8363546214883574601",
+    "payment_reference": "1RJITP5HLL",
+    "state": "processing",
+    "time_received": "2025-04-04T06:13:52.585619Z",
+    "last_updated": "2025-04-04T06:15:10.102993Z"
+  }
+}
+```
+
+---
+
+## Notes
+
+- `state` can be `processing`, `succeeded`, `failed`, or `canceled`.
+- If the payout is not found, you will receive a `NOT_FOUND` response.
+- `payment_reference` is a separate Waftpay reference; do not send it as `payment_uuid`.
+- Errors follow the standard error shape. See [Errors](/errors).

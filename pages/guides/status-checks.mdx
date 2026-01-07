@@ -1,208 +1,77 @@
 ---
 title: "Status Checks"
-description: "Poll the latest status of a transaction or a refund reversal; scoping, responses, and reconciliation patterns."
+description: "Poll the latest status when webhooks are delayed or unavailable."
 ---
 
-Use Status Checks when you need a pull‑based confirmation or as a safety net if webhooks can’t be delivered.
+Use status checks as a fallback when you cannot rely on webhooks (temporary outages, firewalls, or delayed deliveries).
 
 ---
 
-## 1) Transactions Status Query
+## Endpoint
 
-**Endpoint**: `POST /payments-tsq-service/v1/transactions/query`
+**POST** `/payments-tsq-service/v1/query/payments`
 
-**Rules**
-- Provide **exactly one** of:  
-  `transaction_reference` **xor** `payment_uuid`.
-- Results are **scoped** to the `client_id` in your Bearer token.
+**Auth**: Use the Bearer token for the product you are querying (Payouts, Collections, or Remittance).
 
-**Requests**
+---
+
+## Request body
+
+Provide **one** of the following fields:
+
+- `transaction_reference`
+- `payment_uuid`
+- `request_uuid`
+
+### Example (by transaction reference)
+
 ```json
-{
-"transaction_reference": "TXN123654671",
-"payment_uuid": "4e61243c-3449-43a3-a17c-b857e40434224"
-}
+{ "transaction_reference": "TXN123654671" }
 ```
 
-**Success**
+### Example (by payment UUID)
+
+```json
+{ "payment_uuid": "8363546214883574601" }
+```
+
+---
+
+## Example response (processing)
+
 ```json
 {
-  "code": "200.200",
-  "status": "SUCCESS",
-  "description": "Transaction Was Successful",
-  "results": {
-    "result_code": "200",
-    "result_description": "Success",
-    "amount": "30.00",
-    "total_charges": "10.00",
-    "total_amount": "40.00",
-    "service_code": "COLLECT_MPESA",
-    "msisdn": "2547987654321",
+  "status": "200.100",
+  "code": "ACCEPTED",
+  "description": "Accepted for processing",
+  "data": {
+    "amount": 1000,
+    "total_charges": 0,
+    "total_amount": 1000,
     "transaction_reference": "TXN123654671",
-    "payment_uuid": "4e61243c-3449-43a3-a17c-b857e40434224",
-    "external_reference": "7947539867548",
-    "time_processed": "2025-06-17T10:18:18.302+03:00",
-    "validation_hash": "99e4de9b...5d2db92",
-    "metadata": { "note": "This is part of a callback", "agent_id": "Agent2" }
+    "payment_uuid": "8363546214883574601",
+    "payment_reference": "1RJITP5HLL",
+    "state": "processing",
+    "time_received": "2025-04-04T06:15:10.102993Z",
+    "last_updated": "2025-04-04T06:16:44.442001Z"
   }
 }
 ```
 
-**Failed**
-```json
-{
-  "code": 103,
-  "status": "FAILED",
-  "description": "Transaction Failed",
-  "results": {
-    "result_code": "No response received",
-    "result_description": "HTTP connect timed out",
-    "amount": 100,
-    "total_charges": 1.5,
-    "total_amount": 101.5,
-    "service_code": "MOCK_MPESA_COL",
-    "account": "254712345678",
-    "transaction_reference": "ref-586351566",
-    "payment_uuid": "345836869386794168",
-    "external_reference": null,
-    "time_processed": "2025-09-09T12:29:21.802553127Z",
-    "validation_hash": "dfda0d2ddf4897c7bea679e356be89f1c9fab306fcf22c9bf9c73f635cf05031",
-    "metadata": {
-      "note": "This info is returned as part of the callback",
-      "agent_id": "AGENT456"
-    }
-  }
-}
-```
+---
 
-**Pending / Created / Expired**
-```json
-{ "code": "200.101", "status": "PENDING", "description": "Transaction Is Pending", "results": {} }
-```
+## Best practices
 
-**Failed Authorization**
-```json
-{ "code": "401", "status": "FAILED AUTHORIZATION", "description": "Unauthorized", "results": {} }
-```
-
-**Not Found**
-```json
-{ "code": "400.600", "status": "NOT_FOUND", "description": "Transaction Not Found", "results": {} }
-```
+- Poll only when necessary; prefer webhooks.
+- Use backoff (5s -> 10s -> 30s -> 60s) and stop after a sensible max window.
+- Cache last known status to reduce repeated queries.
 
 ---
 
-## 2) Refund Reversal Status Query
+## Related links
 
-**Endpoint**: `POST /payments-tsq-service/v1/refunds-reversal/query`
-
-**Request**
-```json
-{ "request_uuid": "A333RTYUT" }
-```
-
-**Success**
-```json
-{
-  "code": "200.200",
-  "status": "SUCCESS",
-  "description": "Transaction success",
-  "results": {
-    "result_code": "21",
-    "result_description": "The service request is processed successfully",
-    "amount": "1015.00",
-    "total_charges": "0.00",
-    "total_amount": "1015.00",
-    "account": "254792452002",
-    "original_payment_uuid": "882231418121042119",
-    "original_transaction_reference": "TNC0009886898418",
-    "original_external_reference": "1V1OPZZGHQ",
-    "external_reference": "1V33UUE1IR",
-    "time_processed": "2025-08-26T05:20:27Z"
-  }
-}
-```
-
-**Failed**
-```json
-{
-  "code": 103,
-  "status": "FAILED",
-  "description": "Transaction Failed",
-  "results": {
-    "result_code": "No response received",
-    "result_description": "HTTP connect timed out",
-    "amount": 100,
-    "total_charges": 1.5,
-    "total_amount": 101.5,
-    "service_code": "MOCK_MPESA_COL",
-    "account": "254712345678",
-    "transaction_reference": "ref-586351566",
-    "payment_uuid": "345836869386794168",
-    "external_reference": null,
-    "time_processed": "2025-09-09T12:29:21.802553127Z",
-    "validation_hash": "dfda0d2ddf4897c7bea679e356be89f1c9fab306fcf22c9bf9c73f635cf05031",
-    "metadata": {
-      "note": "This info is returned as part of the callback",
-      "agent_id": "AGENT456"
-    }
-  }
-}
-```
-
-**Pending / Created / Expired**
-```json
-{ "code": "200.101", "status": "PENDING", "description": "Transaction Is Pending", "results": {} }
-```
-
-**Failed Authorization**
-```json
-{ "code": "401", "status": "FAILED AUTHORIZATION", "description": "Unauthorized", "results": {} }
-```
-
-**Not Found**
-```json
-{ "code": "400.600", "status": "NOT_FOUND", "description": "Transaction not found", "results": {} }
-```
-
----
-
-## 3) Best Practices for Polling
-
-- Poll only when necessary; prefer webhooks.  
-- Use backoff: e.g., 5s → 10s → 30s → 60s; stop after a sensible max window.  
-- Cache the last known status to reduce repeated queries.
-
----
-
-## 4) Error Reference (TSQ)
-
-| HTTP | code     | meaning                                 |
-|------|----------|-----------------------------------------|
-| 200  | 200.200  | Success                                 |
-| 200  | 200.101  | Pending/Created/Expired                 |
-| 400  | 400.100  | Validation failed (both/none provided)  |
-| 401  | 400.200  | Authentication failed                   |
-| 404  | 400.600  | Not found                               |
-| 500  | 400.500  | Internal error                          |
-
----
-
-## 5) Reconciliation Patterns
-
-- Use `transaction_reference` as your business key; map to our `payment_uuid`.  
-- Record the final `result_code`/`result_description` for audits.  
-- Ensure ledger postings are idempotent (guard by `(payment_uuid, status)` or webhook delivery ID).
-
----
-
-## 6) FAQ
-
-**Q: My webhook endpoint was down; will you resend?**  
-A: Yes, exponential retries for a fixed window. Use TSQ as a fallback.
-
-**Q: Why is my request rejected with signature errors?**  
-A: Check canonical string order, Base64URL encoding, and that the `kid` matches the registered public key. Ensure `amount` has no decimals.
-
-**Q: Can I query by both `transaction_reference` and `payment_uuid` together?**  
-A: No. Exactly one must be provided.
+- [Check payout status](/api-reference/payouts/retrieve)
+- [Check collection status](/api-reference/collections/collections-status)
+- [Check remittance status](/api-reference/remittance/remittance-status)
+- [Webhooks overview](/pages/webhooks/overview)
+- [Errors](/errors)

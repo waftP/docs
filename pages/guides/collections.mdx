@@ -1,29 +1,49 @@
 ---
 title: "Collections"
-description: "Receive incoming customer payments; end‑to‑end flow with signing, acceptance, webhooks, and reconciliation."
+description: "Receive customer payments with signing, acceptance, webhooks, and reconciliation guidance."
 ---
 
-Collections represent **incoming customer payments** (e.g., paybill/till). The API is <Tooltip tip="You get 202 immediately; the final result arrives later via webhook">asynchronous</Tooltip> and uses the same auth/signing model as payouts.
-
-> **Flow**: Authenticate → Sign → Send collection → Receive **202** → Get **webhook** (SUCCESS/FAILED) → Reconcile (optional poll).
-
----
-
-## 1) Endpoint & Headers
-
-**POST** `/payments-api-service/v1/collections`
-
-Headers are identical to payouts (see that guide). Use `X-Idempotency-Key: <transaction.reference>` <Tooltip tip="Dedupes retries for the same collection request">?</Tooltip>.
+Collections are incoming customer payments. The API is asynchronous: you get an acceptance response immediately, then a final result via webhook.
 
 ---
 
-## 2) Request Body (authoritative schema)
+## Quick flow
+
+Authenticate -> Sign -> Send collection -> Receive acceptance -> Receive webhook -> Reconcile (optional status check).
+
+---
+
+## Prerequisites
+
+- Product-scoped Bearer token from [Authentication API](/api-reference/auth/auth-token).
+- RSA 2048 key pair registered with Waftpay. See [Signature generation](/api-reference/signatures/signature-generate).
+- Correct base URL for your environment. See [Environments](/environments).
+
+---
+
+## Endpoint
+
+**POST** `/payments-api-service/v1/user/collections`
+
+**Required headers**
+
+```http
+Authorization: Bearer <access_token>
+Content-Type: application/json
+X-Custom-Signature: <base64-signature>
+```
+
+**Idempotency**: reuse the same `transaction.reference` for retries of the same logical collection.
+
+---
+
+## Request body (example)
 
 ```json
 {
   "transaction": {
     "reference": "TNC000008",
-    "amount": "1000.00",
+    "amount": 1000,
     "currency": "KES",
     "description": "Order #98765",
     "timestamp": "2025-01-21T12:30:10Z"
@@ -36,9 +56,8 @@ Headers are identical to payouts (see that guide). Use `X-Idempotency-Key: <tran
     "purpose": "Collections"
   },
   "recipient": {
-    "service_code": "COLLECT_MPESA",
     "invoice_number": "3456789987654",
-    "external_reference": "INVJMA01",
+    "reference": "INVJMA01",
     "account": "254712345678"
   },
   "callback_url": "https://merchant.example.com/webhooks/collections",
@@ -50,57 +69,41 @@ Headers are identical to payouts (see that guide). Use `X-Idempotency-Key: <tran
 ```
 
 **Notes**
-- Use `external_reference` when you need to carry your invoice/order id to downstreams.
-- `account` is the target/payee account in the receiving system context.
-- `msisdn` should be in <Tooltip tip="International phone format; no leading +">E.164</Tooltip> without the `+`.
+
+- `invoice_number` is optional but useful for reconciliation.
+- `timestamp` must be ISO 8601 UTC (ends with `Z`).
 
 ---
 
-## 3) Acceptance & Webhooks
+## Acceptance response (immediate)
 
-**HTTP 202** on accept, with the same `data` envelope as payouts. Webhook example:
-
-```json
-{
-  "code": "200.200",
-  "status": "SUCCESS",
-  "description": "Collection completed",
-  "results": {
-    "result_code": "0",
-    "result_description": "Success",
-    "amount": "1000.00",
-    "total_charges": "0.00",
-    "total_amount": "1000.00",
-    "service_code": "COLLECT_MPESA",
-    "msisdn": "254712345678",
-    "transaction_reference": "TNC000008",
-    "payment_uuid": "8363546214883574601",
-    "external_reference": "MNO7890",
-    "time_processed": "2025-04-04T06:16:21.101Z"
-  }
-}
-```
+The acceptance response uses the same envelope as payouts. See [Initiate collection API](/api-reference/collections/collection-initiate).
 
 ---
 
-## 4) Reconciliation Tips
+## Webhook (final outcome)
 
-- Store `payment_uuid`, `transaction_reference`, and `external_reference` for ledgers.  
-- Use **Status Checks** for any entries that lack a webhook (network failure, etc.).
-- Ensure your webhook handler is **idempotent**we may retry callbacks.
+We POST to your `callback_url` when the collection completes. See [Webhook payload](/pages/webhooks/payload).
 
 ---
 
-## 5) Security & Compliance
+## Status checks (optional)
 
-- Mask MSISDN in logs (e.g., show last 3–4 digits).  
-- Enforce HTTPS only; consider mTLS if required.  
-- Follow your local data retention/regulatory guidelines for KYC/PII.
+If a webhook is delayed or missing, query status using [Check collection status](/api-reference/collections/collections-status) or [Status checks](/pages/guides/status-checks).
 
 ---
 
-## 6) Troubleshooting
+## Common issues
 
-- **Validation failed (400.100)**: Check amount precision, missing fields, or service_code.  
-- **Authorization failed (403.300)**: Your token’s client is not entitled to the `service_code`.  
-- **No callback received**: Verify your endpoint returns **200** quickly and is reachable. Poll status if needed.
+- **Signature mismatch**: ensure the string-to-sign matches the payload exactly. See [Signature generation](/api-reference/signatures/signature-generate).
+- **Wrong token**: use a collection-scoped Bearer token.
+- **Duplicate references**: reuse `transaction.reference` only for safe retries.
+
+---
+
+## Related links
+
+- [Initiate collection API](/api-reference/collections/collection-initiate)
+- [Check collection status](/api-reference/collections/collections-status)
+- [Webhooks overview](/pages/webhooks/overview)
+- [Errors](/errors)

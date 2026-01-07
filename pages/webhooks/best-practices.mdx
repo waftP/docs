@@ -11,3 +11,5 @@ description: Hardening guidance for production-grade webhook receivers.
 - **Monitoring**: alert on spikes in non-2xx responses and long latencies.
 - **Backoff**: if you call our APIs in response, add your own retry/backoff to avoid thundering herds.
 - **Versioning**: handle new fields gracefully (ignore unknowns).
+
+See [Retries & idempotency](/pages/webhooks/retries-and-idempotency) and [Verify signature](/pages/webhooks/verify-signature) for implementation details.

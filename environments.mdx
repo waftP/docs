@@ -25,10 +25,10 @@ Use the correct host per environment when composing endpoints.
 
 ### Service examples
 
-**Authentication (Client Credentials):**
+**Authentication (Consumer credentials):**
 
-- Sandbox: `https://sandbox.waftpay.io/api/authentication-service/v1/application/token/authentication`  
-- Production: `https://api.waftpay.io/authentication-service/v1/application/token/authentication`
+- Sandbox: `https://sandbox.waftpay.io/api/authentication-service/v1/api/generate-token`  
+- Production: `https://api.waftpay.io/authentication-service/v1/api/generate-token`
 
 **Payments / Payouts:**
 
@@ -44,8 +44,8 @@ We recommend parameterizing the base URL and credentials.
 ```bash
 # .env (example)
 WAFTPAY_BASE_URL=https://sandbox.waftpay.io/api
-WAFTPAY_CLIENT_ID=...
-WAFTPAY_CLIENT_SECRET=...
+WAFTPAY_CONSUMER_KEY=...
+WAFTPAY_CONSUMER_SECRET=...
 WAFTPAY_PUBLIC_KEY_PATH=./keys/sandbox_public.pem
 WAFTPAY_PRIVATE_KEY_PATH=./keys/sandbox_private.pem
 ```
@@ -54,8 +54,8 @@ WAFTPAY_PRIVATE_KEY_PATH=./keys/sandbox_private.pem
 // config.ts
 export const WAFTPAY = {
   baseUrl: process.env.WAFTPAY_BASE_URL ?? "https://sandbox.waftpay.io/api",
-  clientId: process.env.WAFTPAY_CLIENT_ID!,
-  clientSecret: process.env.WAFTPAY_CLIENT_SECRET!,
+  consumerKey: process.env.WAFTPAY_CONSUMER_KEY!,
+  consumerSecret: process.env.WAFTPAY_CONSUMER_SECRET!,
 };
 ```
 
@@ -75,24 +75,22 @@ WAFTPAY_BASE_URL=https://api.waftpay.io
 ```bash
 # SANDBOX
 curl -X POST \
-  https://sandbox.waftpay.io/api/authentication-service/v1/application/token/authentication \
+  https://sandbox.waftpay.io/api/authentication-service/v1/api/generate-token \
   -H 'Content-Type: application/json' \
   -d '{
-    "client_id":"<sandbox-client-id>",
-    "client_secret":"<sandbox-client-secret>",
-    "grant_type":"client_credentials"
+    "consumer_key":"<sandbox-consumer-key>",
+    "consumer_secret":"<sandbox-consumer-secret>"
   }'
 ```
 
 ```bash
 # PRODUCTION
 curl -X POST \
-  https://api.waftpay.io/authentication-service/v1/application/token/authentication \
+  https://api.waftpay.io/authentication-service/v1/api/generate-token \
   -H 'Content-Type: application/json' \
   -d '{
-    "client_id":"<prod-client-id>",
-    "client_secret":"<prod-client-secret>",
-    "grant_type":"client_credentials"
+    "consumer_key":"<prod-consumer-key>",
+    "consumer_secret":"<prod-consumer-secret>"
   }'
 ```
 
@@ -160,7 +158,7 @@ curl --request POST \
 
 ## Credentials & keys
 
-- Maintain **separate** OAuth Client IDs/Secrets and signing keys per environment.
+- Maintain **separate** consumer keys/secrets and signing keys per environment.
 - Keep private keys **server‑side only** and rotate regularly.
 - Enforce least privilege: ensure the Production client has access only to the services it needs.
 
@@ -197,6 +195,6 @@ curl --request POST \
 ---
 
 ## See also
-- **Authentication** — obtain a client-credentials token: [/api-reference/auth/auth-token](/api-reference/auth/auth-token)
+- **Authentication** — obtain a consumer-credentials token: [/api-reference/auth/auth-token](/api-reference/auth/auth-token)
 - **Signing Requests** — compute and send `X-Custom-Signature`: [/api-reference/signatures/signature-generate](/api-reference/signatures/signature-generate)
 - **Errors** — interpret extended error codes: [/errors](/errors)
