@@ -4,52 +4,52 @@ description: "Everything you need to integrate Waftpay payments, collections, an
 ---
 
 <img
-    style={{ borderRadius: '0.5rem' }}
-    alt={"Waftpay image"}
-    src="/images/waft-placeholder.svg"
+  style={{ borderRadius: "0.5rem" }}
+  alt="Waftpay image"
+  src="/images/waft-placeholder.svg"
 />
 
-Waftpay makes it easy to **collect payments, send payouts, and reconcile transactions** with a single API.
-This documentation will guide you through authentication, endpoints, and best practices.
+Waftpay helps you **collect payments, send payouts, and reconcile transactions** with a single API. This guide focuses on the essentials: auth, signatures, idempotency, and webhooks.
 
 ---
 
 ## Quickstart
 
-- Get your **API keys** from the [Waftpay Dashboard](https://dashboard.waftpay.io).
-- Use our [sandbox environment](https://sandbox.waftpay.io) to test before going live.
-- Authenticate using a **Bearer token** from `/auth/token`.
-
-Follow the [Quickstart guide](./quickstart) to make your first API call.
-
----
-
-## Core Concepts
-
-- **Authentication** – Secure every API call with Authentication bearer tokens.
-- **Idempotency** – Retry safely with the `Idempotency-Key` header.
-- **Webhooks** – Get real-time updates for payments and payouts.
-- **Errors** – All errors return standardized codes and messages.
+1. Sign in to the [Waftpay Dashboard](https://app.dev.waftpay.io/sign-in) and grab your API keys.
+2. Create a Bearer token via the [Authentication API](/api-reference/auth/auth-token).
+3. Make your first request using the [Quickstart guide](/quickstart).
+4. Add a webhook endpoint to receive final status updates.
 
 ---
 
-## API Overview
+## Core concepts
 
-- [Payments](/pages/payments/overview) – Create and confirm customer charges
-- [Collections](/pages/collections/checkout-sessions) – Generate hosted checkout sessions
-- [Remittance](/pages/remittance/overview) – Send payouts to wallets and bank accounts
-- [Webhooks](/pages/webhooks/overview) – Subscribe to payment & payout events
+- **Authentication**: Bearer tokens for every request.
+- **Signatures**: RSA signing for sensitive requests.
+- **Idempotency**: Safe retries with `Idempotency-Key`.
+- **Webhooks**: Real-time events for payments and payouts.
+- **Errors**: Consistent error shape and codes.
+- **Environments**: Sandbox vs production base URLs.
+
+---
+
+## API overview
+
+- [Payments](/pages/guides/payouts) - Move money out to wallets and bank accounts (payouts)
+- [Collections](/pages/guides/collections) - Collect money from customers via hosted checkout
+- [Remittances](/pages/guides/remittances) - Send cross-border payouts with recipient details
+- [Webhooks](/pages/webhooks/overview) - Receive payment and payout status events
 
 ---
 
 ## Helpful links
 
-- [Waftpay Dashboard](https://dashboard.waftpay.io)
+- [Waftpay Dashboard](https://app.dev.waftpay.io/sign-in)
 - [API Status](/status)
-- [Community Forum](https://community.waftpay.io)
+- [OpenAPI spec](/openapi/waftpay.json)
 
 ---
 
 <Info>
-    Need help? Email us at [info@waftpay.io](mailto:info@waftpay.io)
+  Need help? Email us at [info@waftpay.io](mailto:info@waftpay.io)
 </Info>

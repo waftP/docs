@@ -3,55 +3,59 @@ title: "API Status"
 description: "Run a live health check against the Waftpay API."
 ---
 
-{/* No imports — your bundler only allows /snippets/* imports */}
+import { useState } from "react";
 
-function StatusCheck({ url }) {
-const [state, setState] = React.useState("idle"); // idle | loading | up | down
-const [latency, setLatency] = React.useState(null);
-const [detail, setDetail] = React.useState("");
+export function StatusCheck({ url }) {
+  const [state, setState] = useState("idle");
+  const [latency, setLatency] = useState(null);
+  const [detail, setDetail] = useState("");
 
-async function run() {
-setState("loading");
-setLatency(null);
-setDetail("");
-const start = performance.now();
-try {
-const res = await fetch(url, { method: "GET", cache: "no-store" });
-const ms = Math.round(performance.now() - start);
-setLatency(ms);
-if (!res.ok) {
-setState("down");
-setDetail(`HTTP ${res.status}`);
-return;
-}
-const data = await res.json().catch(() => ({}));
-if (data?.status === "UP") {
-setState("up");
-setDetail(Array.isArray(data?.groups) ? `groups: ${data.groups.join(", ")}` : "");
-} else {
-setState("down");
-setDetail(typeof data?.status === "string" ? `status: ${data.status}` : "");
-}
-} catch (e) {
-setState("down");
-setDetail(String(e?.message || e));
-}
-}
+  async function run() {
+    setState("loading");
+    setLatency(null);
+    setDetail("");
 
-return (
-<div>
-<button
-onClick={run}
-style={{
-padding: "0.6rem 1rem",
-borderRadius: "0.5rem",
-border: "1px solid #e5e7eb",
-fontWeight: 600,
-cursor: "pointer"
-}}
->
-{state === "loading" ? "Checking…" : "Run status check"}
-</button>
+    const start = performance.now();
+    try {
+      const res = await fetch(url, { method: "GET", cache: "no-store" });
+      const ms = Math.round(performance.now() - start);
+      setLatency(ms);
+
+      if (!res.ok) {
+        setState("down");
+        setDetail(`HTTP ${res.status}`);
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (data?.status === "UP") {
+        setState("up");
+        setDetail(Array.isArray(data?.groups) ? `groups: ${data.groups.join(", ")}` : "");
+      } else {
+        setState("down");
+        setDetail(typeof data?.status === "string" ? `status: ${data.status}` : "");
+      }
+    } catch (e) {
+      setState("down");
+      setDetail(String(e?.message || e));
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={run}
+        style={{
+          padding: "0.6rem 1rem",
+          borderRadius: "0.5rem",
+          border: "1px solid #e5e7eb",
+          fontWeight: 600,
+          cursor: "pointer"
+        }}
+      >
+        {state === "loading" ? "Checking…" : "Run status check"}
+      </button>
 
       <div style={{ marginTop: "1rem", fontSize: "0.95rem" }}>
         {state === "idle" && <span>Click the button to test the API.</span>}
@@ -83,7 +87,7 @@ cursor: "pointer"
         </ul>
       </details>
     </div>
-);
+  );
 }
 
 <StatusCheck url="https://payments-api.dev.pockets-pay.com/actuator/health" />

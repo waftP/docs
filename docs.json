@@ -7,7 +7,7 @@
     "light": "#FBB040",
     "dark": "#15803D"
   },
-  "favicon": "favicon.ico",
+  "favicon": "icon.png",
   "logo": {
     "light": "/public/logo/light.png",
     "dark": "/public/logo/dark.svg"
@@ -21,7 +21,7 @@
     "primary": {
       "type": "button",
       "label": "Create Account",
-      "href": "https://dashboard.dev.pockets-pay.com"
+      "href": "https://waftpay.io/contact"
     }
   },
   "navigation": {

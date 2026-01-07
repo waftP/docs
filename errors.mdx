@@ -3,7 +3,9 @@ title: "Errors"
 description: "How to read, troubleshoot, and act on Waftpay API errors."
 ---
 
-All endpoints return errors with a consistent, machine-readable shape. This page shows the structure, how to interpret it step-by-step, and a catalog of common error codes.
+All endpoints return errors with a consistent, machine-readable shape. This page shows the structure, how to interpret it, and a catalog of common error codes.
+
+---
 
 ## Standard error shape
 
@@ -21,7 +23,7 @@ All endpoints return errors with a consistent, machine-readable shape. This page
 ### Field reference
 
 - **error**  High-level category (`invalid_request`, `authentication_error`, `authorization_error`, `validation_error`, `service_error`, etc.).
-- **message**  Human‑readable explanation. Safe to show in logs and dashboards.
+- **message**  Human-readable explanation. Safe to show in logs and dashboards.
 - **param**  The field that caused the error (if applicable).
 - **request_id**  Unique ID for this request. Always include this when contacting support.
 - **code**  Waftpay extended error code (explained below).
@@ -51,22 +53,22 @@ You’ll see the HTTP status in the response and the extended code in the body (
 
 ## Outcomes vs. HTTP statuses
 
-- **ACCEPTED (202)**  The request passed validation and was queued for processing. Final state will arrive via your `callback_url`.
+- **ACCEPTED (202)**  The request passed validation and was queued for processing. Final state arrives via your `callback_url`.
 - **REJECTED (4xx)**  The request is invalid or not permitted. Fix the request before retrying.
 - **ERROR (5xx)**  A temporary error on our side. You may retry with backoff and idempotency.
 
 ---
 
-## How to troubleshoot (step-by-step)
+## How to troubleshoot (step by step)
 
-1. **Read the HTTP status**  
-   `4xx` : your request needs fixing (don’t blind‑retry).  
-   `5xx` : transient service issue (safe to retry with backoff).  
-   `202` : accepted asynchronously; wait for the callback.
-2. **Check `code` and `status`**  
-   `code` pinpoints the exact cause (e.g., `400.001.307` = invalid URL).  
+1. **Read the HTTP status**
+   `4xx`: your request needs fixing (don’t blind-retry).
+   `5xx`: transient service issue (safe to retry with backoff).
+   `202`: accepted asynchronously; wait for the callback.
+2. **Check `code` and `status`**
+   `code` pinpoints the exact cause (e.g., `400.001.307` = invalid URL).
    `status` tells you whether the request was accepted, rejected, or errored.
-3. **Use `param` to find the faulty field** (e.g., `transaction.amount`).  
+3. **Use `param` to find the faulty field** (e.g., `transaction.amount`).
 4. **Act based on the family**
    - **Validation (400.001.xxx):** fix the payload (type/format/range/required).
    - **Auth (401/403):** verify Bearer token, signature, and access rights.
@@ -81,32 +83,32 @@ You’ll see the HTTP status in the response and the extended code in the body (
 
 > The **Service** column is `001` in these examples. Other products will use their own service ID but keep the same pattern.
 
-| HTTP | Code        | Status    | Description                              |
-|-----:|-------------|-----------|------------------------------------------|
-| 202  | 200.001.000 | ACCEPTED  | Accepted for processing                   |
-| 401  | 401.001.000 | REJECTED  | Failed authentication                     |
-| 401  | 400.001.100 | REJECTED  | Bearer token missing                      |
-| 403  | 403.001.000 | REJECTED  | Failed authorization                      |
-| 403  | 403.001.100 | REJECTED  | Service access not allowed                |
-| 400  | 400.001.000 | REJECTED  | Validation failed                         |
-| 400  | 400.001.200 | REJECTED  | Duplicate reference                       |
-| 400  | 400.001.300 | REJECTED  | Validation failed, missing field          |
-| 400  | 400.001.301 | REJECTED  | Validation failed, empty field            |
+| HTTP | Code        | Status    | Description                                        |
+|-----:|-------------|-----------|----------------------------------------------------|
+| 202  | 200.001.000 | ACCEPTED  | Accepted for processing                            |
+| 401  | 401.001.000 | REJECTED  | Failed authentication                              |
+| 401  | 400.001.100 | REJECTED  | Bearer token missing                               |
+| 403  | 403.001.000 | REJECTED  | Failed authorization                               |
+| 403  | 403.001.100 | REJECTED  | Service access not allowed                         |
+| 400  | 400.001.000 | REJECTED  | Validation failed                                  |
+| 400  | 400.001.200 | REJECTED  | Duplicate reference                                |
+| 400  | 400.001.300 | REJECTED  | Validation failed, missing field                   |
+| 400  | 400.001.301 | REJECTED  | Validation failed, empty field                     |
 | 400  | 400.001.302 | REJECTED  | Validation failed, field contains invalid characters |
-| 400  | 400.001.303 | REJECTED  | Validation failed, invalid amount         |
-| 400  | 400.001.304 | REJECTED  | Validation failed, invalid currency       |
-| 400  | 400.001.305 | REJECTED  | Validation failed, invalid timestamp      |
-| 400  | 400.001.306 | REJECTED  | Validation failed, invalid timestamp format |
-| 400  | 400.001.307 | REJECTED  | Validation failed, invalid URL            |
-| 400  | 400.001.308 | REJECTED  | Validation failed, field contains SQL keywords |
-| 400  | 400.001.400 | REJECTED  | Signature validation failed               |
-| 500  | 500.001.000 | ERROR     | Service error                             |
-| 500  | 500.001.100 | ERROR     | Service error, database related error     |
-| 500  | 500.001.200 | ERROR     | Service error, rabbit related error       |
-| 500  | 500.001.300 | ERROR     | Service error, NATS related error         |
-| 404  | 404.001.000 | REJECTED  | Resource not found                         |
+| 400  | 400.001.303 | REJECTED  | Validation failed, invalid amount                  |
+| 400  | 400.001.304 | REJECTED  | Validation failed, invalid currency                |
+| 400  | 400.001.305 | REJECTED  | Validation failed, invalid timestamp               |
+| 400  | 400.001.306 | REJECTED  | Validation failed, invalid timestamp format        |
+| 400  | 400.001.307 | REJECTED  | Validation failed, invalid URL                     |
+| 400  | 400.001.308 | REJECTED  | Validation failed, field contains SQL keywords     |
+| 400  | 400.001.400 | REJECTED  | Signature validation failed                        |
+| 500  | 500.001.000 | ERROR     | Service error                                      |
+| 500  | 500.001.100 | ERROR     | Service error, database related error              |
+| 500  | 500.001.200 | ERROR     | Service error, rabbit related error                |
+| 500  | 500.001.300 | ERROR     | Service error, NATS related error                  |
+| 404  | 404.001.000 | REJECTED  | Resource not found                                 |
 
-> If you see a code not in this table, read it using the same `<HTTP>.<SERVICE>.<SPECIFIC>` pattern and check the endpoint’s section for any service‑specific codes.
+> If you see a code not in this table, read it using the same `<HTTP>.<SERVICE>.<SPECIFIC>` pattern and check the endpoint’s section for any service-specific codes.
 
 ---
 
@@ -203,7 +205,7 @@ export function interpretError(res: Response, body: WaftpayError) {
   const code = body.code || "";
   const status = body.status || (http >= 500 ? "ERROR" : http >= 400 ? "REJECTED" : "ACCEPTED");
 
-  const [httpPart, servicePart, specificPart] = code.split(".");
+  const [, servicePart, specificPart] = code.split(".");
 
   return {
     http,
@@ -237,15 +239,14 @@ export function interpretError(res: Response, body: WaftpayError) {
 
 - **Duplicate reference**  Your `transaction.reference` was already used; supply a new unique value.
 - **Invalid currency**  Currency not supported or wrong ISO 4217 code for the target flow.
-- **Invalid timestamp / format**  Use ISO‑8601 (e.g., `2025-01-21T12:30:10Z`).
+- **Invalid timestamp / format**  Use ISO-8601 (e.g., `2025-01-21T12:30:10Z`).
 - **Invalid URL**  `callback_url` must be a valid `https://` URI.
 - **Service access not allowed**  Your client is not permitted to call this operation or product; contact support if this seems wrong.
-- **Signature validation failed**  The computed signature doesn’t match ours; re‑derive it using the documented string‑to‑sign and key.
+- **Signature validation failed**  The computed signature doesn’t match ours; re-derive it using the documented string-to-sign and key.
 
 ---
 
 ## See also
-
 
 - **Environments** — Sandbox vs Production base URLs: [/environments](/environments)
 - **Authentication** — how to get your Bearer token: [/api-reference/auth/auth-token](/api-reference/auth/auth-token)

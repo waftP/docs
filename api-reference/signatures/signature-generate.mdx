@@ -7,9 +7,9 @@ Some Waftpay APIs (notably **Payouts** and **Remittance**) require a request hea
 This signature lets our platform verify **who sent the request** and that its **key fields weren’t altered** in transit.
 
 > **TL;DR**
-> 1) Get a **Bearer token** ([Auth token](/api-reference/auth/auth-token)).  
-> 2) Generate an **RSA 2048** key pair; register your **public** key with Waftpay.  
-> 3) Build the signing string: `transaction.reference + transaction.amount + originator.country + recipient.service_code` (no separators).  
+> 1) Get a **Bearer token** ([Auth token](/api-reference/auth/auth-token)).
+> 2) Generate an **RSA 2048** key pair; register your **public** key with Waftpay.
+> 3) Build the signing string: `transaction.reference + transaction.amount + originator.country + recipient.service_code` (no separators).
 > 4) Sign with **RSA + SHA-256** (`RS256`), Base64-encode the signature bytes, and send it in `X-Custom-Signature`.
 
 ---
@@ -24,6 +24,7 @@ These endpoints also require **Bearer auth** in the `Authorization` header.
 ---
 
 ## Prerequisites
+
 - Valid **Bearer token** in `Authorization: Bearer <access_token>` (see [Auth token](/api-reference/auth/auth-token)).
 - **RSA 2048** key pair in PEM; public key registered with Waftpay (we reject unknown keys).
 - Make sure the values you sign **exactly** match the payload you send (including casing/formatting).
@@ -55,122 +56,127 @@ transaction.reference + transaction.amount + originator.country + recipient.serv
 TXN123654573100.00KENewqeqw
 ```
 
+---
+
 ## Generate `X-Custom-Signature`
 
 <Tabs>
-    <Tab title="Node.js">
+  <Tab title="Node.js">
 
-        ```js
-        import crypto from "crypto";
-        import fs from "fs";
+    ```js
+    import crypto from "crypto";
+    import fs from "fs";
 
-        const txRef = "TXN123654573";
-        const amount = "100";   // stringify exactly as sent
-        const country = "KEN";  // match payload (KE vs KEN)
-        const service = "ewqeqw";
+    const txRef = "TXN123654573";
+    const amount = "100";   // stringify exactly as sent
+    const country = "KEN";  // match payload (KE vs KEN)
+    const service = "ewqeqw";
 
-        const signingString = `${txRef}${amount}${country}${service}`;
-        const privateKeyPem = fs.readFileSync("client_private.pem", "utf8");
+    const signingString = `${txRef}${amount}${country}${service}`;
+    const privateKeyPem = fs.readFileSync("client_private.pem", "utf8");
 
-        const sig = crypto.sign("RSA-SHA256", Buffer.from(signingString, "utf8"), privateKeyPem);
-        console.log(sig.toString("base64")); // -> X-Custom-Signature
-        ```
-    </Tab>
-    <Tab title="Python">
+    const sig = crypto.sign("RSA-SHA256", Buffer.from(signingString, "utf8"), privateKeyPem);
+    console.log(sig.toString("base64")); // -> X-Custom-Signature
+    ```
+  </Tab>
 
-        ```python
-        import base64
-        from cryptography.hazmat.primitives import hashes, serialization
-        from cryptography.hazmat.primitives.asymmetric import padding
+  <Tab title="Python">
 
-        tx_ref = "TXN123654573"
-        amount = "100"
-        country = "KEN"
-        service = "ewqeqw"
+    ```python
+    import base64
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import padding
 
-        signing_string = f"{tx_ref}{amount}{country}{service}".encode("utf-8")
+    tx_ref = "TXN123654573"
+    amount = "100"
+    country = "KEN"
+    service = "ewqeqw"
 
-        with open("client_private.pem", "rb") as f:
-            key = serialization.load_pem_private_key(f.read(), password=None)
+    signing_string = f"{tx_ref}{amount}{country}{service}".encode("utf-8")
 
-        sig = key.sign(signing_string, padding.PKCS1v15(), hashes.SHA256())
-        print(base64.b64encode(sig).decode("utf-8"))  # -> X-Custom-Signature
-        ```
-    </Tab>
-    <Tab title="Java">
+    with open("client_private.pem", "rb") as f:
+        key = serialization.load_pem_private_key(f.read(), password=None)
 
-        ```java
-        import java.nio.charset.StandardCharsets;
-        import java.nio.file.Files;
-        import java.nio.file.Path;
-        import java.security.KeyFactory;
-        import java.security.PrivateKey;
-        import java.security.Signature;
-        import java.security.spec.PKCS8EncodedKeySpec;
-        import java.util.Base64;
+    sig = key.sign(signing_string, padding.PKCS1v15(), hashes.SHA256())
+    print(base64.b64encode(sig).decode("utf-8"))  # -> X-Custom-Signature
+    ```
+  </Tab>
 
-        public final class WaftpaySignature {
+  <Tab title="Java">
 
-            public static String generateXCustomSignature(
+    ```java
+    import java.nio.charset.StandardCharsets;
+    import java.nio.file.Files;
+    import java.nio.file.Path;
+    import java.security.KeyFactory;
+    import java.security.PrivateKey;
+    import java.security.Signature;
+    import java.security.spec.PKCS8EncodedKeySpec;
+    import java.util.Base64;
+
+    public final class WaftpaySignature {
+
+        public static String generateXCustomSignature(
             String txRef,
             String amount,
             String country,
             String service,
             PrivateKey privateKey
-            ) throws Exception {
+        ) throws Exception {
 
-                String signingString = txRef + amount + country + service;
-                byte[] message = signingString.getBytes(StandardCharsets.UTF_8);
+            String signingString = txRef + amount + country + service;
+            byte[] message = signingString.getBytes(StandardCharsets.UTF_8);
 
-                Signature sig = Signature.getInstance("SHA256withRSA");
-                sig.initSign(privateKey);
-                sig.update(message);
-                byte[] raw = sig.sign();
+            Signature sig = Signature.getInstance("SHA256withRSA");
+            sig.initSign(privateKey);
+            sig.update(message);
+            byte[] raw = sig.sign();
 
-                return Base64.getEncoder().encodeToString(raw);
-            }
+            return Base64.getEncoder().encodeToString(raw);
+        }
 
-            public static PrivateKey loadPkcs8PrivateKey(Path pemPath) throws Exception {
-                String pem = Files.readString(pemPath, StandardCharsets.US_ASCII);
+        public static PrivateKey loadPkcs8PrivateKey(Path pemPath) throws Exception {
+            String pem = Files.readString(pemPath, StandardCharsets.US_ASCII);
 
-                String base64 = pem
+            String base64 = pem
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replaceAll("\\s", "");
 
-                byte[] der = Base64.getDecoder().decode(base64);
-                PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(der);
-                return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
-            }
-
-            public static void main(String[] args) throws Exception {
-                PrivateKey key = loadPkcs8PrivateKey(Path.of("client_private.pem"));
-
-                String txRef   = "TXN123654573";
-                String amount  = "100";
-                String country = "KEN";
-                String service = "ewqeqw";
-
-                String xCustomSignature = generateXCustomSignature(txRef, amount, country, service, key);
-                System.out.println("X-Custom-Signature: " + xCustomSignature);
-            }
+            byte[] der = Base64.getDecoder().decode(base64);
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(der);
+            return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
         }
-        ```
-    </Tab>
-    <Tab title="PHP">
 
-        ```php
-        <?php
-        $signingString = "TXN123654573100KENewqeqw";
-        $privateKey = openssl_pkey_get_private(file_get_contents('client_private.pem'));
-        openssl_sign($signingString, $rawSig, $privateKey, OPENSSL_ALGO_SHA256);
-        echo base64_encode($rawSig), PHP_EOL; // -> X-Custom-Signature
-        ```
-    </Tab>
+        public static void main(String[] args) throws Exception {
+            PrivateKey key = loadPkcs8PrivateKey(Path.of("client_private.pem"));
+
+            String txRef = "TXN123654573";
+            String amount = "100";
+            String country = "KEN";
+            String service = "ewqeqw";
+
+            String xCustomSignature = generateXCustomSignature(txRef, amount, country, service, key);
+            System.out.println("X-Custom-Signature: " + xCustomSignature);
+        }
+    }
+    ```
+  </Tab>
+
+  <Tab title="PHP">
+
+    ```php
+    <?php
+    $signingString = "TXN123654573100KENewqeqw";
+    $privateKey = openssl_pkey_get_private(file_get_contents("client_private.pem"));
+    openssl_sign($signingString, $rawSig, $privateKey, OPENSSL_ALGO_SHA256);
+    echo base64_encode($rawSig), PHP_EOL; // -> X-Custom-Signature
+    ```
+  </Tab>
 </Tabs>
 
 <Note>
-    Use <em>standard Base64</em> (not Base64URL). Algorithm is <strong>RS256</strong> (RSA PKCS#1 v1.5 + SHA-256).
+  Use <em>standard Base64</em> (not Base64URL). Algorithm is <strong>RS256</strong> (RSA PKCS#1 v1.5 + SHA-256).
 </Note>
 
 ---
@@ -183,3 +189,4 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out client_private
 
 # 2) Derive the matching public key (X.509 SPKI)
 openssl rsa -pubout -in client_private.pem -out client_public.pem
+```
