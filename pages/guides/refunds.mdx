@@ -18,7 +18,13 @@ Refunds and reversals are processed asynchronously. Use this guide to query the 
 ## Request body
 
 ```json
-{ "request_uuid": "A333RTYUT" }
+{
+  "transaction_reference": "TRN4055499030801",
+  "payment_uuid": "915195656265353595",
+  "amount": 100,
+  "notification_url": "https://webhook.site/679ced79-7dac-4977-be7a-3d600b39c245",
+  "remarks": "Test remarks"
+}
 ```
 
 ---
