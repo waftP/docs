@@ -339,7 +339,9 @@
                     "originator": {
                       "msisdn": "254708374149",
                       "channel": "USSD",
-                      "country": "KE"
+                      "country": "KE",
+                      "name": "John Doe",
+                      "purpose": "Salary Payment"
                     },
                     "recipient": {
                       "reference": "INVJMA02",
@@ -627,6 +629,58 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/PayoutInitiationResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/payments-api-service/v1/refund-reversal": {
+      "post": {
+        "tags": ["Refunds"],
+        "summary": "Initiate Refund/Reversal",
+        "operationId": "initiateRefundReversal",
+        "description": "Create a refund or reversal request for a collection payment. Returns a request_uuid for status checks.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RefundReversalInitiateRequest" },
+              "examples": {
+                "default": {
+                  "value": {
+                    "transaction_reference": "TRC94513697913522",
+                    "payment_uuid": "803556523944079845",
+                    "amount": 400,
+                    "notification_url": "https://webhook.site/679ced79-7dac-4977-be7a-3d600b39c245",
+                    "remarks": "Test remarks"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RefundReversalInitiateResponse" },
+                "examples": {
+                  "accepted": {
+                    "value": {
+                      "code": 102,
+                      "status": "SUCCESS",
+                      "description": "Request accepted",
+                      "results": {
+                        "request_uuid": "A333RTYUT"
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -1604,6 +1658,75 @@
         }
       },
 
+      "RefundReversalInitiateRequest": {
+        "type": "object",
+        "required": [
+          "transaction_reference",
+          "payment_uuid",
+          "amount",
+          "notification_url"
+        ],
+        "properties": {
+          "transaction_reference": {
+            "type": "string",
+            "description": "Original transaction reference to refund/reverse."
+          },
+          "payment_uuid": {
+            "type": "string",
+            "description": "Original Waftpay payment UUID."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Amount to refund/reverse in major units."
+          },
+          "notification_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTPS URL to receive final status callbacks."
+          },
+          "remarks": {
+            "type": "string",
+            "description": "Optional reason or notes."
+          }
+        }
+      },
+
+      "RefundReversalInitiateResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "status",
+          "description",
+          "results"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Application code, e.g., 102 for SUCCESS."
+          },
+          "status": {
+            "type": "string",
+            "description": "Semantic status, e.g., SUCCESS."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description."
+          },
+          "results": {
+            "type": "object",
+            "description": "Request metadata for status checks.",
+            "required": ["request_uuid"],
+            "properties": {
+              "request_uuid": {
+                "type": "string",
+                "description": "Refund/reversal request UUID returned for status checks."
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+
       "RefundReversalTsqRequest": {
         "type": "object",
         "required": ["request_uuid"],
@@ -2266,14 +2389,15 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Error"
+              "$ref": "#/components/schemas/WaftpayErrorEnvelope"
             },
             "examples": {
               "unauthorized": {
                 "value": {
-                  "error": "unauthorized",
-                  "message": "Missing or invalid Authorization header",
-                  "request_id": "req_123"
+                  "code": "400.001.100",
+                  "status": "REJECTED",
+                  "description": "Invalid or expired token",
+                  "data": {}
                 }
               }
             }

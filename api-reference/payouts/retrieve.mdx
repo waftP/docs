@@ -52,19 +52,23 @@ Provide **one** of the following fields:
 
 ```json
 {
-  "status": "200.100",
-  "code": "ACCEPTED",
-  "description": "Accepted for processing",
-  "data": {
-    "amount": 1000,
-    "total_charges": 0,
-    "total_amount": 1000,
-    "transaction_reference": "TXN213687756272200",
-    "payment_uuid": "8363546214883574601",
-    "payment_reference": "1RJITP5HLL",
-    "state": "processing",
-    "time_received": "2025-04-04T06:13:52.585619Z",
-    "last_updated": "2025-04-04T06:15:10.102993Z"
+  "code": 102,
+  "status": "SUCCESS",
+  "description": "Transaction Was Successful",
+  "results": {
+    "result_code": "0",
+    "result_description": "The service request is processed successfully.",
+    "amount": 100.0,
+    "total_charges": 10.0,
+    "total_amount": 100.0,
+    "service_code": "SAF_MOCK_PAYOUT",
+    "account": "254708374149",
+    "transaction_reference": "410823",
+    "payment_uuid": "413377670969114276",
+    "external_reference": "3C1HH12RIN",
+    "time_processed": "2026-01-08T07:43:47.800432367Z",
+    "validation_hash": "04213f90a36e1de7b8a7f49e13cd0bd7a1066d3d552ef9035e145cf6e7a8c160",
+    "metadata": {}
   }
 }
 ```

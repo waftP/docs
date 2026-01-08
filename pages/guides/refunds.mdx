@@ -1,15 +1,15 @@
 ---
 title: "Refunds"
-description: "Check the status of refund or reversal requests."
+description: "Initiate a refund or reversal request and check its status."
 ---
 
-Refunds and reversals are processed asynchronously. Use this guide to query the latest status when you have a `request_uuid` from the original refund/reversal request.
+Refunds and reversals are processed asynchronously. First, initiate the request to get a `request_uuid`, then query the latest status.
 
 ---
 
-## Endpoint
+## Initiate refund/reversal
 
-**POST** `/refund-reversal`
+**POST** `/payments-api-service/v1/refund-reversal`
 
 **Auth**: Requires a **collection-scoped** Bearer token.
 
@@ -19,11 +19,29 @@ Refunds and reversals are processed asynchronously. Use this guide to query the 
 
 ```json
 {
-  "transaction_reference": "TRN4055499030801",
-  "payment_uuid": "915195656265353595",
-  "amount": 100,
+  "transaction_reference": "TRC94513697913522",
+  "payment_uuid": "803556523944079845",
+  "amount": 400,
   "notification_url": "https://webhook.site/679ced79-7dac-4977-be7a-3d600b39c245",
   "remarks": "Test remarks"
+}
+```
+
+---
+
+## Check status
+
+**POST** `/refund-reversal`
+
+**Auth**: Requires a **collection-scoped** Bearer token.
+
+---
+
+## Request body (status)
+
+```json
+{
+  "request_uuid": "A333RTYUT"
 }
 ```
 
@@ -63,6 +81,7 @@ Refunds and reversals are processed asynchronously. Use this guide to query the 
 
 ## Related links
 
+- [Initiate refund/reversal API](/api-reference/collections/collections-refund-initiate)
 - [Refund/Reversal status API](/api-reference/collections/collections-refund)
 - [Collections guide](/pages/guides/collections)
 - [Errors](/errors)

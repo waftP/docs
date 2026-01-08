@@ -1,0 +1,66 @@
+---
+title: "Initiate Refund/Reversal"
+description: "Create a refund or reversal request for a collection payment."
+openapi: "POST /payments-api-service/v1/refund-reversal"
+---
+
+## Overview
+
+Use this endpoint to initiate a refund or reversal for a collection payment. The request is asynchronous: you receive a `request_uuid` immediately, then check the final outcome via the status endpoint.
+
+> **Auth**: Requires a **Collection token** (`Authorization: Bearer <collection_token>`).
+
+---
+
+## Endpoint
+
+```http
+POST {BASE_URL}/payments-api-service/v1/refund-reversal
+```
+
+---
+
+## Request body
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `transaction_reference` | string | Yes | Original transaction reference to refund/reverse. |
+| `payment_uuid` | string | Yes | Original Waftpay payment UUID. |
+| `amount` | number | Yes | Amount to refund/reverse in major units. |
+| `notification_url` | string | Yes | HTTPS URL to receive the final status callback. |
+| `remarks` | string | No | Optional reason or notes. |
+
+---
+
+## Example request
+
+```json
+{
+  "transaction_reference": "TRC94513697913522",
+  "payment_uuid": "803556523944079845",
+  "amount": 400,
+  "notification_url": "https://webhook.site/679ced79-7dac-4977-be7a-3d600b39c245",
+  "remarks": "Test remarks"
+}
+```
+
+---
+
+## Example response (accepted)
+
+```json
+{
+  "code": 102,
+  "status": "SUCCESS",
+  "description": "Request accepted",
+  "results": {
+    "request_uuid": "A333RTYUT"
+  }
+}
+```
+
+---
+
+## Next step
+
+Use the `request_uuid` to check the final outcome: [Refund/Reversal status](/api-reference/collections/collections-refund).
