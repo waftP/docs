@@ -24,23 +24,20 @@ Use this page to map webhook `status` / `code` pairs to their meaning and expect
 {
   "status": "SUCCESS",
   "code": "102",
-  "description": "SUCCESS",
+  "description": "Payment completed successfully",
   "results": {
     "result_code": "0",
-    "result_description": "Transaction complete",
-    "amount": 1000.0,
-    "total_charges": 10.0,
-    "total_amount": 1000.0,
-    "msisdn": "254712345678",
-    "transaction_reference": "TRD99672118069255",
-    "payment_uuid": "422664585064023059",
-    "external_reference": "ws_CO_11062025125308639792002",
-    "time_processed": "2025-06-18T08:28:16.090966",
-    "validation_hash": "2b9e9d...a9db1",
-    "metadata": {
-      "note": "This info is returned as part of the callback",
-      "agent_id": "AGENT456"
-    }
+    "result_description": "The service request is processed successfully.",
+    "amount": 100,
+    "total_charges": 10,
+    "total_amount": 100,
+    "account": "254708374149",
+    "transaction_reference": "295877",
+    "payment_uuid": "413283551145761444",
+    "external_reference": "3C1HH10ZU8",
+    "time_processed": "2026-01-07T09:48:08.8485958",
+    "validation_hash": "16b70a72ab3abddd1a2ed3db533317be9785fa553beafb563d205cec5a693b6c",
+    "metadata": {}
   }
 }
 ```

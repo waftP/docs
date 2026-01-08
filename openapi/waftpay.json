@@ -433,17 +433,15 @@
                   "accepted": {
                     "summary": "Accepted for processing",
                     "value": {
-                      "status": "200.100",
-                      "code": "ACCEPTED",
+                      "code": "100",
+                      "status": "ACCEPTED",
                       "description": "Accepted for processing",
                       "data": {
-                        "amount": 1000,
-                        "total_charges": 0,
-                        "total_amount": 1000,
-                        "transaction_reference": "TNC000009",
-                        "payment_uuid": "8363546214883574601",
-                        "payment_reference": "1RJITP5HLL",
-                        "time_received": "2025-04-04T06:13:52.585619Z"
+                        "amount": 100,
+                        "transaction_reference": "919938",
+                        "payment_uuid": "413283551143664292",
+                        "payment_reference": "351CSICLV0",
+                        "time_received": "2026-01-07T09:44:43.558023Z"
                       }
                     }
                   }
@@ -1009,8 +1007,6 @@
             "type": "object",
             "required": [
               "amount",
-              "total_charges",
-              "total_amount",
               "transaction_reference",
               "payment_uuid",
               "payment_reference",
@@ -1018,12 +1014,6 @@
             ],
             "properties": {
               "amount": {
-                "type": "number"
-              },
-              "total_charges": {
-                "type": "number"
-              },
-              "total_amount": {
                 "type": "number"
               },
               "transaction_reference": {
@@ -2134,17 +2124,15 @@
             "examples": {
               "accepted": {
                 "value": {
-                  "status": "200.100",
-                  "code": "ACCEPTED",
+                  "code": "100",
+                  "status": "ACCEPTED",
                   "description": "Accepted for processing",
                   "data": {
-                    "amount": 1000,
-                    "total_charges": 0,
-                    "total_amount": 1000,
-                    "transaction_reference": "TXN213687756272200",
-                    "payment_uuid": "8837988760786506492",
-                    "payment_reference": "1V5ADJM5SO",
-                    "time_received": "2025-04-04T02:20:44.967336Z"
+                    "amount": 100,
+                    "transaction_reference": "919938",
+                    "payment_uuid": "413283551143664292",
+                    "payment_reference": "351CSICLV0",
+                    "time_received": "2026-01-07T09:44:43.558023Z"
                   }
                 }
               }
