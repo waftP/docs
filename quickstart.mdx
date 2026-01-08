@@ -104,6 +104,7 @@ BODY='{
     "amount": 1000,
     "currency": "KES",
     "description": "Test description",
+    "service_code": "MPESAB2C",
     "timestamp": "2025-01-21T12:30:10Z"
   },
   "originator": {
@@ -112,7 +113,6 @@ BODY='{
     "country": "KE"
   },
   "recipient": {
-    "service_code": "MPESAB2C",
     "reference": "INVJMA02",
     "account": "254708374149"
   },
@@ -198,10 +198,11 @@ export async function createPayout({ clientId, clientSecret, privateKeyPem }:{
       amount: 1000,
       currency: "KES",
       description: "Test description",
+      service_code: "MPESAB2C",
       timestamp: "2025-01-21T12:30:10Z"
     },
     originator: { msisdn: "254708374149", channel: "USSD", country: "KE" },
-    recipient:  { service_code: "MPESAB2C", reference: "INVJMA02", account: "254708374149" },
+    recipient:  { reference: "INVJMA02", account: "254708374149" },
     callback_url: "https://staging.example.com/waftpay/callbacks"
   });
 
@@ -264,10 +265,11 @@ def create_payout(client_id, client_secret, private_key_pem):
             "amount": 1000,
             "currency": "KES",
             "description": "Test description",
+            "service_code": "MPESAB2C",
             "timestamp": "2025-01-21T12:30:10Z"
         },
         "originator": {"msisdn":"254708374149","channel":"USSD","country":"KE"},
-        "recipient":  {"service_code":"MPESAB2C","reference":"INVJMA02","account":"254708374149"},
+        "recipient":  {"reference":"INVJMA02","account":"254708374149"},
         "callback_url":"https://staging.example.com/waftpay/callbacks"
     }
     import json

@@ -25,7 +25,7 @@ This call is **idempotent**. Reuse the same `transaction.reference` to safely re
 **String to sign (no separators)**
 
 ```
-transaction.reference + transaction.amount + originator.country + recipient.service_code
+transaction.reference + transaction.amount + originator.country + transaction.service_code
 ```
 
 Use the exact string values you send in the JSON (including casing).
@@ -40,7 +40,7 @@ Use the exact string values you send in the JSON (including casing).
 |---|---|---|---|
 | `transaction` | object | Yes | Remittance details and idempotency reference. |
 | `originator` | object | Yes | Sender details. |
-| `recipient` | object | Yes | Recipient details and service code. |
+| `recipient` | object | Yes | Recipient details. |
 | `callback_url` | string | Yes | HTTPS URL for final status callbacks. |
 | `meta` | object | No | Arbitrary key/value metadata echoed in callbacks. |
 
@@ -52,6 +52,7 @@ Use the exact string values you send in the JSON (including casing).
 | `amount` | integer | Yes | Amount in major units (e.g., 100 = 100 KES). |
 | `currency` | string | Yes | ISO 4217 currency code (e.g., KES, USD). |
 | `description` | string | Yes | Short narrative for the remittance. |
+| `service_code` | string | Yes | Corridor/payout rail code. |
 | `timestamp` | string | Yes | Format: `YYYY-MM-DD HH:mm:ss`. |
 
 **originator**
@@ -73,7 +74,6 @@ Use the exact string values you send in the JSON (including casing).
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `service_code` | string | Yes | Corridor/payout rail code. |
 | `reference` | string | Yes | Client-generated reference for recipient context. |
 | `account` | string | Yes | Recipient account identifier. |
 | `name` | string | Yes | Recipient full name. |
@@ -89,6 +89,7 @@ Use the exact string values you send in the JSON (including casing).
     "amount": 100,
     "currency": "KES",
     "description": "Test",
+    "service_code": "ewqeqw",
     "timestamp": "2025-01-21 12:30:10"
   },
   "originator": {
@@ -104,7 +105,6 @@ Use the exact string values you send in the JSON (including casing).
     "purpose": "No purpose"
   },
   "recipient": {
-    "service_code": "ewqeqw",
     "reference": "Test",
     "account": "Test",
     "name": "John Doe Init"

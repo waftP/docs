@@ -46,6 +46,7 @@ X-Custom-Signature: <base64-signature>
     "amount": 1000,
     "currency": "KES",
     "description": "Vendor payout",
+    "service_code": "MPESAB2C",
     "timestamp": "2025-01-21T12:30:10Z"
   },
   "originator": {
@@ -56,7 +57,6 @@ X-Custom-Signature: <base64-signature>
     "purpose": "Transaction Payment"
   },
   "recipient": {
-    "service_code": "MPESAB2C",
     "reference": "INVJMA02",
     "account": "254708374149"
   },
@@ -72,7 +72,7 @@ X-Custom-Signature: <base64-signature>
 
 - `amount` is in major units (e.g., 1000 = 1000 KES).
 - `timestamp` must be ISO 8601 UTC (ends with `Z`).
-- `recipient.service_code` is assigned by Waftpay; confirm entitlement before go-live.
+- `transaction.service_code` is assigned by Waftpay; confirm entitlement before go-live.
 
 ---
 

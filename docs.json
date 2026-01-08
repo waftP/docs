@@ -62,6 +62,12 @@
         "tab": "API reference",
         "groups": [
           {
+            "group": "Overview",
+            "pages": [
+              "api-reference/index"
+            ]
+          },
+          {
             "group": "Health",
             "pages": [
               "api-reference/health"

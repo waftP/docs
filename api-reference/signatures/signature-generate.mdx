@@ -9,7 +9,7 @@ This signature lets our platform verify **who sent the request** and that its **
 > **TL;DR**
 > 1) Get a **Bearer token** ([Auth token](/api-reference/auth/auth-token)).
 > 2) Generate an **RSA 2048** key pair; register your **public** key with Waftpay.
-> 3) Build the signing string: `transaction.reference + transaction.amount + originator.country + recipient.service_code` (no separators).
+> 3) Build the signing string: `transaction.reference + transaction.amount + originator.country + transaction.service_code` (no separators).
 > 4) Sign with **RSA + SHA-256** (`RS256`), Base64-encode the signature bytes, and send it in `X-Custom-Signature`.
 
 ---
@@ -54,7 +54,7 @@ You need an **RSA 2048** key pair in **PEM** format:
 Concatenate these fields **in order** with **no separators**:
 
 ```
-transaction.reference + transaction.amount + originator.country + recipient.service_code
+transaction.reference + transaction.amount + originator.country + transaction.service_code
 ```
 
 - Use the **exact strings** you send in the JSON (e.g., amount `"100.00"`, country `"KE"` vs `"KEN"`).

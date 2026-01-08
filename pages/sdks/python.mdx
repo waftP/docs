@@ -60,14 +60,14 @@ class PaymentsClient:
 
     # Payouts (signature)
     def payouts_initiate(self, payload: dict):
-        t, o, r = payload["transaction"], payload["originator"], payload["recipient"]
-        sig = self._sign(self._canonical(t["reference"], t["amount"], o["country"], r["service_code"]))
+        t, o = payload["transaction"], payload["originator"]
+        sig = self._sign(self._canonical(t["reference"], t["amount"], o["country"], t["service_code"]))
         return self._post("/payments-api-service/v1/payouts", payload, idempotency_key=t["reference"], signature=sig)
 
     # Remittance (signature)
     def remittance_initiate(self, payload: dict):
-        t, o, r = payload["transaction"], payload["originator"], payload["recipient"]
-        sig = self._sign(self._canonical(t["reference"], t["amount"], o["country"], r["service_code"]))
+        t, o = payload["transaction"], payload["originator"]
+        sig = self._sign(self._canonical(t["reference"], t["amount"], o["country"], t["service_code"]))
         return self._post("/payments-api-service/v1/remittance", payload, idempotency_key=t["reference"], signature=sig)
 
     # Status

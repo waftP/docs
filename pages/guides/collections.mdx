@@ -46,6 +46,7 @@ X-Custom-Signature: <base64-signature>
     "amount": 1000,
     "currency": "KES",
     "description": "Order #98765",
+    "service_code": "RMT_WU",
     "timestamp": "2025-01-21T12:30:10Z"
   },
   "originator": {
@@ -72,6 +73,7 @@ X-Custom-Signature: <base64-signature>
 
 - `invoice_number` is optional but useful for reconciliation.
 - `timestamp` must be ISO 8601 UTC (ends with `Z`).
+- `transaction.service_code` is required only if enabled on your account.
 
 ---
 

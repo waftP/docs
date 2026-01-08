@@ -62,16 +62,16 @@ export class PaymentsClient {
 
   // Payouts  signature required
   payoutsInitiate(payload){
-    const t = payload.transaction; const r = payload.recipient; const o = payload.originator;
-    const data = this.canonical({ reference: t.reference, amount: t.amount, country: o.country, service_code: r.service_code });
+    const t = payload.transaction; const o = payload.originator;
+    const data = this.canonical({ reference: t.reference, amount: t.amount, country: o.country, service_code: t.service_code });
     const sig = this.sign(data);
     return this._post("/payments-api-service/v1/payouts", payload, { idempotencyKey: t.reference, signature: sig });
   }
 
   // Remittance  signature required
   remittanceInitiate(payload){
-    const t = payload.transaction; const r = payload.recipient; const o = payload.originator;
-    const data = this.canonical({ reference: t.reference, amount: t.amount, country: o.country, service_code: r.service_code });
+    const t = payload.transaction; const o = payload.originator;
+    const data = this.canonical({ reference: t.reference, amount: t.amount, country: o.country, service_code: t.service_code });
     const sig = this.sign(data);
     return this._post("/payments-api-service/v1/remittance", payload, { idempotencyKey: t.reference, signature: sig });
   }

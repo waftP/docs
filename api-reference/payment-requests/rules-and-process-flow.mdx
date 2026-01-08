@@ -46,7 +46,7 @@ After the Bearer token is validated, the following fields are required/validated
 | `originator.msisdn`          | string | Originating phone number (MSISDN)                                           | YES      |
 | `originator.country`         | string | Country code (e.g., `KE`)                                                   | YES      |
 | `originator.channel`         | string | Channel/device (e.g., `USSD`, `API`)                                        | YES      |
-| `recipient.service_code`     | string | Service to consume (e.g., `RMT_WU`)                                         | YES      |
+| `transaction.service_code`   | string | Service to consume (e.g., `RMT_WU`)                                         | YES      |
 | `recipient.reference`        | string | Client-unique reference for recipient context                               | YES      |
 | `recipient.account`          | string | Customer account identifier (phone/wallet/bank)                             | YES      |
 | `callback_url`               | string | HTTPS webhook for final status                                              | YES      |
@@ -54,12 +54,12 @@ After the Bearer token is validated, the following fields are required/validated
 | `meta.agent_id`              | string | Agent identifier                                                            | YES      |
 
 <Note>
-Follow your configured <code>recipient.service_code</code> contract for which fields are enforced.
+Follow your configured <code>transaction.service_code</code> contract for which fields are enforced.
 </Note>
 
 **Special Handling**
 - Missing/invalid token → **401 Unauthorized**.
-- Missing `recipient.service_code` → **403 Forbidden**.
+- Missing `transaction.service_code` → **403 Forbidden**.
 - Duplicate `transaction.reference` → handle gracefully (idempotent response).
 
 **Reference headers**

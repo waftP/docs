@@ -97,7 +97,7 @@ export const SignaturePlayground = () => {
                            value={amount} onChange={e => setAmount(e.target.value)} />
                     <input className="w-full rounded border p-2 text-sm" placeholder="originator.country"
                            value={country} onChange={e => setCountry(e.target.value)} />
-                    <input className="w-full rounded border p-2 text-sm" placeholder="recipient.service_code"
+                    <input className="w-full rounded border p-2 text-sm" placeholder="transaction.service_code"
                            value={serviceCode} onChange={e => setServiceCode(e.target.value)} />
 
                     <div className="text-xs mt-3 font-medium">String to sign</div>

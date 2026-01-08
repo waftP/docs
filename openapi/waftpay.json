@@ -333,6 +333,7 @@
                       "amount": 1000,
                       "currency": "KES",
                       "description": "Test description",
+                      "service_code": "MPESAB2C",
                       "timestamp": "2025-01-21T12:30:10Z"
                     },
                     "originator": {
@@ -341,7 +342,6 @@
                       "country": "KE"
                     },
                     "recipient": {
-                      "service_code": "MPESAB2C",
                       "reference": "INVJMA02",
                       "account": "254708374149"
                     },
@@ -395,6 +395,7 @@
                       "amount": 1000,
                       "currency": "KES",
                       "description": "Test description",
+                      "service_code": "RMT_WU",
                       "timestamp": "2025-01-21T12:30:10Z"
                     },
                     "originator": {
@@ -591,6 +592,7 @@
                       "amount": 100,
                       "currency": "KES",
                       "description": "Test",
+                      "service_code": "ewqeqw",
                       "timestamp": "2025-01-21 12:30:10"
                     },
                     "originator": {
@@ -606,7 +608,6 @@
                       "purpose": "No purpose"
                     },
                     "recipient": {
-                      "service_code": "ewqeqw",
                       "reference": "Test",
                       "account": "Test",
                       "name": "John Doe Init"
@@ -863,6 +864,7 @@
               "amount",
               "currency",
               "description",
+              "service_code",
               "timestamp"
             ],
             "properties": {
@@ -881,6 +883,10 @@
               "description": {
                 "type": "string",
                 "description": "Short narrative for the payout."
+              },
+              "service_code": {
+                "type": "string",
+                "description": "Service the client wants to consume (e.g., MPESAB2C)."
               },
               "timestamp": {
                 "type": "string",
@@ -924,15 +930,10 @@
           "recipient": {
             "type": "object",
             "required": [
-              "service_code",
               "reference",
               "account"
             ],
             "properties": {
-              "service_code": {
-                "type": "string",
-                "description": "Service the client wants to consume (e.g., MPESAB2C)."
-              },
               "reference": {
                 "type": "string",
                 "description": "Client-generated unique reference (idempotency key). Reuse to safely retry."
@@ -961,6 +962,7 @@
               "amount": 1000,
               "currency": "KES",
               "description": "Vendor payout",
+              "service_code": "MPESAB2C",
               "timestamp": "2025-01-21T12:30:10Z"
             },
             "originator": {
@@ -971,7 +973,6 @@
               "purpose": "Transaction Payment"
             },
             "recipient": {
-              "service_code": "MPESAB2C",
               "reference": "INVJMA02",
               "account": "254708374149"
             },
@@ -1252,6 +1253,10 @@
                 "type": "string",
                 "description": "Short narrative for the collection."
               },
+              "service_code": {
+                "type": "string",
+                "description": "Service the client wants to consume (e.g., RMT_WU, MPESA_STK)."
+              },
               "timestamp": {
                 "type": "string",
                 "format": "date-time",
@@ -1287,12 +1292,8 @@
           },
           "recipient": {
             "type": "object",
-            "required": ["service_code", "reference", "account"],
+            "required": ["reference", "account"],
             "properties": {
-              "service_code": {
-                "type": "string",
-                "description": "Service the client wants to consume (e.g., RMT_WU, MPESA_STK)."
-              },
               "invoice_number": {
                 "type": "string",
                 "description": "Optional invoice number associated with the transaction."
@@ -1786,7 +1787,7 @@
         "properties": {
           "transaction": {
             "type": "object",
-            "required": ["reference", "amount", "currency", "description", "timestamp"],
+            "required": ["reference", "amount", "currency", "description", "service_code", "timestamp"],
             "properties": {
               "reference": {
                 "type": "string",
@@ -1803,6 +1804,10 @@
               "description": {
                 "type": "string",
                 "description": "Short narrative for the remittance."
+              },
+              "service_code": {
+                "type": "string",
+                "description": "Service to consume (corridor/payout rail code)."
               },
               "timestamp": {
                 "type": "string",
@@ -1859,12 +1864,8 @@
           },
           "recipient": {
             "type": "object",
-            "required": ["service_code", "reference", "account", "name"],
+            "required": ["reference", "account", "name"],
             "properties": {
-              "service_code": {
-                "type": "string",
-                "description": "Service to consume (corridor/payout rail code)."
-              },
               "reference": {
                 "type": "string",
                 "description": "Client-generated unique reference for recipient context."
@@ -1897,6 +1898,7 @@
               "amount": 100,
               "currency": "KES",
               "description": "Test",
+              "service_code": "ewqeqw",
               "timestamp": "2025-01-21 12:30:10"
             },
             "originator": {
@@ -1912,7 +1914,6 @@
               "purpose": "No purpose"
             },
             "recipient": {
-              "service_code": "ewqeqw",
               "reference": "Test",
               "account": "Test",
               "name": "John Doe Init"
@@ -2096,7 +2097,7 @@
         "schema": {
           "type": "string"
         },
-        "description": "Base64 RSA signature over: transaction.reference + transaction.amount + originator.country + recipient.service_code"
+        "description": "Base64 RSA signature over: transaction.reference + transaction.amount + originator.country + transaction.service_code"
       }
     },
 
