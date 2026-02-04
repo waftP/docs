@@ -353,7 +353,9 @@
                     },
                     "recipient": {
                       "reference": "INVJMA02",
-                      "account": "254708374149"
+                      "account": "254708374149",
+                      "name": "John Doe Init",
+                      "destination_code": "300213"
                     },
                     "callback_url": "https://merchant.example.com/callbacks/payout",
                     "meta": {}
@@ -726,7 +728,8 @@
                     "recipient": {
                       "reference": "Test",
                       "account": "Test",
-                      "name": "John Doe Init"
+                      "name": "John Doe Init",
+                      "destination_code": "300213"
                     },
                     "callback_url": "https://www.google.com",
                     "meta": {
@@ -1344,7 +1347,9 @@
             "type": "object",
             "required": [
               "reference",
-              "account"
+              "account",
+              "name",
+              "destination_code"
             ],
             "properties": {
               "reference": {
@@ -1354,6 +1359,14 @@
               "account": {
                 "type": "string",
                 "description": "Recipient account identifier (phone, wallet, bank acct)."
+              },
+              "name": {
+                "type": "string",
+                "description": "Recipient full name."
+              },
+              "destination_code": {
+                "type": "string",
+                "description": "Destination code for the recipient corridor or payout rail."
               }
             }
           },
@@ -1387,7 +1400,9 @@
             },
             "recipient": {
               "reference": "INVJMA02",
-              "account": "254708374149"
+              "account": "254708374149",
+              "name": "John Doe Init",
+              "destination_code": "300213"
             },
             "callback_url": "https://merchant.example.com/callbacks/payout",
             "meta": {
@@ -2338,7 +2353,7 @@
           },
           "recipient": {
             "type": "object",
-            "required": ["reference", "account", "name"],
+            "required": ["reference", "account", "name", "destination_code"],
             "properties": {
               "reference": {
                 "type": "string",
@@ -2351,6 +2366,10 @@
               "name": {
                 "type": "string",
                 "description": "Recipient full name."
+              },
+              "destination_code": {
+                "type": "string",
+                "description": "Destination code for the recipient corridor or payout rail."
               }
             }
           },
@@ -2390,7 +2409,8 @@
             "recipient": {
               "reference": "Test",
               "account": "Test",
-              "name": "John Doe Init"
+              "name": "John Doe Init",
+              "destination_code": "300213"
             },
             "callback_url": "https://www.google.com",
             "meta": {

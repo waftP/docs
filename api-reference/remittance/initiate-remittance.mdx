@@ -77,6 +77,7 @@ Use the exact string values you send in the JSON (including casing).
 | `reference` | string | Yes | Client-generated reference for recipient context. |
 | `account` | string | Yes | Recipient account identifier. |
 | `name` | string | Yes | Recipient full name. |
+| `destination_code` | string | Yes | Destination code for the recipient corridor or payout rail. |
 
 ---
 
@@ -107,7 +108,8 @@ Use the exact string values you send in the JSON (including casing).
   "recipient": {
     "reference": "Test",
     "account": "Test",
-    "name": "John Doe Init"
+    "name": "John Doe Init",
+    "destination_code": "300213"
   },
   "callback_url": "https://www.google.com",
   "meta": {

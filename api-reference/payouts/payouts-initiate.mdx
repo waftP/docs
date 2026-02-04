@@ -63,6 +63,8 @@ This call is **idempotent**. Reuse the same `transaction.reference` to safely re
 |---|---|---|---|
 | `reference` | string | Yes | Client-generated reference for recipient-side tracking. |
 | `account` | string | Yes | Recipient account identifier (phone, wallet, bank account). |
+| `name` | string | Yes | Recipient full name. |
+| `destination_code` | string | Yes | Destination code for the recipient corridor or payout rail. |
 
 ---
 
@@ -87,7 +89,9 @@ This call is **idempotent**. Reuse the same `transaction.reference` to safely re
   },
   "recipient": {
     "reference": "INVJMA02",
-    "account": "254708374149"
+    "account": "254708374149",
+    "name": "John Doe Init",
+    "destination_code": "300213"
   },
   "callback_url": "https://merchant.example.com/callbacks/payout",
   "meta": {
