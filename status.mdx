@@ -3,7 +3,7 @@ title: "API Status"
 description: "Run a live health check against the Waftpay API."
 ---
 
-import React, { useRef, useState } from "react";
+const { useRef, useState } = React;
 
 export function StatusCheck({ urls }) {
     const [env, setEnv] = useState(Object.keys(urls)[0]);

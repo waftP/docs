@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+const { useEffect, useMemo, useState } = React;
 
 const stripPem = (pem) => pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
 const pemToArrayBuffer = (pem) => {

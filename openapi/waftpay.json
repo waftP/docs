@@ -26,6 +26,10 @@
       "description": "Status"
     },
     {
+      "url": "https://checkout-backend-api-service.dev.waftpay.io",
+      "description": "Checkout"
+    },
+    {
       "url": "https://api.waftpay.io",
       "description": "Production"
     }
@@ -42,6 +46,10 @@
     {
       "name": "Collections",
       "description": "Customer-initiated payments and hosted checkouts"
+    },
+    {
+      "name": "Checkout",
+      "description": "Hosted checkout flow for customer payments.\n\nFlow:\n1. Ensure the Collections service is enabled for your account.\n2. Use `consumer_key` and `consumer_secret` to generate a Bearer token via **Get Authentication Token**.\n3. Cache the token and refresh only on expiry.\n4. Call **Create Checkout Request** with customer details, amount, and redirect URLs.\n5. Use the returned `checkout_url` for redirect or iframe.\n6. The `callback_url` receives a payload matching the `CheckoutCallback` schema."
     },
     {
       "name": "Remittance",
@@ -444,6 +452,114 @@
                         "payment_uuid": "413283551143664292",
                         "payment_reference": "351CSICLV0",
                         "time_received": "2026-01-07T09:44:43.558023Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "status",
+                    "description",
+                    "data"
+                  ],
+                  "properties": {
+                    "code": { "type": "string" },
+                    "status": { "type": "string" },
+                    "description": { "type": "string" },
+                    "data": { "type": "object" }
+                  }
+                },
+                "examples": {
+                  "missingAuthorization": {
+                    "value": {
+                      "code": "400.008.100",
+                      "status": "REJECTED",
+                      "description": "Missing or invalid Authorization header",
+                      "data": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/checkout-backend-api/v1/request": {
+      "post": {
+        "tags": ["Checkout"],
+        "summary": "Create Checkout Request",
+        "operationId": "createCheckoutRequest",
+        "description": "Initiate a hosted checkout session and receive a `checkout_url` for redirect or iframe. Requires a valid Bearer token from **Get Authentication Token**. The `callback_url` receives the `CheckoutCallback` payload.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutRequest"
+              },
+              "examples": {
+                "redirect": {
+                  "value": {
+                    "customer": {
+                      "first_name": "Amina",
+                      "other_names": "Kariuki",
+                      "email": "amina.kariuki@example.com",
+                      "phone_number": "254733112244"
+                    },
+                    "timestamp": "2025-11-18T09:45:30.540Z",
+                    "checkout_reference": "CHK623581942",
+                    "payment_reference": "INV20478519",
+                    "msisdn": "254711223344",
+                    "country": "KEN",
+                    "currency": "KES",
+                    "amount": 1750.0,
+                    "mode": "redirect",
+                    "callback_url": "https://webhook.site/aa2b85e4-1c13-4a9c-9b7e-3d7f3d91c9f1",
+                    "success_redirect_url": "https://webhook.site/aa2b85e4-1c13-4a9c-9b7e-3d7f3d91c9f1",
+                    "fail_redirect_url": "https://webhook.site/aa2b85e4-1c13-4a9c-9b7e-3d7f3d91c9f1",
+                    "meta_data": {
+                      "order_id": "ORDER-39182"
+                    },
+                    "extra_params": {
+                      "language": "en",
+                      "expiry": "2026-02-14 18:30:00",
+                      "strict_amount": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponse"
+                },
+                "examples": {
+                  "accepted": {
+                    "value": {
+                      "code": "200",
+                      "status": "SUCCESS",
+                      "description": "Request accepted",
+                      "data": {
+                        "checkout_url": "https://waftpay.netlify.app/checkout/OTRkN2I2YTQtZTliZi00MDI0LTk2N2ItZGI1MTQ0NmU2NzY2",
+                        "expires_at": "2026-03-02T14:08:41.921Z"
                       }
                     }
                   }
@@ -854,6 +970,251 @@
           "type": "string"
         },
         "description": "Arbitrary key-value metadata"
+      },
+
+      "CheckoutCustomer": {
+        "type": "object",
+        "required": [
+          "first_name",
+          "other_names",
+          "phone_number",
+          "email"
+        ],
+        "properties": {
+          "first_name": {
+            "type": "string"
+          },
+          "other_names": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Customer phone number in MSISDN format (e.g., 2547XXXXXXXX)."
+          }
+        }
+      },
+
+      "CheckoutExtraParams": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "description": "Checkout language preference (e.g., en, fr)."
+          },
+          "expiry": {
+            "type": "string",
+            "description": "Optional expiry timestamp in `YYYY-MM-DD HH:mm:ss` format. If omitted, the default expiry applies."
+          },
+          "strict_amount": {
+            "type": "boolean",
+            "description": "If true, only full payment is allowed. If false, partial payments are allowed."
+          }
+        }
+      },
+
+      "CheckoutRequest": {
+        "type": "object",
+        "required": [
+          "customer",
+          "timestamp",
+          "checkout_reference",
+          "payment_reference",
+          "msisdn",
+          "country",
+          "currency",
+          "amount",
+          "mode",
+          "callback_url",
+          "success_redirect_url",
+          "fail_redirect_url"
+        ],
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/CheckoutCustomer"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp for the request."
+          },
+          "checkout_reference": {
+            "type": "string",
+            "description": "Client-generated unique checkout reference."
+          },
+          "payment_reference": {
+            "type": "string",
+            "description": "Your internal invoice or payment reference."
+          },
+          "msisdn": {
+            "type": "string",
+            "description": "Payer phone number in MSISDN format (e.g., 2547XXXXXXXX)."
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-3 country code (e.g., KEN)."
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code (e.g., KES)."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Amount in major units (e.g., 1000 = 1000 KES)."
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "redirect"
+            ],
+            "description": "Checkout mode."
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL for payment status callback notifications."
+          },
+          "success_redirect_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to redirect on successful payment."
+          },
+          "fail_redirect_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to redirect on failed payment."
+          },
+          "meta_data": {
+            "type": "object",
+            "description": "Arbitrary key-value data returned in the callback.",
+            "additionalProperties": true
+          },
+          "extra_params": {
+            "$ref": "#/components/schemas/CheckoutExtraParams"
+          }
+        }
+      },
+
+      "CheckoutResponseData": {
+        "type": "object",
+        "required": [
+          "checkout_url",
+          "expires_at"
+        ],
+        "properties": {
+          "checkout_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+
+      "CheckoutResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "status",
+          "description",
+          "data"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "200"
+          },
+          "status": {
+            "type": "string",
+            "example": "SUCCESS"
+          },
+          "description": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CheckoutResponseData"
+          }
+        }
+      },
+
+      "CheckoutCallbackPayment": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "result_code": { "type": "string" },
+          "result_description": { "type": "string" },
+          "amount": { "type": "number" },
+          "account": { "type": "string" },
+          "total_charges": { "type": "number" },
+          "total_amount": { "type": "number" },
+          "service_code": { "type": "string" },
+          "external_reference": { "type": "string" },
+          "payment_uuid": { "type": "string" },
+          "time_processed": { "type": "number" }
+        }
+      },
+
+      "CheckoutCallbackResults": {
+        "type": "object",
+        "properties": {
+          "transaction_reference": { "type": "string" },
+          "checkout_status": { "type": "string" },
+          "amount": { "type": "number" },
+          "payments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CheckoutCallbackPayment" }
+          },
+          "metadata": { "type": "string" }
+        }
+      },
+
+      "CheckoutCallback": {
+        "type": "object",
+        "required": [
+          "status",
+          "code",
+          "description",
+          "results"
+        ],
+        "properties": {
+          "status": { "type": "string" },
+          "code": { "type": "string" },
+          "description": { "type": "string" },
+          "results": { "$ref": "#/components/schemas/CheckoutCallbackResults" }
+        },
+        "examples": [
+          {
+            "status": "SUCCESS",
+            "code": "102",
+            "description": "Transaction successfully processed",
+            "results": {
+              "transaction_reference": "CHK1769954123895429017",
+              "checkout_status": "FULLY_PAID",
+              "amount": 1750,
+              "payments": [
+                {
+                  "status": "SUCCESS",
+                  "result_code": "0",
+                  "result_description": "The service request is processed successfully.",
+                  "amount": 1750,
+                  "account": "254733112244",
+                  "total_charges": 140,
+                  "total_amount": 1750,
+                  "service_code": "SAF_COL_KE",
+                  "external_reference": "Q8MN7RX4J2",
+                  "payment_uuid": "197563911284320774",
+                  "time_processed": 1769954132.447
+                }
+              ],
+              "metadata": "{\"order_id\":\"ORDER-39182\"}"
+            }
+          }
+        ]
       },
 
       "TokenRequest": {

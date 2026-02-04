@@ -45,7 +45,7 @@ If the token is invalid, expired, or not authorized for the requested product, y
 
 ## Successful responses
 
-### 200 OK — All balances (no filter)
+### 200 OK - All balances (no filter)
 ```json
 {
   "code": 200,
@@ -63,7 +63,7 @@ If the token is invalid, expired, or not authorized for the requested product, y
 }
 ```
 
-### 200 OK — Specific currency (present)
+### 200 OK - Specific currency (present)
 ```json
 {
   "code": 200,
@@ -91,7 +91,7 @@ If the token is invalid, expired, or not authorized for the requested product, y
 
 ## Error responses
 
-### 404 Not Found — Currency not provisioned for this product
+### 404 Not Found - Currency not provisioned for this product
 ```json
 {
   "code": 404,
@@ -101,7 +101,7 @@ If the token is invalid, expired, or not authorized for the requested product, y
 }
 ```
 
-### 401 Unauthorized — Bad/expired token or wrong scope
+### 401 Unauthorized - Bad/expired token or wrong scope
 ```json
 {
   "code": 401,

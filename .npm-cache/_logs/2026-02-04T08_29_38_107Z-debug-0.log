@@ -1,0 +1,17 @@
+0 verbose cli /home/alex/.nvm/versions/node/v20.17.0/bin/node /home/alex/.nvm/versions/node/v20.17.0/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@10.8.2
+2 info using node@v20.17.0
+3 silly config load:file:/home/alex/.nvm/versions/node/v20.17.0/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/alex/Documents/waft/developer/docs/.npmrc
+5 silly config load:file:/home/alex/.npmrc
+6 silly config load:file:/home/alex/.nvm/versions/node/v20.17.0/etc/npmrc
+7 verbose title npm exec mintlify dev
+8 verbose argv "exec" "--" "mintlify" "dev"
+9 verbose logfile logs-max:10 dir:/home/alex/Documents/waft/developer/docs/.npm-cache/_logs/2026-02-04T08_29_38_107Z-
+10 verbose logfile /home/alex/Documents/waft/developer/docs/.npm-cache/_logs/2026-02-04T08_29_38_107Z-debug-0.log
+11 silly logfile start cleaning logs, removing 1 files
+12 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+13 silly logfile done cleaning log files
+14 http fetch GET 200 https://registry.npmjs.org/mintlify 1187ms (cache revalidated)
+15 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+16 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368

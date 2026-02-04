@@ -1,0 +1,150 @@
+---
+title: "Create Checkout Request"
+description: "Initiate a hosted checkout session and receive a checkout URL."
+openapi: "POST /checkout-backend-api/v1/request"
+---
+
+## Overview
+
+Use Checkout to collect a payment through a hosted page. Your account must have the **[Collections](/pages/guides/collections)** service enabled. For a full walkthrough, see the **[Checkout guide](/pages/guides/checkout)**.
+
+Flow
+1. Use `consumer_key` and `consumer_secret` to generate a token in **[Get Authentication Token](/api-reference/auth/auth-token)**.
+2. Cache the token and refresh only on expiry.
+3. Call **Create Checkout Request** with customer details, amount, and redirect URLs.
+4. Redirect the user to the returned `checkout_url` (or render it in an iframe).
+5. Receive the final result on your `callback_url` (see **[Webhooks](/pages/webhooks/overview)**).
+
+---
+
+## Authentication
+
+**Required headers**
+
+| Header | Required | Notes |
+|---|---|---|
+| `Authorization` | Yes | `Bearer <token>` |
+| `Content-Type` | Yes | `application/json` |
+
+---
+
+## Example request
+
+```json
+{
+  "customer": {
+    "first_name": "Amina",
+    "other_names": "Kariuki",
+    "email": "amina.kariuki@example.com",
+    "phone_number": "254733112244"
+  },
+  "timestamp": "2025-11-18T09:45:30.540Z",
+  "checkout_reference": "CHK623581942",
+  "payment_reference": "INV20478519",
+  "msisdn": "254711223344",
+  "country": "KEN",
+  "currency": "KES",
+  "amount": 1750.0,
+  "mode": "redirect",
+  "callback_url": "https://webhook.site/aa2b85e4-1c13-4a9c-9b7e-3d7f3d91c9f1",
+  "success_redirect_url": "https://webhook.site/aa2b85e4-1c13-4a9c-9b7e-3d7f3d91c9f1",
+  "fail_redirect_url": "https://webhook.site/aa2b85e4-1c13-4a9c-9b7e-3d7f3d91c9f1",
+  "meta_data": {
+    "order_id": "ORDER-39182"
+  },
+  "extra_params": {
+    "language": "en",
+    "expiry": "2026-02-14 18:30:00",
+    "strict_amount": true
+  }
+}
+```
+
+---
+
+## Example cURL
+
+```bash
+curl --request POST \
+  --url https://checkout-backend-api-service.dev.waftpay.io/checkout-backend-api/v1/request \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "customer": {
+    "first_name": "Amina",
+    "other_names": "Kariuki",
+    "email": "amina.kariuki@example.com",
+    "phone_number": "254733112244"
+  },
+  "timestamp": "2025-11-18T09:45:30.540Z",
+  "checkout_reference": "CHK623581942",
+  "payment_reference": "INV20478519",
+  "msisdn": "254711223344",
+  "country": "KEN",
+  "currency": "KES",
+  "amount": 1750,
+  "mode": "redirect",
+  "callback_url": "https://webhook.site/aa2b85e4-1c13-4a9c-9b7e-3d7f3d91c9f1",
+  "success_redirect_url": "https://webhook.site/aa2b85e4-1c13-4a9c-9b7e-3d7f3d91c9f1",
+  "fail_redirect_url": "https://webhook.site/aa2b85e4-1c13-4a9c-9b7e-3d7f3d91c9f1",
+  "meta_data": {
+    "order_id": "ORDER-39182"
+  },
+  "extra_params": {
+    "language": "en",
+    "expiry": "2026-02-14 18:30:00",
+    "strict_amount": true
+  }
+}'
+```
+
+---
+
+## Example response
+
+```json
+{
+  "code": "200",
+  "status": "SUCCESS",
+  "description": "Request accepted",
+  "data": {
+    "checkout_url": "https://waftpay.netlify.app/checkout/OTRkN2I2YTQtZTliZi00MDI0LTk2N2ItZGI1MTQ0NmU2NzY2",
+    "expires_at": "2026-03-02T14:08:41.921Z"
+  }
+}
+```
+
+---
+
+## Example callback payload
+
+```json
+{
+  "status": "SUCCESS",
+  "code": "102",
+  "description": "Transaction successfully processed",
+  "results": {
+    "transaction_reference": "CHK1769954123895429017",
+    "checkout_status": "FULLY_PAID",
+    "amount": 1750,
+    "payments": [
+      {
+        "status": "SUCCESS",
+        "result_code": "0",
+        "result_description": "The service request is processed successfully.",
+        "amount": 1750,
+        "account": "254733112244",
+        "total_charges": 140,
+        "total_amount": 1750,
+        "service_code": "SAF_COL_KE",
+        "external_reference": "Q8MN7RX4J2",
+        "payment_uuid": "197563911284320774",
+        "time_processed": 1769954132.447
+      }
+    ],
+    "metadata": "{\"order_id\":\"ORDER-39182\"}"
+  }
+}
+```
+
+---

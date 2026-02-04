@@ -7,6 +7,7 @@
     "light": "#FBB040",
     "dark": "#15803D"
   },
+  "styles": ["/styles.css"],
   "favicon": "icon.png",
   "logo": {
     "light": "/public/logo/light.png",
@@ -51,6 +52,7 @@
             "pages": [
               "/pages/guides/payouts",
               "/pages/guides/collections",
+              "/pages/guides/checkout",
               "/pages/guides/remittances",
               "/pages/guides/refunds",
               "/pages/guides/status-checks"
@@ -111,6 +113,12 @@
             ]
           },
           {
+            "group": "Checkout",
+            "pages": [
+              "api-reference/checkout/checkout-request"
+            ]
+          },
+          {
             "group": "Remittance",
             "pages": [
               "api-reference/remittance/remittance-initiate",
@@ -153,7 +161,8 @@
   "openapi": "/openapi/waftpay.json",
   "api": {
     "baseUrl": [
-      "https://payments-api.dev.pockets-pay.com"
+      "https://payments-api.dev.pockets-pay.com",
+      "https://checkout-backend-api-service.dev.waftpay.io"
     ],
     "auth": {
       "method": "bearer",
@@ -161,7 +170,8 @@
       "inputPrefix": "Bearer "
     },
     "playground": {
-      "mode": "show"
+      "mode": "show",
+      "proxy": false
     }
   },
   "footer": {

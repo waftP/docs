@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+const { useState } = React;
 
 const ab2b64 = (ab) => {
     const bytes = new Uint8Array(ab);
