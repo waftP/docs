@@ -18,10 +18,11 @@ curl -X POST \
     "amount": 1000,
     "client_reference": "TRD99672118069255",
     "payment_uuid": "422664585064023059",
-    "payment_id": 145,
+    "payment_reference": "PAYMENT-REF-145",
     "metadata": { "note": "Test delivery" }
   }'
 ```
 
 > The simulator **sends** a webhook to your `callback_url` using the same payload format as production (see [Webhook payload](/pages/webhooks/payload)).  
+> `payment_reference` in the payload corresponds to the transaction payment reference.
 > In your logs, confirm receipt and your 2xx response.

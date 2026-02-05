@@ -42,35 +42,34 @@ X-Custom-Signature: <base64-signature>
 ```json
 {
   "transaction": {
-    "reference": "TXN123654573",
-    "amount": 100,
+    "reference": "{{remittance_transaction_ref}}",
+    "amount": 1000,
     "currency": "KES",
-    "description": "Family support",
-    "service_code": "RMT_WU",
-    "timestamp": "2025-01-21 12:30:10"
+    "description": "QA Tests",
+    "service_code": "PESALINK_REM",
+    "timestamp": "2025-09-15T12:45:30.123Z"
   },
   "originator": {
-    "msisdn": "254722111999",
-    "channel": "APP",
+    "msisdn": "256722111999",
+    "channel": "USSD",
     "country": "KEN",
-    "Service_provider": "TELCOM-UK",
+    "service_provider": "TELCOM-UK",
     "name": "John Sender",
     "dob": "1965-01-01",
     "nationality": "UK",
-    "id_type": "Passport",
-    "id_number": "PSA010101",
-    "purpose": "No purpose"
+    "id_type": "National ID",
+    "id_number": "PSA010101"
   },
   "recipient": {
-    "reference": "REM-2025-01",
-    "account": "254701234567",
-    "name": "John Doe Init",
-    "destination_code": "300213"
+    "reference": "Test",
+    "account": "9382947489",
+    "name": "Ralph",
+    "destination_code": "0002"
   },
-  "callback_url": "https://merchant.example.com/webhooks/remittances",
+  "callback_url": "https://webhook",
   "meta": {
-    "note": "KYC verified",
-    "agent_id": "AG1234"
+    "note": "QA Test",
+    "agent_id": "Test"
   }
 }
 ```

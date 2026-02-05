@@ -62,7 +62,7 @@ Use the exact string values you send in the JSON (including casing).
 | `msisdn` | string | Yes | MSISDN format (e.g., 2547XXXXXXXX). |
 | `channel` | string | Yes | Initiation channel (e.g., USSD, API). |
 | `country` | string | Yes | Country code (ISO-2 or ISO-3 as configured on your account). |
-| `Service_provider` | string | Yes | Sending provider name (corridor-specific). |
+| `service_provider` | string | Yes | Sending provider name (corridor-specific). |
 | `name` | string | Yes | Originator full name. |
 | `dob` | string | Yes | Date of birth (YYYY-MM-DD). |
 | `nationality` | string | Yes | Originator nationality (e.g., UK). |
@@ -86,34 +86,33 @@ Use the exact string values you send in the JSON (including casing).
 ```json
 {
   "transaction": {
-    "reference": "TXN123654573",
-    "amount": 100,
+    "reference": "{{remittance_transaction_ref}}",
+    "amount": 1000,
     "currency": "KES",
-    "description": "Test",
-    "service_code": "ewqeqw",
-    "timestamp": "2025-01-21 12:30:10"
+    "description": "QA Tests",
+    "service_code": "PESALINK_REM",
+    "timestamp": "2025-09-15T12:45:30.123Z"
   },
   "originator": {
-    "msisdn": "254722111999",
-    "channel": "Test",
+    "msisdn": "256722111999",
+    "channel": "USSD",
     "country": "KEN",
-    "Service_provider": "TELCOM-UK",
+    "service_provider": "TELCOM-UK",
     "name": "John Sender",
     "dob": "1965-01-01",
     "nationality": "UK",
-    "id_type": "Passport",
-    "id_number": "PSA010101",
-    "purpose": "No purpose"
+    "id_type": "National ID",
+    "id_number": "PSA010101"
   },
   "recipient": {
     "reference": "Test",
-    "account": "Test",
-    "name": "John Doe Init",
-    "destination_code": "300213"
+    "account": "9382947489",
+    "name": "Ralph",
+    "destination_code": "0002"
   },
-  "callback_url": "https://www.google.com",
+  "callback_url": "https://webhook",
   "meta": {
-    "note": "Test",
+    "note": "QA Test",
     "agent_id": "Test"
   }
 }

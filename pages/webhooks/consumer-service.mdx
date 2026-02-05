@@ -16,7 +16,7 @@ Example message consumed from the queue (validated before processing):
 
 ```json
 {
-  "payment_id": 145,
+  "payment_reference": "PAYMENT-REF-145",
   "payment_uuid": "422664585064023059",
   "client_reference": "TRD99672118069255",
   "payment_status": "SUCCESS",
@@ -39,7 +39,7 @@ Example message consumed from the queue (validated before processing):
 ```
 
 **Validation rules**
-- `payment_id` positive and present.
+- `payment_reference` positive and present.
 - `payment_uuid`, `client_reference`, `callback_url` non-blank.
 - `amount` non-negative.
 - Violations throw a validation exception and are **not re-queued**.
@@ -82,7 +82,7 @@ Status codes are consistent with [Webhook payload](/pages/webhooks/payload) (`10
 8) **Error handling**: HTTP/network errors retry; DB errors log/rollback; validation errors stop processing.
 
 ## Integrity check (validation_hash)
-- Computed as **SHA-256** over `amount + client_reference + payment_uuid + payment_id`.
+- Computed as **SHA-256** over `amount + client_reference + payment_uuid + payment_reference`.
 - Included in `results.validation_hash` so you can recompute and verify. See [Verify signature](/pages/webhooks/verify-signature) for verification snippets and stronger HMAC guidance.
 
 ## Operational notes

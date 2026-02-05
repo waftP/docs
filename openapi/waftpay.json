@@ -386,7 +386,7 @@
       }
     },
 
-    "/payments-api-service/v1/user/collections": {
+    "/payments-api-service/v1/collections": {
       "post": {
         "tags": ["Collections"],
         "summary": "Initiate Collection",
@@ -714,26 +714,25 @@
                       "timestamp": "2025-01-21 12:30:10"
                     },
                     "originator": {
-                      "msisdn": "254722111999",
-                      "channel": "Test",
+                      "msisdn": "256722111999",
+                      "channel": "USSD",
                       "country": "KEN",
-                      "Service_provider": "TELCOM-UK",
+                      "service_provider": "TELCOM-UK",
                       "name": "John Sender",
                       "dob": "1965-01-01",
                       "nationality": "UK",
-                      "id_type": "Passport",
-                      "id_number": "PSA010101",
-                      "purpose": "No purpose"
+                      "id_type": "National ID",
+                      "id_number": "PSA010101"
                     },
                     "recipient": {
                       "reference": "Test",
-                      "account": "Test",
-                      "name": "John Doe Init",
-                      "destination_code": "300213"
+                      "account": "9382947489",
+                      "name": "Ralph",
+                      "destination_code": "0002"
                     },
-                    "callback_url": "https://www.google.com",
+                    "callback_url": "https://webhook",
                     "meta": {
-                      "note": "Test",
+                      "note": "QA Test",
                       "agent_id": "Test"
                     }
                   }
@@ -2307,7 +2306,7 @@
           },
           "originator": {
             "type": "object",
-            "required": ["msisdn", "channel", "country", "Service_provider", "name", "dob", "nationality", "id_type", "id_number", "purpose"],
+            "required": ["msisdn", "channel", "country", "service_provider", "name", "dob", "nationality", "id_type", "id_number"],
             "properties": {
               "msisdn": {
                 "type": "string",
@@ -2321,7 +2320,7 @@
                 "type": "string",
                 "description": "Country code; tenant may use ISO-2 (KE) or ISO-3 (KEN). Use what your account is configured for."
               },
-              "Service_provider": {
+              "service_provider": {
                 "type": "string",
                 "description": "Sending provider name as used in your corridor (e.g., TELCOM-UK)."
               },
@@ -2344,10 +2343,6 @@
               "id_number": {
                 "type": "string",
                 "description": "Identification number (e.g., Passport number, ID number, DL number)."
-              },
-              "purpose": {
-                "type": "string",
-                "description": "Purpose of sending the funds."
               }
             }
           },
@@ -2387,34 +2382,33 @@
         "examples": [
           {
             "transaction": {
-              "reference": "TXN123654573",
-              "amount": 100,
+              "reference": "{{remittance_transaction_ref}}",
+              "amount": 1000,
               "currency": "KES",
-              "description": "Test",
-              "service_code": "ewqeqw",
-              "timestamp": "2025-01-21 12:30:10"
+              "description": "QA Tests",
+              "service_code": "PESALINK_REM",
+              "timestamp": "2025-09-15T12:45:30.123Z"
             },
             "originator": {
-              "msisdn": "254722111999",
-              "channel": "Test",
+              "msisdn": "256722111999",
+              "channel": "USSD",
               "country": "KEN",
-              "Service_provider": "TELCOM-UK",
+              "service_provider": "TELCOM-UK",
               "name": "John Sender",
               "dob": "1965-01-01",
               "nationality": "UK",
-              "id_type": "Passport",
-              "id_number": "PSA010101",
-              "purpose": "No purpose"
+              "id_type": "National ID",
+              "id_number": "PSA010101"
             },
             "recipient": {
               "reference": "Test",
-              "account": "Test",
-              "name": "John Doe Init",
-              "destination_code": "300213"
+              "account": "9382947489",
+              "name": "Ralph",
+              "destination_code": "0002"
             },
-            "callback_url": "https://www.google.com",
+            "callback_url": "https://webhook",
             "meta": {
-              "note": "Test",
+              "note": "QA Test",
               "agent_id": "Test"
             }
           }

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "mintlify": "^4.2.315"
+    "mintlify": "^4.2.326"
   },
   "_npx": {
     "packages": [
