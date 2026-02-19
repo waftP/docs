@@ -57,12 +57,7 @@
               "/pages/guides/refunds",
               "/pages/guides/status-checks"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "API reference",
-        "groups": [
+          },
           {
             "group": "Overview",
             "pages": [
