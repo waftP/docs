@@ -3,31 +3,44 @@ title: "Generate X-Custom-Signature"
 description: "Authoritative guide for creating and attaching the Base64 RSA signature required for Payouts and Remittance."
 ---
 
-Some Waftpay APIs (notably **Payouts** and **Remittance**) require a request header called `X-Custom-Signature`.
-This signature lets our platform verify **who sent the request** and that its **key fields weren’t altered** in transit.
+Some Waftpay APIs, notably **Payouts** and **Remittance**, require a request header called `X-Custom-Signature`. This signature lets our platform verify **who sent the request** and that its **key fields were not altered** in transit.
 
 > **TL;DR**
-> 1) Get a **Bearer token** ([Auth token](/api-reference/auth/auth-token)).
-> 2) Generate an **RSA 2048** key pair; register your **public** key with Waftpay.
-> 3) Build the signing string: `transaction.reference + transaction.amount + originator.country + transaction.service_code` (no separators).
-> 4) Sign with **RSA + SHA-256** (`RS256`), Base64-encode the signature bytes, and send it in `X-Custom-Signature`.
+>
+> 1. Get a **Bearer token** ([Auth token](/api-reference/auth/auth-token)).
+> 2. Generate an **RSA 2048** key pair; register your **public** key with Waftpay.
+> 3. Build the signing string: `transaction.reference + transaction.amount + originator.country + transaction.service_code` with no separators.
+> 4. Sign with **RSA \+ SHA-256**, Base64-encode the signature bytes, and send it in `X-Custom-Signature`.
 
 ---
 
 ## When it’s required
 
-- **Payouts**: `POST /payments-api-service/v1/payouts`
-- **Remittance**: `POST /payments-api-service/v1/remittance`
+- **Payouts**: `POST /payments/api/v1/payouts`
+- **Remittance**: `POST /payments/api/v1/remittance`
 
 These endpoints also require **Bearer auth** in the `Authorization` header.
+
+---
+
+## Environments
+
+| Environment | Base URL |
+| --- | --- |
+| Sandbox | `https://dev.waftpay.io` |
+| Production | `https://prod.waftpay.io` |
+
+<Warning>
+  Use separate key pairs for Sandbox and Production. Register the correct public key for each environment.
+</Warning>
 
 ---
 
 ## Prerequisites
 
 - Valid **Bearer token** in `Authorization: Bearer <access_token>` (see [Auth token](/api-reference/auth/auth-token)).
-- **RSA 2048** key pair in PEM; public key registered with Waftpay (we reject unknown keys).
-- Make sure the values you sign **exactly** match the payload you send (including casing/formatting).
+- **RSA 2048** key pair in PEM; public key registered with Waftpay.
+- Make sure the values you sign **exactly** match the payload you send, including casing and formatting.
 
 ---
 
@@ -36,7 +49,7 @@ These endpoints also require **Bearer auth** in the `Authorization` header.
 - **Never commit private keys** to your repo or docs site. Treat them as secrets.
 - Store private keys in a secure vault or encrypted filesystem and load them at runtime.
 - Rotate keys periodically and re-register the **public** key with Waftpay.
-- Use different key pairs for sandbox and production.
+- Use different key pairs for Sandbox and Production.
 
 ---
 
@@ -53,15 +66,16 @@ You need an **RSA 2048** key pair in **PEM** format:
 
 Concatenate these fields **in order** with **no separators**:
 
-```
+```text
 transaction.reference + transaction.amount + originator.country + transaction.service_code
 ```
 
-- Use the **exact strings** you send in the JSON (e.g., amount `"100.00"`, country `"KE"` vs `"KEN"`).
-- Do not trim, pad, or change case once you build the payload.
+- Use the **exact strings** you send in the JSON, for example amount `"100.00"` and country `"KE"` vs `"KEN"`.
+- Do not trim, pad, round, or change case once you build the payload.
 
 **Example signing string**
-```
+
+```text
 TXN123654573100.00KENewqeqw
 ```
 
@@ -69,52 +83,53 @@ TXN123654573100.00KENewqeqw
 
 ## Generate `X-Custom-Signature`
 
-> Keep your private key outside the repo (for example, `./keys/client_private.pem`) and load it at runtime.
+> Keep your private key outside the repo, for example `./keys/client_private.pem`, and load it at runtime.
 
 <Tabs>
   <Tab title="Node.js">
-
     ```js
     import crypto from "crypto";
     import fs from "fs";
-
+    
     const txRef = "TXN123654573";
-    const amount = "100";   // stringify exactly as sent
-    const country = "KEN";  // match payload (KE vs KEN)
+    const amount = "100.00"; // stringify exactly as sent
+    const country = "KEN";   // match payload exactly
     const service = "ewqeqw";
-
+    
     const signingString = `${txRef}${amount}${country}${service}`;
     const privateKeyPem = fs.readFileSync("client_private.pem", "utf8");
-
-    const sig = crypto.sign("RSA-SHA256", Buffer.from(signingString, "utf8"), privateKeyPem);
+    
+    const sig = crypto.sign(
+      "RSA-SHA256",
+      Buffer.from(signingString, "utf8"),
+      privateKeyPem
+    );
+    
     console.log(sig.toString("base64")); // -> X-Custom-Signature
     ```
   </Tab>
-
   <Tab title="Python">
-
     ```python
     import base64
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import padding
-
+    
     tx_ref = "TXN123654573"
-    amount = "100"
+    amount = "100.00"
     country = "KEN"
     service = "ewqeqw"
-
+    
     signing_string = f"{tx_ref}{amount}{country}{service}".encode("utf-8")
-
+    
     with open("client_private.pem", "rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
-
+    
     sig = key.sign(signing_string, padding.PKCS1v15(), hashes.SHA256())
+    
     print(base64.b64encode(sig).decode("utf-8"))  # -> X-Custom-Signature
     ```
   </Tab>
-
   <Tab title="Java">
-
     ```java
     import java.nio.charset.StandardCharsets;
     import java.nio.file.Files;
@@ -124,9 +139,9 @@ TXN123654573100.00KENewqeqw
     import java.security.Signature;
     import java.security.spec.PKCS8EncodedKeySpec;
     import java.util.Base64;
-
+    
     public final class WaftpaySignature {
-
+    
         public static String generateXCustomSignature(
             String txRef,
             String amount,
@@ -134,70 +149,98 @@ TXN123654573100.00KENewqeqw
             String service,
             PrivateKey privateKey
         ) throws Exception {
-
+    
             String signingString = txRef + amount + country + service;
             byte[] message = signingString.getBytes(StandardCharsets.UTF_8);
-
+    
             Signature sig = Signature.getInstance("SHA256withRSA");
             sig.initSign(privateKey);
             sig.update(message);
+    
             byte[] raw = sig.sign();
-
+    
             return Base64.getEncoder().encodeToString(raw);
         }
-
+    
         public static PrivateKey loadPkcs8PrivateKey(Path pemPath) throws Exception {
             String pem = Files.readString(pemPath, StandardCharsets.US_ASCII);
-
+    
             String base64 = pem
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replaceAll("\\s", "");
-
+    
             byte[] der = Base64.getDecoder().decode(base64);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(der);
+    
             return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
         }
-
+    
         public static void main(String[] args) throws Exception {
             PrivateKey key = loadPkcs8PrivateKey(Path.of("client_private.pem"));
-
+    
             String txRef = "TXN123654573";
-            String amount = "100";
+            String amount = "100.00";
             String country = "KEN";
             String service = "ewqeqw";
-
-            String xCustomSignature = generateXCustomSignature(txRef, amount, country, service, key);
+    
+            String xCustomSignature = generateXCustomSignature(
+                txRef,
+                amount,
+                country,
+                service,
+                key
+            );
+    
             System.out.println("X-Custom-Signature: " + xCustomSignature);
         }
     }
     ```
   </Tab>
-
   <Tab title="PHP">
-
     ```php
     <?php
-    $signingString = "TXN123654573100KENewqeqw";
-    $privateKey = openssl_pkey_get_private(file_get_contents("client_private.pem"));
+    
+    $txRef = "TXN123654573";
+    $amount = "100.00";
+    $country = "KEN";
+    $service = "ewqeqw";
+    
+    $signingString = $txRef . $amount . $country . $service;
+    
+    $privateKey = openssl_pkey_get_private(
+        file_get_contents("client_private.pem")
+    );
+    
     openssl_sign($signingString, $rawSig, $privateKey, OPENSSL_ALGO_SHA256);
+    
     echo base64_encode($rawSig), PHP_EOL; // -> X-Custom-Signature
     ```
   </Tab>
 </Tabs>
 
 <Note>
-  Use <em>standard Base64</em> (not Base64URL). Algorithm is <strong>RS256</strong> (RSA PKCS#1 v1.5 + SHA-256).
+  Use <em>standard Base64</em>, not Base64URL. The signing algorithm is <strong>RSA PKCS#1 v1.5 + SHA-256</strong>.
 </Note>
+
+---
+
+## Example request headers
+
+```http
+Authorization: Bearer <access_token>
+X-Custom-Signature: <base64_signature>
+Content-Type: application/json
+```
 
 ---
 
 ## Common mistakes
 
-- **Mismatched amount formatting**: if you send `"100.00"` you must sign `"100.00"` (not `"100"`).
+- **Mismatched amount formatting**: if you send `"100.00"` you must sign `"100.00"`, not `"100"`.
 - **Country/service casing**: `KE` vs `KEN` or service code casing must match exactly.
 - **Wrong key format**: use PKCS#8 (`BEGIN PRIVATE KEY`), not PKCS#1 (`BEGIN RSA PRIVATE KEY`).
-- **Base64URL vs Base64**: use standard Base64 (`+` and `/`), not URL-safe Base64.
+- **Base64URL vs Base64**: use standard Base64 with `+` and `/`, not URL-safe Base64.
 - **Payload mismatch**: any difference between the signed string and the sent JSON will fail verification.
 
 ---

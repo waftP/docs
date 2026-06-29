@@ -1,33 +1,63 @@
 ---
 title: "Get Balance"
 description: "Fetch wallet balances for the authenticated product (collections, payouts, etc.). Filter by currency or fetch all."
-openapi: "GET /payments-tsq-service/v1/wallet-balances"
+openapi: "GET /tsq/api/v1/wallet-balances"
 ---
 
-Fetch wallet balances associated with the **product tied to your token** (e.g., *Collections*, *Payouts*).
-Optionally filter by a specific `currency` (e.g., `KES`). If omitted, **all balances** for the product are returned.
+Fetch wallet balances associated with the **product tied to your token** (e.g., _Collections_, _Payouts_). Optionally filter by a specific `currency` (e.g., `KES`). If omitted, **all balances** for the product are returned.
 
-> **Base URL (Sandbox)**
->
-> `{{payments_tsq_base_url}}`
+---
+
+## Environments
+
+| Environment | Base URL |
+| --- | --- |
+| Sandbox | `https://dev.waftpay.io` |
+| Production | `https://prod.waftpay.io` |
+
+---
 
 ## Endpoint
 
 ```http
-GET /payments-tsq-service/v1/wallet-balances?currency={CURRENCY}
+GET /tsq/api/v1/wallet-balances?currency={CURRENCY}
 ```
+
+---
+
+## Full URLs
+
+| Environment | URL |
+| --- | --- |
+| Sandbox | `https://dev.waftpay.io/tsq/api/v1/wallet-balances?currency=KES` |
+| Production | `https://prod.waftpay.io/tsq/api/v1/wallet-balances?currency=KES` |
+
+---
 
 ## Example request
 
-```bash
-curl -X GET \
-  'https://sandbox.waftpay.io/api/payments-tsq-service/v1/wallet-balances?currency=KES' \
-  -H 'Authorization: Bearer <access_token>'
-```
+<Tabs>
+  <Tab title="Sandbox">
+    ```bash
+    curl -X GET \
+      'https://dev.waftpay.io/tsq/api/v1/wallet-balances?currency=KES' \
+      -H 'Authorization: Bearer <access_token>'
+    ```
+  </Tab>
+  <Tab title="Production">
+    ```bash
+    curl -X GET \
+      'https://prod.waftpay.io/tsq/api/v1/wallet-balances?currency=KES' \
+      -H 'Authorization: Bearer <access_token>'
+    ```
+  </Tab>
+</Tabs>
+
+---
 
 ## Authentication
 
-This endpoint **requires** a Bearer token that is **scoped to the product** you are querying (e.g., a *Collections* token can only view Collections balances; a *Payouts* token can only view Payouts balances).
+This endpoint **requires** a Bearer token that is **scoped to the product** you are querying (e.g., a _Collections_ token can only view Collections balances; a _Payouts_ token can only view Payouts balances).
 
 ```http
 Authorization: Bearer <access_token>
@@ -35,17 +65,20 @@ Authorization: Bearer <access_token>
 
 If the token is invalid, expired, or not authorized for the requested product, you'll receive `401 Unauthorized`.
 
+---
+
 ## Query parameters
 
-| Name     | In    | Type   | Required | Description                                        |
-|----------|-------|--------|----------|----------------------------------------------------|
-| currency | query | string | No       | ISO currency code (e.g., `KES`, `UGX`). If omitted, returns all balances for the product tied to your token. |
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `currency` | query | string | No | ISO currency code (e.g., `KES`, `UGX`). If omitted, returns all balances for the product tied to your token. |
 
 ---
 
 ## Successful responses
 
 ### 200 OK - All balances (no filter)
+
 ```json
 {
   "code": 200,
@@ -63,7 +96,8 @@ If the token is invalid, expired, or not authorized for the requested product, y
 }
 ```
 
-### 200 OK - Specific currency (present)
+### 200 OK - Specific currency present
+
 ```json
 {
   "code": 200,
@@ -81,17 +115,21 @@ If the token is invalid, expired, or not authorized for the requested product, y
 }
 ```
 
-> **Notes**
-> - `actual_balance` is the total ledger balance.
-> - `available_balance` is the spendable amount after holds/reserves.
-> - `alert_limit` is your configured low-balance threshold (if any).
-> - `status` reflects wallet state (e.g., `ACTIVE`, `INACTIVE`, `SUSPENDED`).
+<Note>
+  <ul>
+  <li><code>actual\_balance</code> is the total ledger balance.</li>
+  <li><code>available\_balance</code> is the spendable amount after holds/reserves.</li>
+  <li><code>alert\_limit</code> is your configured low-balance threshold, if any.</li>
+  <li><code>status</code> reflects wallet state, for example <code>ACTIVE</code>, <code>INACTIVE</code>, or <code>SUSPENDED</code>.</li>
+</ul>
+</Note>
 
 ---
 
 ## Error responses
 
 ### 404 Not Found - Currency not provisioned for this product
+
 ```json
 {
   "code": 404,
@@ -102,6 +140,7 @@ If the token is invalid, expired, or not authorized for the requested product, y
 ```
 
 ### 401 Unauthorized - Bad/expired token or wrong scope
+
 ```json
 {
   "code": 401,
@@ -118,8 +157,6 @@ If the token is invalid, expired, or not authorized for the requested product, y
 - **Product scoping:** The Bearer token determines which product’s wallets are visible (e.g., Collections vs Payouts).
 - **Filtering:** `currency` is optional; when omitted, all provisioned wallets for the token’s product are returned.
 - **Idempotency:** This is a `GET` and does not change state; no idempotency key required.
-- **Caching:** Avoid caching balances client‑side if you need real‑time accuracy.
+- **Caching:** Avoid caching balances client-side if you need real-time accuracy.
 - **Rate limits:** Standard platform rate limits apply. Handle `429` with retries and backoff.
 - **Currency codes:** Must be ISO 4217 uppercase; unrecognized codes return `404` or an empty list depending on provisioning.
-
----

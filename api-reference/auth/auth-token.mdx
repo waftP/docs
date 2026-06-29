@@ -1,14 +1,18 @@
 ---
 title: "Get Authentication Token"
-description: "Exchange consumer credentials for a short-lived Bearer token."
+description: "Exchange your consumer credentials for a short-lived Bearer token."
 openapi: "POST /auth/api/v1/generate-token"
 ---
 
 ## Overview
 
-Use this endpoint to exchange your `consumer_key` and `consumer_secret` for a short-lived Bearer token.
+Use this endpoint to exchange your **consumer\_key** and **consumer\_secret** for a short-lived Bearer token. This is a server-to-server flow and does **not** require an existing Bearer token.
 
-This is a server-to-server flow and does **not** require an existing Bearer token.
+<Info>
+  Use this token when calling protected Waftpay APIs such as Collections, Payouts, Remittance, Checkout, Wallet Balance, and Transaction Status Query.
+</Info>
+
+---
 
 ## Environments
 
@@ -17,38 +21,135 @@ This is a server-to-server flow and does **not** require an existing Bearer toke
 | Sandbox | `https://dev.waftpay.io` |
 | Production | `https://prod.waftpay.io` |
 
+<Warning>
+  Sandbox and Production credentials are separate. Use Sandbox credentials on `https://dev.waftpay.io` and Production credentials on `https://prod.waftpay.io`.
+</Warning>
+
+---
+
 ## Endpoint
 
 ```http
 POST /auth/api/v1/generate-token
-Example request
-curl --request POST \
-  --url https://dev.waftpay.io/auth/api/v1/generate-token \
-  --header 'Content-Type: application/json' \
-  --data '{
-    "consumer_key": "APP_CONSUMER_KEY",
-    "consumer_secret": "APP_CONSUMER_SECRET"
-  }'
-Request body
+```
+
+---
+
+## Full URLs
+
+| Environment | URL |
+| --- | --- |
+| Sandbox | `https://dev.waftpay.io/auth/api/v1/generate-token` |
+| Production | `https://prod.waftpay.io/auth/api/v1/generate-token` |
+
+---
+
+## Request body
+
+```json
 {
   "consumer_key": "APP_CONSUMER_KEY",
   "consumer_secret": "APP_CONSUMER_SECRET"
 }
-Example response
+```
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumer_key` | string | Yes | Your product-specific consumer key. |
+| `consumer_secret` | string | Yes | Your product-specific consumer secret. |
+
+---
+
+## Example request
+
+<Tabs>
+  <Tab title="Sandbox">
+    ```bash
+    curl --request POST \
+      --url https://dev.waftpay.io/auth/api/v1/generate-token \
+      --header 'Content-Type: application/json' \
+      --data '{
+        "consumer_key": "APP_CONSUMER_KEY",
+        "consumer_secret": "APP_CONSUMER_SECRET"
+      }'
+    ```
+  </Tab>
+  <Tab title="Production">
+    ```bash
+    curl --request POST \
+      --url https://prod.waftpay.io/auth/api/v1/generate-token \
+      --header 'Content-Type: application/json' \
+      --data '{
+        "consumer_key": "APP_CONSUMER_KEY",
+        "consumer_secret": "APP_CONSUMER_SECRET"
+      }'
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Example response (success)
+
+```json
 {
   "status": true,
   "message": "Request processed successfully",
   "token": "abcdeFGHIjklmno@1234567890...",
   "expires_in": 7200000
 }
-
-Use the returned token in the Authorization header:
-
-Authorization: Bearer <token>
-Notes
-Use credentials for the specific product you are calling: Collections, Payouts, Remittance, or Checkout.
-Sandbox credentials work only on https://dev.waftpay.io.
-Production credentials work only on https://prod.waftpay.io.
-If you regenerate your keys, the old credentials stop working immediately.
- 
 ```
+
+---
+
+## Response fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `status` | boolean | Indicates whether the token request was successful. |
+| `message` | string | Human-readable response message. |
+| `token` | string | Bearer token to use on protected API requests. |
+| `expires_in` | number | Token validity duration in milliseconds. |
+
+---
+
+## Using the token
+
+Use the token in the `Authorization` header:
+
+```http
+Authorization: Bearer <token>
+```
+
+Example:
+
+```bash
+curl --request GET \
+  --url https://dev.waftpay.io/tsq/api/v1/wallet-balances \
+  --header 'Authorization: Bearer <token>'
+```
+
+---
+
+## Token lifecycle
+
+<Steps>
+  <Step title="Generate token">
+    Call this endpoint using your product-specific consumer credentials.
+  </Step>
+  <Step title="Cache token securely">
+    Store the token server-side and reuse it for subsequent API requests until it expires.
+  </Step>
+  <Step title="Refresh on expiry">
+    Generate a new token only when the current token expires or becomes invalid.
+  </Step>
+</Steps>
+
+---
+
+## Notes
+
+- Use the credentials for the **specific product** you are calling: Payouts, Collections, Remittance, Checkout, Wallet Balance, or Transaction Status Query.
+- This endpoint does **not** require Bearer authentication.
+- Never expose your `consumer_secret` in frontend or mobile applications.
+- If you regenerate your keys, the old credentials stop working immediately.
