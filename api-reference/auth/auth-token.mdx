@@ -6,18 +6,23 @@ openapi: "POST /auth/api/v1/generate-token"
 
 ## Overview
 
-Use this endpoint to exchange your `consumer_key` and `consumer_secret` for a short-lived Bearer token.
-
-This is a server-to-server flow and does **not** require an existing Bearer token.
+Use this endpoint to exchange your **consumer\_key** and **consumer\_secret** for a short-lived Bearer token. This is a server-to-server flow and does **not** require an existing Bearer token.
 
 ---
 
 ## Environments
 
-| Environment | Base URL |
-| --- | --- |
-| Sandbox | `https://dev.waftpay.io` |
-| Production | `https://prod.waftpay.io` |
+### Sandbox
+
+```text
+https://dev.waftpay.io
+```
+
+### Production
+
+```text
+https://prod.waftpay.io
+```
 
 ---
 
@@ -26,15 +31,6 @@ This is a server-to-server flow and does **not** require an existing Bearer toke
 ```http
 POST /auth/api/v1/generate-token
 ```
-
----
-
-## Full URLs
-
-| Environment | URL |
-| --- | --- |
-| Sandbox | `https://dev.waftpay.io/auth/api/v1/generate-token` |
-| Production | `https://prod.waftpay.io/auth/api/v1/generate-token` |
 
 ---
 
@@ -49,21 +45,7 @@ POST /auth/api/v1/generate-token
 
 ---
 
-## Example request
-
-```bash
-curl --request POST \
-  --url https://dev.waftpay.io/auth/api/v1/generate-token \
-  --header 'Content-Type: application/json' \
-  --data '{
-    "consumer_key": "APP_CONSUMER_KEY",
-    "consumer_secret": "APP_CONSUMER_SECRET"
-  }'
-```
-
----
-
-## Example response
+## Example response (success)
 
 ```json
 {
@@ -74,11 +56,7 @@ curl --request POST \
 }
 ```
 
----
-
-## Using the token
-
-Use the returned token in the `Authorization` header when calling protected endpoints:
+Use the token in the `Authorization` header:
 
 ```http
 Authorization: Bearer <token>
@@ -88,12 +66,7 @@ Authorization: Bearer <token>
 
 ## Notes
 
-- Use credentials for the specific product you are calling: Collections, Payouts, Remittance, Checkout, or Wallet Balance.
-- Sandbox credentials work only on `https://dev.waftpay.io`.
-- Production credentials work only on `https://prod.waftpay.io`.
+- Use the credentials for the **specific product** you are calling (Payouts, Collections, Remittance, or Checkout).
+- Sandbox credentials work only with the Sandbox environment (`https://dev.waftpay.io`).
+- Production credentials work only with the Production environment (`https://prod.waftpay.io`).
 - If you regenerate your keys, the old credentials stop working immediately.
-
-```text
-
-Next section: **Generate X-Custom-Signature**.
-```
